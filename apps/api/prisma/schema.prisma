@@ -6,3 +6,214 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Difficulty {
+  EASY
+  NORMAL
+  HARD
+  MASTER
+}
+
+enum Category {
+  KOREAN
+  WESTERN
+  CHINESE
+  JAPANESE
+  SOUTHEAST_ASIAN
+  HOME_BAKING
+  BEVERAGE
+  SAUCE
+  CONVENIENCE
+  FUSION
+}
+
+enum CopyState {
+  OWNED
+  LISTED
+  OFFERED
+}
+
+enum ListingType {
+  SALE
+  EXCHANGE
+  BOTH
+}
+
+enum ListingStatus {
+  ON_SALE
+  SOLD_OUT
+  WITHDRAWN
+}
+
+enum TradeOfferStatus {
+  PENDING
+  ACCEPTED
+  REFUSED
+  CANCELED
+}
+
+enum NotificationType {
+  PURCHASED
+  SOLD_OUT
+  TRADE_OFFER_NEW
+  TRADE_OFFER_ACCEPT
+  TRADE_OFFER_REFUSE
+}
+
+model User {
+  id                     Int       @id @default(autoincrement())
+  email                  String    @unique
+  passwordHash           String?
+  googleId               String?   @unique
+  nickname               String    @unique
+  points                 Int       @default(0)
+  lastRandomBoxClaimedAt DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  createdRecipes     Recipe[]        @relation("RecipeCreator")
+  ownedCopies        RecipeCopy[]    @relation("CopyOwner")
+  listings           MarketListing[]
+  purchases          Purchase[]      @relation("PurchaseBuyer")
+  sales              Purchase[]      @relation("PurchaseSeller")
+  tradeOffers        TradeOffer[]    @relation("OfferProposer")
+  notifications      Notification[]  @relation("NotificationReceiver")
+  actedNotifications Notification[]  @relation("NotificationActor")
+}
+
+model Recipe {
+  id          Int        @id @default(autoincrement())
+  creatorId   Int
+  title       String
+  imageUrl    String
+  minPrice    Int
+  difficulty  Difficulty
+  category    Category
+  summary     String
+  content     String
+  totalSupply Int
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  creator       User            @relation("RecipeCreator", fields: [creatorId], references: [id])
+  copies        RecipeCopy[]
+  listings      MarketListing[]
+  notifications Notification[]
+
+  @@index([creatorId])
+  @@index([difficulty, category])
+}
+
+model RecipeCopy {
+  id            Int       @id @default(autoincrement())
+  recipeId      Int
+  ownerId       Int
+  listingId     Int?
+  state         CopyState @default(OWNED)
+  everPurchased Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  recipe  Recipe         @relation(fields: [recipeId], references: [id])
+  owner   User           @relation("CopyOwner", fields: [ownerId], references: [id])
+  listing MarketListing? @relation(fields: [listingId], references: [id])
+
+  purchases        Purchase[]
+  offeredInTrades  TradeOffer[] @relation("OfferedCopy")
+  receivedInTrades TradeOffer[] @relation("ReceivedCopy")
+
+  @@index([ownerId, state])
+  @@index([recipeId])
+  @@index([listingId])
+}
+
+model MarketListing {
+  id                Int           @id @default(autoincrement())
+  sellerId          Int
+  recipeId          Int
+  listingType       ListingType
+  initialQuantity   Int
+  price             Int?
+  wantedDifficulty  Difficulty?
+  wantedCategory    Category?
+  wantedDescription String?
+  status            ListingStatus @default(ON_SALE)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  seller User   @relation(fields: [sellerId], references: [id])
+  recipe Recipe @relation(fields: [recipeId], references: [id])
+
+  copies        RecipeCopy[]
+  purchases     Purchase[]
+  tradeOffers   TradeOffer[]
+  notifications Notification[]
+
+  @@index([status, createdAt])
+  @@index([sellerId])
+  @@index([recipeId])
+}
+
+model Purchase {
+  id           Int      @id @default(autoincrement())
+  listingId    Int
+  recipeCopyId Int      @unique
+  buyerId      Int
+  sellerId     Int
+  price        Int
+  createdAt    DateTime @default(now())
+
+  listing    MarketListing @relation(fields: [listingId], references: [id])
+  recipeCopy RecipeCopy    @relation(fields: [recipeCopyId], references: [id])
+  buyer      User          @relation("PurchaseBuyer", fields: [buyerId], references: [id])
+  seller     User          @relation("PurchaseSeller", fields: [sellerId], references: [id])
+
+  notifications Notification[]
+
+  @@index([buyerId, createdAt])
+  @@index([sellerId, createdAt])
+  @@index([listingId])
+}
+
+model TradeOffer {
+  id             Int              @id @default(autoincrement())
+  listingId      Int
+  proposerId     Int
+  offeredCopyId  Int
+  receivedCopyId Int?
+  status         TradeOfferStatus @default(PENDING)
+  createdAt      DateTime         @default(now())
+  decidedAt      DateTime?
+
+  listing      MarketListing @relation(fields: [listingId], references: [id])
+  proposer     User          @relation("OfferProposer", fields: [proposerId], references: [id])
+  offeredCopy  RecipeCopy    @relation("OfferedCopy", fields: [offeredCopyId], references: [id])
+  receivedCopy RecipeCopy?   @relation("ReceivedCopy", fields: [receivedCopyId], references: [id])
+
+  notifications Notification[]
+
+  @@index([listingId, status])
+  @@index([proposerId, createdAt])
+}
+
+model Notification {
+  id           Int              @id @default(autoincrement())
+  userId       Int
+  type         NotificationType
+  actorId      Int?
+  recipeId     Int?
+  listingId    Int?
+  purchaseId   Int?
+  tradeOfferId Int?
+  isRead       Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+
+  user       User           @relation("NotificationReceiver", fields: [userId], references: [id], onDelete: Cascade)
+  actor      User?          @relation("NotificationActor", fields: [actorId], references: [id])
+  recipe     Recipe?        @relation(fields: [recipeId], references: [id])
+  listing    MarketListing? @relation(fields: [listingId], references: [id])
+  purchase   Purchase?      @relation(fields: [purchaseId], references: [id])
+  tradeOffer TradeOffer?    @relation(fields: [tradeOfferId], references: [id])
+
+  @@index([userId, isRead, createdAt])
+}
