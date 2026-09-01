@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+apps/api/src/generated/
+apps/api/prisma/migrations/
+.idea/
+.vscode/
+.cache/
+.vercel/

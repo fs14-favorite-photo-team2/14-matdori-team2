@@ -1,0 +1,51 @@
+{
+  "name": "matdori-market",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "concurrently --kill-others-on-fail -n web,api -c cyan,green \"npm run dev:web\" \"npm run dev:api\"",
+    "dev:web": "npm run dev --workspace=@matdori-market/web",
+    "dev:api": "npm run dev --workspace=@matdori-market/api",
+    "build": "npm run build --workspaces --if-present",
+    "start:web": "npm run start --workspace=@matdori-market/web",
+    "start:api": "npm run start --workspace=@matdori-market/api",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:fix": "npm run lint:fix --workspaces --if-present",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "prisma:generate": "npm run prisma:generate --workspace=@matdori-market/api",
+    "prisma:migrate": "npm run prisma:migrate --workspace=@matdori-market/api",
+    "prisma:deploy": "npm run prisma:deploy --workspace=@matdori-market/api",
+    "prisma:studio": "npm run prisma:studio --workspace=@matdori-market/api",
+    "precommit": "lint-staged",
+    "prepare": "node .husky/install.mjs"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.1",
+    "@commitlint/config-conventional": "^21.2.0",
+    "concurrently": "^10.0.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
+    "prettier": "^3.9.4"
+  },
+  "lint-staged": {
+    "apps/web/**/*.{js,jsx,mjs,cjs}": [
+      "npm exec --workspace=@matdori-market/web -- eslint --fix",
+      "prettier --write"
+    ],
+    "apps/api/**/*.{js,mjs,cjs}": [
+      "npm exec --workspace=@matdori-market/api -- eslint --fix",
+      "prettier --write"
+    ],
+    "./*.{js,cjs,mjs}": "prettier --write",
+    ".husky/*.{js,cjs,mjs}": "prettier --write",
+    "*.{css,json,md,yml,yaml,prisma}": "prettier --write --ignore-unknown"
+  }
+}
