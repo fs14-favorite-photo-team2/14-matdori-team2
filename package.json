@@ -23,6 +23,7 @@
     "prisma:generate": "npm run prisma:generate --workspace=@matdori-market/api",
     "prisma:migrate": "npm run prisma:migrate --workspace=@matdori-market/api",
     "prisma:deploy": "npm run prisma:deploy --workspace=@matdori-market/api",
+    "prisma:seed": "npm run prisma:seed --workspace=@matdori-market/api",
     "prisma:studio": "npm run prisma:studio --workspace=@matdori-market/api",
     "precommit": "lint-staged",
     "prepare": "node .husky/install.mjs"
