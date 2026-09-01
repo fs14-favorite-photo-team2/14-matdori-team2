@@ -31,3 +31,22 @@
   border: none;
   cursor: pointer;
 }
+
+/* 태블릿 */
+@media (max-width: 1023px) {
+  .dialog {
+    max-width: 420px;
+  }
+}
+
+/* 모바일 */
+@media (max-width: 743px) {
+  .dialog {
+    max-width: 90%;
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 1.1rem;
+  }
+}
