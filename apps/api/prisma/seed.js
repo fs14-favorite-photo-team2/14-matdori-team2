@@ -14,7 +14,7 @@ const prisma = new PrismaClient({ adapter })
 // - WESTERN: 양식
 // - CHINESE: 중식
 // - JAPANESE: 일식
-// - SOUTHEAST_ASIAN: 동남아식
+// - ASIAN: 아시안
 // - HOME_BAKING: 홈 베이킹
 // - BEVERAGE: 음료
 // - SAUCE: 양념장
@@ -56,7 +56,7 @@ const CATEGORIES = [
   'WESTERN',
   'CHINESE',
   'JAPANESE',
-  'SOUTHEAST_ASIAN',
+  'ASIAN',
   'HOME_BAKING',
   'BEVERAGE',
   'SAUCE',
@@ -76,7 +76,7 @@ const CATEGORY_LABELS = {
   WESTERN: '양식',
   CHINESE: '중식',
   JAPANESE: '일식',
-  SOUTHEAST_ASIAN: '아시안',
+  ASIAN: '아시안',
   HOME_BAKING: '홈 베이킹',
   BEVERAGE: '음료',
   SAUCE: '양념장',
@@ -138,7 +138,7 @@ const RECIPE_NAMES = {
     '스키야키',
   ],
 
-  SOUTHEAST_ASIAN: [
+  ASIAN: [
     '팟타이',
     '똠얌꿍',
     '나시고렝',
