@@ -2,8 +2,6 @@
 
 import Image from 'next/image'
 import styles from './Pagination.module.css'
-import leftIcon from './icons/type_left.svg'
-import rightIcon from './icons/type_right.svg'
 
 const BOUNDARY_COUNT = 3
 
@@ -44,7 +42,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         disabled={currentPage === 1}
         aria-label="이전 페이지"
       >
-        <Image src={leftIcon} alt="" width={24} height={24} />
+        <Image src="/icons/type_close.svg" alt="" width={24} height={24} />
       </button>
 
       {pageItems.map((item, index) =>
