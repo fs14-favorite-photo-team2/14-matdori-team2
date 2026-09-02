@@ -42,7 +42,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         disabled={currentPage === 1}
         aria-label="이전 페이지"
       >
-        <Image src="/icons/type_close.svg" alt="" width={24} height={24} />
+        <Image src="/icons/type_left.svg" alt="" width={24} height={24} />
       </button>
 
       {pageItems.map((item, index) =>
@@ -70,7 +70,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         disabled={currentPage === totalPages}
         aria-label="다음 페이지"
       >
-        <Image src={rightIcon} alt="" width={24} height={24} />
+        <Image src="/icons/type_right.svg" alt="" width={24} height={24} />
       </button>
     </nav>
   )
