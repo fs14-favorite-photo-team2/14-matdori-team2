@@ -69,7 +69,7 @@ Copy-Item apps/web/.env.example apps/web/.env.local
 | `NODE_ENV`            | `development`                     | 실행 환경 (`production` 등)     |
 | `CLIENT_ORIGIN`       | `http://localhost:3000`           | CORS에서 허용할 프론트엔드 주소 |
 | `DATABASE_URL`        | `postgresql://.../matdori_market` | PostgreSQL 연결 문자열          |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:3001`           | 프론트엔드에서 사용할 API 주소  |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:3001/api`       | 프론트엔드에서 사용할 API 주소  |
 
 `npm run build`와 Prisma 명령어는 API의 Prisma 설정을 불러오므로 먼저 `apps/api/.env`를 만들어야 합니다. Prisma Client 생성 자체는 데이터베이스에 연결하지 않으므로 PostgreSQL을 실행하지 않은 상태에서도 예시 URL을 사용할 수 있습니다.
 

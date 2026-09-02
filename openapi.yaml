@@ -1063,7 +1063,7 @@ components:
           WESTERN,
           CHINESE,
           JAPANESE,
-          SOUTHEAST_ASIAN,
+          ASIAN,
           HOME_BAKING,
           BEVERAGE,
           SAUCE,
