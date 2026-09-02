@@ -5,9 +5,9 @@
   align-items: center;
   gap: 12px;
   padding: 0 20px 0 24px;
-  border: 1px solid #dddddd;
+  border: 1px solid var(--color-gray-200);
   border-radius: 2px;
-  background: #0f0f0f;
+  background-color: var(--color-black);
 }
 
 .input {
@@ -16,13 +16,17 @@
   border: none;
   outline: none;
   background: transparent;
-  color: #ffffff;
+  color: var(--color-white);
   font-family: inherit;
-  font-size: 18px;
+  font-size: var(--font-size-18);
 }
 
 .input::placeholder {
-  color: #a4a4a4;
+  color: var(--color-gray-300);
+}
+
+.input::-webkit-search-cancel-button {
+  display: none;
 }
 
 .searchButton {

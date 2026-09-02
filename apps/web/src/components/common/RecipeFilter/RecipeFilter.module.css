@@ -5,7 +5,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .desktopFilters {
@@ -25,10 +25,10 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: #ffffff;
+  color: var(--color-white);
   font-family: inherit;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
 }
 
@@ -58,11 +58,11 @@
   justify-content: space-between;
   gap: 10px;
   padding: 0 24px 0 28px;
-  border: 1px solid #dddddd;
-  background-color: #0f0f0f;
-  color: #ffffff;
+  border: 1px solid var(--color-gray-200);
+  background-color: var(--color-black);
+  color: var(--color-white);
   font-family: inherit;
-  font-size: 16px;
+  font-size: var(--font-size-16);
   cursor: pointer;
 }
 
@@ -77,16 +77,16 @@
   flex-direction: column;
   overflow-y: auto;
   padding: 12px 0;
-  border: 1px solid #dddddd;
-  background-color: #0f0f0f;
+  border: 1px solid var(--color-gray-200);
+  background-color: var(--color-black);
 }
 
 .optionCount {
-  color: #a4a4a4;
+  color: var(--color-gray-300);
 }
 
 .mobileOptionSelected .optionCount {
-  color: #eeeeee;
+  color: var(--color-gray-100);
 }
 
 .optionButton {
@@ -94,9 +94,9 @@
   padding: 12px 28px;
   border: none;
   background: transparent;
-  color: #ffffff;
+  color: var(--color-white);
   font-family: inherit;
-  font-size: 18px;
+  font-size: var(--font-size-18);
   text-align: left;
   white-space: nowrap;
   cursor: pointer;
@@ -145,7 +145,7 @@
     width: 120px;
     height: 40px;
     padding: 0 10px 0 14px;
-    font-size: 12px;
+    font-size: var(--font-size-12);
   }
 
   .sortButton .dropDownIcon {
@@ -174,7 +174,7 @@
     overflow: hidden;
     border-radius: 16px 16px 0 0;
     background-color: #1b1b1b;
-    color: #ffffff;
+    color: var(--color-white);
   }
 
   .sheetHeader {
@@ -187,8 +187,8 @@
   }
 
   .sheetHeader h2 {
-    font-size: 18px;
-    font-weight: 400;
+    font-size: var(--font-size-18);
+    font-weight: var(--font-weight-regular);
   }
 
   .closeButton {
@@ -221,12 +221,12 @@
     background: transparent;
     color: #777777;
     font-family: inherit;
-    font-size: 14px;
+    font-size: var(--font-size-14);
     cursor: pointer;
   }
 
   .tabButtonActive {
-    color: #ffffff;
+    color: var(--color-white);
   }
 
   .tabButtonActive::after {
@@ -235,7 +235,7 @@
     position: absolute;
     right: 15%;
     bottom: 0;
-    background-color: #ffffff;
+    background-color: var(--color-white);
     content: '';
   }
 
@@ -244,6 +244,7 @@
     flex: 1;
     overflow-y: auto;
     padding: 8px 0 24px;
+    scrollbar-width: none;
   }
 
   .mobileOptions::-webkit-scrollbar {
@@ -260,28 +261,28 @@
     padding: 0 28px;
     border: none;
     background: transparent;
-    color: #dddddd;
+    color: var(--color-gray-200);
     font-family: inherit;
-    font-size: 14px;
+    font-size: var(--font-size-14);
     text-align: left;
     cursor: pointer;
   }
 
   /* 모바일 난이도별 고유 색상 */
   .easy {
-    color: #efff04;
+    color: var(--color-main);
   }
 
   .normal {
-    color: #29c9f9;
+    color: var(--color-blue);
   }
 
   .hard {
-    color: #a77eff;
+    color: var(--color-purple);
   }
 
   .master {
-    color: #ff2a6a;
+    color: var(--color-pink);
   }
 
   .mobileOptionSelected {
@@ -310,11 +311,11 @@
     min-height: 52px;
     padding: 0 16px;
     border: none;
-    background-color: #efff04;
-    color: #0f0f0f;
+    background-color: var(--color-main);
+    color: var(--color-black);
     font-family: inherit;
-    font-size: 16px;
-    font-weight: 700;
+    font-size: var(--font-size-16);
+    font-weight: var(--font-weight-bold);
     cursor: pointer;
   }
 }

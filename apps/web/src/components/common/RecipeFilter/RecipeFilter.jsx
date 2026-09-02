@@ -45,7 +45,9 @@ export default function RecipeFilter({
   }
 
   const handleOptionSelect = (groupKey, value) => {
-    onFilterChange?.(groupKey, value)
+    const nextValue = filters[groupKey] === value ? '' : value
+
+    onFilterChange?.(groupKey, nextValue)
     setOpenMenu(null)
   }
 
@@ -248,7 +250,7 @@ export default function RecipeFilter({
               ))}
             </div>
             <div className={styles.mobileOptions}>
-              {activeGroup.options.map((option) => (
+              {activeGroup?.options.map((option) => (
                 <button
                   className={`${styles.mobileOption} ${
                     draftFilters[activeGroup.key] === option.value
