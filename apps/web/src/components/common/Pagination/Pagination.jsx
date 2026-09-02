@@ -1,6 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import styles from './Pagination.module.css'
+import leftIcon from './icons/type_left.svg'
+import rightIcon from './icons/type_right.svg'
 
 const BOUNDARY_COUNT = 3
 
@@ -41,18 +44,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         disabled={currentPage === 1}
         aria-label="이전 페이지"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-        >
-          <path
-            d="M10.1008 12.1004L14.3008 7.90039L14.3008 16.3004L10.1008 12.1004Z"
-            fill="#5A5A5A"
-          />
-        </svg>
+        <Image src={leftIcon} alt="" width={24} height={24} />
       </button>
 
       {pageItems.map((item, index) =>
@@ -80,18 +72,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         disabled={currentPage === totalPages}
         aria-label="다음 페이지"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-        >
-          <path
-            d="M14.2996 12.0998L10.0996 16.2998L10.0996 7.89981L14.2996 12.0998Z"
-            fill="white"
-          />
-        </svg>
+        <Image src={rightIcon} alt="" width={24} height={24} />
       </button>
     </nav>
   )
