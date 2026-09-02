@@ -1,0 +1,1440 @@
+openapi: 3.1.0
+info:
+  title: 레시피 마켓플레이스 API
+  version: 1.0.0
+  description: |
+    레시피 생성, 마켓플레이스 판매, 구매, 교환, 알림 및 시간당 랜덤 포인트 보상을
+    제공하는 API입니다. 모든 시각은 ISO 8601 형식의 UTC 문자열로 표현합니다.
+
+    포인트, 재고 또는 소유권을 변경하는 작업은 일부만 반영되지 않도록 함께
+    처리합니다. 별도 명시가 없는 한 JSON
+    요청 본문에 정의되지 않은 필드가 포함되면 요청을 거부합니다.
+servers:
+  - url: /api
+    description: 현재 API 서버
+tags:
+  - name: 인증
+  - name: 사용자
+  - name: 레시피
+  - name: 마켓플레이스
+  - name: 교환 제안
+  - name: 알림
+  - name: 랜덤 상자
+
+paths:
+  /health:
+    get:
+      summary: 서버 프로세스 생존 상태 확인
+      operationId: checkHealth
+      servers:
+        - url: /
+      responses:
+        '200':
+          description: 서버 프로세스가 실행 중임
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [status]
+                        properties:
+                          status: { type: string, const: ok }
+  /ready:
+    get:
+      summary: 데이터베이스 연결을 포함한 서버 준비 상태 확인
+      operationId: checkReadiness
+      servers:
+        - url: /
+      responses:
+        '200':
+          description: 서버가 요청을 처리할 준비가 됨
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [status]
+                        properties:
+                          status: { type: string, const: ready }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /auth/signup:
+    post:
+      tags: [인증]
+      summary: 이메일과 비밀번호로 회원가입
+      operationId: signUp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SignUpRequest' }
+      responses:
+        '201':
+          description: 계정이 생성됨
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409':
+          description: 이메일 또는 닉네임이 이미 존재함
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                duplicateEmail:
+                  value:
+                    {
+                      success: false,
+                      error:
+                        {
+                          code: EMAIL_ALREADY_EXISTS,
+                          message: 이미 가입된 이메일입니다.,
+                        },
+                    }
+  /auth/login:
+    post:
+      tags: [인증]
+      summary: 이메일과 비밀번호로 로그인
+      operationId: logIn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: 로그인됨
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/InvalidCredentials' }
+  /auth/logout:
+    post:
+      tags: [인증]
+      summary: 현재 로그인 상태 종료
+      operationId: logOut
+      responses:
+        '204': { description: 로그아웃됨. 응답 본문은 없음 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/{provider}:
+    get:
+      tags: [인증]
+      summary: OAuth 인증 시작
+      operationId: startOAuth
+      parameters:
+        - $ref: '#/components/parameters/OAuthProvider'
+        - name: redirectUri
+          in: query
+          description: 인증 후 리디렉션할 프론트엔드 URI
+          schema: { type: string, format: uri }
+      responses:
+        '302': { description: OAuth 제공자로 리디렉션 }
+        '400': { $ref: '#/components/responses/ValidationError' }
+  /auth/{provider}/callback:
+    get:
+      tags: [인증]
+      summary: OAuth 인증 완료
+      operationId: finishOAuth
+      parameters:
+        - $ref: '#/components/parameters/OAuthProvider'
+        - name: code
+          in: query
+          required: true
+          schema: { type: string, maxLength: 2048 }
+        - name: state
+          in: query
+          required: true
+          schema: { type: string, maxLength: 512 }
+        - name: error
+          in: query
+          required: false
+          description: OAuth provider가 인증을 거부하거나 실패한 경우 반환하는 오류 코드
+          schema: { type: string, maxLength: 200 }
+      responses:
+        '302':
+          description: 인증을 완료하고 프론트엔드로 리디렉션
+        '400':
+          description: 잘못된 콜백, state 값 또는 OAuth 제공자 응답
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /users/me:
+    get:
+      tags: [사용자]
+      summary: 현재 사용자 정보와 기능 사용 가능 여부 조회
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: 현재 사용자 정보
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/CurrentUser' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    patch:
+      tags: [사용자]
+      summary: 현재 사용자 정보 수정
+      operationId: updateCurrentUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateCurrentUserRequest' }
+      responses:
+        '200':
+          description: 수정된 사용자 정보
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/UserSummary' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /users/me/recipe-copies:
+    get:
+      tags: [사용자]
+      summary: 현재 사용자가 보유한 레시피 사본 조회
+      operationId: listMyRecipeCopies
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/CursorLimit'
+        - $ref: '#/components/parameters/Keyword'
+        - $ref: '#/components/parameters/DifficultyFilter'
+        - $ref: '#/components/parameters/CategoryFilter'
+        - name: state
+          in: query
+          schema: { $ref: '#/components/schemas/CopyState' }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, oldest, title_asc, title_desc]
+            default: newest
+      responses:
+        '200':
+          description: 현재 사용자가 보유한 레시피 사본
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MyRecipeCursorResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /users/me/market-listings:
+    get:
+      tags: [사용자]
+      summary: 현재 사용자가 등록한 판매글 조회
+      operationId: listMyListings
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/CursorLimit'
+        - $ref: '#/components/parameters/Keyword'
+        - $ref: '#/components/parameters/DifficultyFilter'
+        - $ref: '#/components/parameters/CategoryFilter'
+        - name: listingType
+          in: query
+          schema: { $ref: '#/components/schemas/ListingType' }
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/ListingStatus' }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, oldest]
+            default: newest
+      responses:
+        '200':
+          description: 현재 사용자의 판매글
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListingCursorResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /users/me/trade-offers:
+    get:
+      tags: [사용자]
+      summary: 현재 사용자가 보낸 교환 제안 조회
+      operationId: listMyTradeOffers
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/CursorLimit'
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/TradeOfferStatus' }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, oldest]
+            default: newest
+      responses:
+        '200':
+          description: 보낸 교환 제안
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TradeOfferCursorResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /users/me/received-trade-offers:
+    get:
+      tags: [사용자]
+      summary: 현재 사용자가 받은 교환 제안 조회
+      operationId: listReceivedTradeOffers
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/CursorLimit'
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/TradeOfferStatus' }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, oldest]
+            default: newest
+      responses:
+        '200':
+          description: 현재 사용자의 판매글에 접수된 교환 제안
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TradeOfferCursorResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /users/me/purchases:
+    get:
+      tags: [사용자]
+      summary: 현재 사용자의 구매 내역 조회
+      operationId: listMyPurchases
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/CursorLimit'
+        - $ref: '#/components/parameters/DateFrom'
+        - $ref: '#/components/parameters/DateTo'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, oldest]
+            default: newest
+      responses:
+        '200':
+          description: 현재 사용자가 포인트로 구매한 레시피 사본 거래 내역
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PurchaseCursorResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /users/me/sales:
+    get:
+      tags: [사용자]
+      summary: 현재 사용자의 판매 내역 조회
+      operationId: listMySales
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/CursorLimit'
+        - $ref: '#/components/parameters/DateFrom'
+        - $ref: '#/components/parameters/DateTo'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, oldest]
+            default: newest
+      responses:
+        '200':
+          description: 현재 사용자가 판매한 레시피 사본과 판매 수익 내역
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PurchaseCursorResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /recipes:
+    post:
+      tags: [레시피]
+      summary: 레시피 생성 및 사본 발행
+      operationId: createRecipe
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/CreateRecipeRequest' }
+      responses:
+        '201':
+          description: 레시피가 생성됨
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/RecipeDetail' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409':
+          description: 월간 레시피 생성 한도에 도달함
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              example:
+                {
+                  success: false,
+                  error:
+                    {
+                      code: MONTHLY_RECIPE_LIMIT_REACHED,
+                      message: 이번 달 레시피 생성 한도에 도달했습니다.,
+                    },
+                }
+  /recipes/{recipeId}:
+    get:
+      tags: [레시피]
+      summary: 레시피 상세 정보 조회
+      description: 인증된 사용자가 해당 레시피의 사본을 소유하거나 레시피를 생성한 경우에만 상세 정보와 전체 조리 내용을 반환합니다.
+      operationId: getRecipe
+      parameters:
+        - $ref: '#/components/parameters/RecipeId'
+      responses:
+        '200':
+          description: 레시피 상세 정보
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/RecipeDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [레시피]
+      summary: 레시피 정보 수정
+      description: 레시피 생성자만 수정할 수 있으며 발행된 사본 수를 나타내는 totalSupply는 수정할 수 없습니다.
+      operationId: updateRecipe
+      parameters:
+        - $ref: '#/components/parameters/RecipeId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/UpdateRecipeRequest' }
+      responses:
+        '200':
+          description: 수정된 레시피 정보
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/RecipeDetail' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /market-listings:
+    get:
+      tags: [마켓플레이스]
+      summary: 마켓플레이스 판매글 목록 조회
+      operationId: listMarketListings
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/CursorLimit'
+        - $ref: '#/components/parameters/Keyword'
+        - $ref: '#/components/parameters/DifficultyFilter'
+        - $ref: '#/components/parameters/CategoryFilter'
+        - name: soldOut
+          in: query
+          schema: { type: boolean }
+        - name: listingType
+          in: query
+          schema: { $ref: '#/components/schemas/ListingType' }
+        - name: minPrice
+          in: query
+          schema: { type: integer, minimum: 0 }
+        - name: maxPrice
+          in: query
+          description: minPrice와 함께 사용하면 minPrice 이상이어야 합니다.
+          schema: { type: integer, minimum: 0 }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, oldest, price_asc, price_desc]
+            default: newest
+      responses:
+        '200':
+          description: 커서 기반으로 조회된 판매글 목록
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListingCursorResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+    post:
+      tags: [마켓플레이스]
+      summary: 직접 생성한 레시피 사본을 판매 또는 교환용으로 등록
+      operationId: createMarketListing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateListingRequest' }
+      responses:
+        '201':
+          description: 판매글이 생성되고 해당 사본이 예약됨
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListingResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409':
+          description: 사본을 판매할 수 없거나 사용 가능한 수량이 부족함
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+  /market-listings/{listingId}:
+    get:
+      tags: [마켓플레이스]
+      summary: 판매글 상세 정보 조회
+      operationId: getMarketListing
+      parameters:
+        - $ref: '#/components/parameters/ListingId'
+      responses:
+        '200':
+          description: 판매글 상세 정보
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListingResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [마켓플레이스]
+      summary: 판매 중인 판매글 수정
+      operationId: updateMarketListing
+      parameters:
+        - $ref: '#/components/parameters/ListingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateListingRequest' }
+      responses:
+        '200':
+          description: 판매글이 수정됨
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListingResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [마켓플레이스]
+      summary: 판매글 판매 종료
+      description: 판매글 상태를 WITHDRAWN으로 변경하고 남은 사본의 예약을 해제합니다.
+      operationId: stopMarketListing
+      parameters:
+        - $ref: '#/components/parameters/ListingId'
+      responses:
+        '204': { description: 판매가 중지됨. 응답 본문은 없음 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /market-listings/{listingId}/purchases:
+    post:
+      tags: [마켓플레이스]
+      summary: 포인트로 레시피 사본 한 장 구매
+      description: 포인트 결제와 재고 차감이 모두 완료된 경우에만 구매를 반영하고, 구매한 사본의 everPurchased를 true로 설정합니다.
+      operationId: purchaseListing
+      parameters:
+        - $ref: '#/components/parameters/ListingId'
+      responses:
+        '201':
+          description: 구매가 완료됨
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Purchase' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /market-listings/{listingId}/trade-offers:
+    post:
+      tags: [교환 제안]
+      summary: 레시피 1:1 교환 제안 생성
+      operationId: createTradeOffer
+      parameters:
+        - $ref: '#/components/parameters/ListingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [offeredCopyId]
+              properties:
+                offeredCopyId:
+                  {
+                    type: integer,
+                    minimum: 1,
+                    description: 교환을 제안할 레시피 사본 ID,
+                    example: 84,
+                  }
+      responses:
+        '201':
+          description: 교환 제안이 생성되고 제안한 사본이 예약됨
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TradeOfferResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    get:
+      tags: [교환 제안]
+      summary: 판매글에 접수된 교환 제안 조회
+      description: 판매글 소유자만 이 엔드포인트에 접근할 수 있습니다.
+      operationId: listListingTradeOffers
+      parameters:
+        - $ref: '#/components/parameters/ListingId'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/CursorLimit'
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/TradeOfferStatus' }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, oldest]
+            default: newest
+      responses:
+        '200':
+          description: 접수된 교환 제안
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TradeOfferCursorResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /trade-offers/{tradeOfferId}/accept:
+    post:
+      tags: [교환 제안]
+      summary: 대기 중인 교환 제안 승인
+      description: 양쪽 레시피의 소유권 변경이 모두 완료된 경우에만 교환을 반영하고 판매글 재고를 차감합니다. 재고가 0이 되면 같은 판매글의 다른 대기 중인 제안을 취소 처리합니다.
+      operationId: acceptTradeOffer
+      parameters:
+        - $ref: '#/components/parameters/TradeOfferId'
+      responses:
+        '200':
+          description: 교환이 완료됨
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TradeOfferResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /trade-offers/{tradeOfferId}/reject:
+    post:
+      tags: [교환 제안]
+      summary: 대기 중인 교환 제안 거절
+      operationId: rejectTradeOffer
+      parameters:
+        - $ref: '#/components/parameters/TradeOfferId'
+      responses:
+        '200':
+          description: 제안이 거절되고 제안한 사본의 예약이 해제됨
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TradeOfferResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /trade-offers/{tradeOfferId}:
+    delete:
+      tags: [교환 제안]
+      summary: 자신이 보낸 대기 중 교환 제안 취소
+      operationId: cancelTradeOffer
+      parameters:
+        - $ref: '#/components/parameters/TradeOfferId'
+      responses:
+        '204': { description: 제안이 취소되고 제안한 사본의 예약이 해제됨 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /notifications:
+    get:
+      tags: [알림]
+      summary: 알림 목록 조회
+      operationId: listNotifications
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/CursorLimit'
+        - name: isRead
+          in: query
+          schema: { type: boolean }
+        - name: type
+          in: query
+          schema: { $ref: '#/components/schemas/NotificationType' }
+      responses:
+        '200':
+          description: 최신순 알림 목록
+          content:
+            application/json:
+              schema:
+                { $ref: '#/components/schemas/NotificationCursorResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /notifications/unread-count:
+    get:
+      tags: [알림]
+      summary: 읽지 않은 알림 개수 조회
+      operationId: getUnreadNotificationCount
+      responses:
+        '200':
+          description: 읽지 않은 알림 개수
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [unreadCount]
+                        properties:
+                          unreadCount: { type: integer, minimum: 0 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /notifications/{notificationId}/read:
+    patch:
+      tags: [알림]
+      summary: 개별 알림 읽음 처리
+      operationId: readNotification
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          description: 알림 ID
+          schema: { type: integer, minimum: 1, example: 501 }
+      responses:
+        '200':
+          description: 수정된 알림
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/Notification' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /notifications/read-all:
+    patch:
+      tags: [알림]
+      summary: 모든 알림을 읽음 처리
+      operationId: readAllNotifications
+      responses:
+        '200':
+          description: 읽음 처리된 알림 개수
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [updatedCount]
+                        properties:
+                          updatedCount: { type: integer, minimum: 0 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /random-box:
+    get:
+      tags: [랜덤 상자]
+      summary: 랜덤 상자 뽑기 가능 여부 조회
+      operationId: getRandomBoxStatus
+      responses:
+        '200':
+          description: 현재 뽑기 가능 여부와 대기 시간
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RandomBoxResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [랜덤 상자]
+      summary: 랜덤 포인트 보상 획득
+      description: 마지막 뽑기 이후 60분에 한 번 실행할 수 있습니다.
+      operationId: claimRandomBox
+      responses:
+        '200':
+          description: 포인트가 지급됨
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RandomBoxClaimResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429':
+          description: 다음 뽑기까지의 대기 시간이 지나지 않음
+          headers:
+            Retry-After:
+              schema: { type: integer, description: 다음 뽑기까지 남은 초 }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+components:
+  parameters:
+    OAuthProvider:
+      name: provider
+      in: path
+      required: true
+      schema: { type: string, enum: [google] }
+    RecipeId:
+      name: recipeId
+      in: path
+      required: true
+      description: 레시피 ID
+      schema: { type: integer, minimum: 1, example: 42 }
+    ListingId:
+      name: listingId
+      in: path
+      required: true
+      description: 판매글 ID
+      schema: { type: integer, minimum: 1, example: 101 }
+    TradeOfferId:
+      name: tradeOfferId
+      in: path
+      required: true
+      description: 교환 제안 ID
+      schema: { type: integer, minimum: 1, example: 205 }
+    Keyword:
+      name: keyword
+      in: query
+      schema: { type: string, minLength: 1, maxLength: 100 }
+    DifficultyFilter:
+      name: difficulty
+      in: query
+      schema: { $ref: '#/components/schemas/Difficulty' }
+    CategoryFilter:
+      name: category
+      in: query
+      schema: { $ref: '#/components/schemas/Category' }
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string, maxLength: 1024 }
+    CursorLimit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+    DateFrom:
+      name: from
+      in: query
+      description: 조회할 거래 기간의 시작 시각
+      schema: { type: string, format: date-time }
+    DateTo:
+      name: to
+      in: query
+      description: 조회할 거래 기간의 종료 시각. from과 함께 사용하면 from 이후이거나 같아야 합니다.
+      schema: { type: string, format: date-time }
+  responses:
+    Unauthorized:
+      description: 인증이 필요함
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            {
+              success: false,
+              error:
+                {
+                  code: AUTHENTICATION_REQUIRED,
+                  message: 로그인이 필요합니다.,
+                },
+            }
+    InvalidCredentials:
+      description: 이메일 또는 비밀번호가 올바르지 않음
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            {
+              success: false,
+              error:
+                {
+                  code: INVALID_CREDENTIALS,
+                  message: 이메일 또는 비밀번호가 올바르지 않습니다.,
+                },
+            }
+    Forbidden:
+      description: 인증된 사용자가 해당 리소스를 소유하거나 관리할 권한이 없음
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    NotFound:
+      description: 리소스를 찾을 수 없거나 현재 사용자에게 공개되지 않음
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Conflict:
+      description: 현재 리소스 상태에서는 작업을 수행할 수 없음
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    ValidationError:
+      description: 요청 값 검증에 실패함
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            success: false
+            error:
+              code: VALIDATION_ERROR
+              message: 요청 값이 올바르지 않습니다.
+              details:
+                - { field: email, reason: 올바른 이메일 형식이 아닙니다. }
+                - { field: null, reason: 비밀번호 확인이 일치하지 않습니다. }
+    InternalServerError:
+      description: 서버 또는 데이터베이스가 요청을 처리할 수 없음
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+  schemas:
+    SuccessResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success: { type: boolean, const: true }
+        data: {}
+    ErrorCode:
+      type: string
+      enum:
+        - EMAIL_ALREADY_EXISTS
+        - NICKNAME_ALREADY_EXISTS
+        - MONTHLY_RECIPE_LIMIT_REACHED
+        - AUTHENTICATION_REQUIRED
+        - INVALID_CREDENTIALS
+        - FORBIDDEN
+        - RESOURCE_NOT_FOUND
+        - CONFLICT
+        - VALIDATION_ERROR
+        - BAD_REQUEST
+        - ROUTE_NOT_FOUND
+        - INTERNAL_SERVER_ERROR
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [success, error]
+      properties:
+        success: { type: boolean, const: false }
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code: { $ref: '#/components/schemas/ErrorCode' }
+            message: { type: string }
+            details:
+              type: array
+              items:
+                type: object
+                required: [field, reason]
+                properties:
+                  field:
+                    type: [string, 'null']
+                    description: 값이 잘못된 필드명. 특정 필드에 매이지 않는 오류는 null입니다.
+                  reason: { type: string }
+    SignUpRequest:
+      type: object
+      additionalProperties: false
+      required: [email, nickname, password, passwordConfirmation]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        nickname:
+          {
+            type: string,
+            minLength: 2,
+            maxLength: 20,
+            pattern: '^[A-Za-z0-9가-힣_-]+$',
+          }
+        password:
+          { type: string, format: password, minLength: 8, maxLength: 24 }
+        passwordConfirmation:
+          { type: string, format: password, minLength: 8, maxLength: 24 }
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password:
+          { type: string, format: password, minLength: 8, maxLength: 24 }
+    UpdateCurrentUserRequest:
+      type: object
+      additionalProperties: false
+      required: [nickname]
+      properties:
+        nickname:
+          {
+            type: string,
+            minLength: 2,
+            maxLength: 20,
+            pattern: '^[A-Za-z0-9가-힣_-]+$',
+          }
+    AuthResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/UserSummary' }
+    UserSummary:
+      type: object
+      required: [id, email, nickname, points]
+      properties:
+        id: { type: integer, minimum: 1, description: 사용자 ID, example: 7 }
+        email: { type: string, format: email, maxLength: 254 }
+        nickname:
+          {
+            type: string,
+            minLength: 2,
+            maxLength: 20,
+            pattern: '^[A-Za-z0-9가-힣_-]+$',
+          }
+        points: { type: integer, minimum: 0 }
+    CurrentUser:
+      allOf:
+        - $ref: '#/components/schemas/UserSummary'
+        - type: object
+          required: [recipeCreationQuota, randomBox]
+          properties:
+            recipeCreationQuota:
+              type: object
+              required: [limit, used, remaining, resetsAt]
+              properties:
+                limit: { type: integer, const: 3 }
+                used: { type: integer, minimum: 0, maximum: 3 }
+                remaining: { type: integer, minimum: 0, maximum: 3 }
+                resetsAt:
+                  {
+                    type: string,
+                    format: date-time,
+                    description: 다음 월간 한도 초기화 시각,
+                  }
+            randomBox: { $ref: '#/components/schemas/RandomBoxStatus' }
+    Difficulty:
+      type: string
+      enum: [EASY, NORMAL, HARD, MASTER]
+    Category:
+      type: string
+      enum:
+        [
+          KOREAN,
+          WESTERN,
+          CHINESE,
+          JAPANESE,
+          ASIAN,
+          HOME_BAKING,
+          BEVERAGE,
+          SAUCE,
+          CONVENIENCE,
+          FUSION,
+        ]
+    CopyState:
+      type: string
+      enum: [OWNED, LISTED, OFFERED]
+    ListingType:
+      type: string
+      enum: [SALE, EXCHANGE, BOTH]
+    ListingStatus:
+      type: string
+      enum: [ON_SALE, SOLD_OUT, WITHDRAWN]
+    TradeOfferStatus:
+      type: string
+      enum: [PENDING, ACCEPTED, REFUSED, CANCELED]
+    NotificationType:
+      type: string
+      enum:
+        [
+          PURCHASED,
+          SOLD_OUT,
+          TRADE_OFFER_NEW,
+          TRADE_OFFER_ACCEPT,
+          TRADE_OFFER_REFUSE,
+        ]
+    RecipeSummary:
+      type: object
+      required: [id, title, imageUrl, difficulty, category, summary, minPrice]
+      properties:
+        id: { type: integer, minimum: 1, description: 레시피 ID, example: 42 }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        imageUrl: { type: string, format: uri }
+        difficulty: { $ref: '#/components/schemas/Difficulty' }
+        category: { $ref: '#/components/schemas/Category' }
+        summary: { type: string, minLength: 1, maxLength: 1000 }
+        minPrice: { type: integer, minimum: 0, maximum: 100000000 }
+    RecipeDetail:
+      allOf:
+        - $ref: '#/components/schemas/RecipeSummary'
+        - type: object
+          required: [creator, totalSupply, createdAt]
+          properties:
+            creator: { $ref: '#/components/schemas/PublicUser' }
+            totalSupply: { type: integer, minimum: 1, maximum: 10 }
+            content:
+              type: string
+              description: 현재 사용자가 조리 내용을 볼 권한이 있는 경우에만 포함됩니다.
+            createdAt: { type: string, format: date-time }
+    PublicUser:
+      type: object
+      required: [id, nickname]
+      properties:
+        id: { type: integer, minimum: 1, description: 사용자 ID, example: 7 }
+        nickname:
+          {
+            type: string,
+            minLength: 2,
+            maxLength: 20,
+            pattern: '^[A-Za-z0-9가-힣_-]+$',
+          }
+    CreateRecipeRequest:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          title,
+          image,
+          content,
+          minPrice,
+          difficulty,
+          totalSupply,
+          category,
+          summary,
+        ]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        image: { type: string, format: binary }
+        content: { type: string, minLength: 1, maxLength: 20000 }
+        minPrice: { type: integer, minimum: 0, maximum: 100000000 }
+        difficulty: { $ref: '#/components/schemas/Difficulty' }
+        totalSupply: { type: integer, minimum: 1, maximum: 10 }
+        category: { $ref: '#/components/schemas/Category' }
+        summary: { type: string, minLength: 1, maxLength: 1000 }
+    UpdateRecipeRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        image: { type: string, format: binary }
+        content: { type: string, minLength: 1, maxLength: 20000 }
+        minPrice: { type: integer, minimum: 0, maximum: 100000000 }
+        difficulty: { $ref: '#/components/schemas/Difficulty' }
+        category: { $ref: '#/components/schemas/Category' }
+        summary: { type: string, minLength: 1, maxLength: 1000 }
+    RecipeCopy:
+      type: object
+      required: [id, recipe, state, everPurchased, createdAt, updatedAt]
+      properties:
+        id:
+          {
+            type: integer,
+            minimum: 1,
+            description: 레시피 사본 ID,
+            example: 84,
+          }
+        recipe: { $ref: '#/components/schemas/RecipeSummary' }
+        listingId:
+          {
+            type: [integer, 'null'],
+            minimum: 1,
+            description: 사본이 등록된 판매글 ID,
+            example: 101,
+          }
+        state: { $ref: '#/components/schemas/CopyState' }
+        everPurchased: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    CreateListingRequest:
+      type: object
+      additionalProperties: false
+      required: [recipeCopyIds, listingType]
+      properties:
+        recipeCopyIds:
+          type: array
+          minItems: 1
+          maxItems: 10
+          uniqueItems: true
+          description: 판매글에 등록할 동일 레시피의 사본 ID 목록
+          items: { type: integer, minimum: 1 }
+          example: [84, 85]
+        listingType: { $ref: '#/components/schemas/ListingType' }
+        price:
+          {
+            type: integer,
+            minimum: 0,
+            maximum: 100000000,
+            description: SALE 또는 BOTH 방식인 경우 필수입니다.,
+          }
+        wantedDifficulty: { $ref: '#/components/schemas/Difficulty' }
+        wantedCategory: { $ref: '#/components/schemas/Category' }
+        wantedDescription: { type: string, maxLength: 500 }
+    UpdateListingRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        price: { type: integer, minimum: 0, maximum: 100000000 }
+        listingType: { $ref: '#/components/schemas/ListingType' }
+        wantedDifficulty: { $ref: '#/components/schemas/Difficulty' }
+        wantedCategory: { $ref: '#/components/schemas/Category' }
+        wantedDescription: { type: string, maxLength: 500 }
+    ListingSummary:
+      type: object
+      required:
+        [
+          id,
+          recipe,
+          seller,
+          listingType,
+          price,
+          initialQuantity,
+          remainingQuantity,
+          wantedDifficulty,
+          wantedCategory,
+          wantedDescription,
+          status,
+          createdAt,
+          updatedAt,
+        ]
+      properties:
+        id: { type: integer, minimum: 1, description: 판매글 ID, example: 101 }
+        recipe: { $ref: '#/components/schemas/RecipeSummary' }
+        seller: { $ref: '#/components/schemas/PublicUser' }
+        listingType: { $ref: '#/components/schemas/ListingType' }
+        price: { type: [integer, 'null'], minimum: 0, maximum: 100000000 }
+        initialQuantity: { type: integer, minimum: 1 }
+        remainingQuantity: { type: integer, minimum: 0 }
+        wantedDifficulty:
+          {
+            anyOf:
+              [{ $ref: '#/components/schemas/Difficulty' }, { type: 'null' }],
+          }
+        wantedCategory:
+          {
+            anyOf:
+              [{ $ref: '#/components/schemas/Category' }, { type: 'null' }],
+          }
+        wantedDescription: { type: [string, 'null'], maxLength: 500 }
+        status: { $ref: '#/components/schemas/ListingStatus' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    Purchase:
+      type: object
+      required:
+        [
+          id,
+          listingId,
+          recipeCopyId,
+          buyerId,
+          sellerId,
+          price,
+          remainingPoints,
+          createdAt,
+        ]
+      properties:
+        id: { type: integer, minimum: 1, description: 구매 ID, example: 310 }
+        listingId:
+          { type: integer, minimum: 1, description: 판매글 ID, example: 101 }
+        recipeCopyId:
+          {
+            type: integer,
+            minimum: 1,
+            description: 구매한 레시피 사본 ID,
+            example: 84,
+          }
+        buyerId:
+          { type: integer, minimum: 1, description: 구매자 ID, example: 12 }
+        sellerId:
+          { type: integer, minimum: 1, description: 판매자 ID, example: 7 }
+        price: { type: integer, minimum: 0, maximum: 100000000 }
+        remainingPoints: { type: integer, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+    TradeOffer:
+      type: object
+      required: [id, listingId, proposer, offeredCopy, status, createdAt]
+      properties:
+        id:
+          { type: integer, minimum: 1, description: 교환 제안 ID, example: 205 }
+        listingId:
+          { type: integer, minimum: 1, description: 판매글 ID, example: 101 }
+        proposer: { $ref: '#/components/schemas/PublicUser' }
+        offeredCopy: { $ref: '#/components/schemas/RecipeCopy' }
+        receivedCopyId:
+          {
+            type: [integer, 'null'],
+            minimum: 1,
+            description: 교환 승인 시 상대방에게 전달된 판매자의 레시피 사본 ID,
+            example: 86,
+          }
+        status: { $ref: '#/components/schemas/TradeOfferStatus' }
+        createdAt: { type: string, format: date-time }
+        decidedAt: { type: [string, 'null'], format: date-time }
+    Notification:
+      type: object
+      required: [id, type, message, isRead, createdAt]
+      properties:
+        id: { type: integer, minimum: 1, description: 알림 ID, example: 501 }
+        type: { $ref: '#/components/schemas/NotificationType' }
+        message: { type: string, maxLength: 1000 }
+        actor:
+          {
+            anyOf:
+              [{ $ref: '#/components/schemas/PublicUser' }, { type: 'null' }],
+          }
+        recipe:
+          {
+            anyOf:
+              [
+                { $ref: '#/components/schemas/RecipeSummary' },
+                { type: 'null' },
+              ],
+          }
+        listingId:
+          {
+            type: [integer, 'null'],
+            minimum: 1,
+            description: 관련 판매글 ID,
+            example: 101,
+          }
+        purchaseId:
+          {
+            type: [integer, 'null'],
+            minimum: 1,
+            description: 관련 구매 ID,
+            example: 310,
+          }
+        tradeOfferId:
+          {
+            type: [integer, 'null'],
+            minimum: 1,
+            description: 관련 교환 제안 ID,
+            example: 205,
+          }
+        isRead: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    RandomBoxStatus:
+      type: object
+      required: [canClaim, lastClaimedAt, nextClaimableAt]
+      properties:
+        canClaim: { type: boolean }
+        lastClaimedAt: { type: [string, 'null'], format: date-time }
+        nextClaimableAt: { type: [string, 'null'], format: date-time }
+    RandomBoxResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/RandomBoxStatus' }
+    RandomBoxClaimResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [rewardPoints, currentPoints, nextClaimableAt]
+              properties:
+                rewardPoints: { type: integer }
+                currentPoints: { type: integer, minimum: 0 }
+                nextClaimableAt: { type: string, format: date-time }
+    CursorMeta:
+      type: object
+      required: [nextCursor, hasNext]
+      properties:
+        nextCursor: { type: [string, 'null'] }
+        hasNext: { type: boolean }
+    MyRecipeCursorResponse:
+      type: object
+      required: [success, data, meta]
+      properties:
+        success: { type: boolean, const: true }
+        data:
+          { type: array, items: { $ref: '#/components/schemas/RecipeCopy' } }
+        meta: { $ref: '#/components/schemas/CursorMeta' }
+    ListingCursorResponse:
+      type: object
+      required: [success, data, meta]
+      properties:
+        success: { type: boolean, const: true }
+        data:
+          {
+            type: array,
+            items: { $ref: '#/components/schemas/ListingSummary' },
+          }
+        meta: { $ref: '#/components/schemas/CursorMeta' }
+    PurchaseCursorResponse:
+      type: object
+      required: [success, data, meta]
+      properties:
+        success: { type: boolean, const: true }
+        data: { type: array, items: { $ref: '#/components/schemas/Purchase' } }
+        meta: { $ref: '#/components/schemas/CursorMeta' }
+    ListingResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/ListingSummary' }
+    TradeOfferCursorResponse:
+      type: object
+      required: [success, data, meta]
+      properties:
+        success: { type: boolean, const: true }
+        data:
+          { type: array, items: { $ref: '#/components/schemas/TradeOffer' } }
+        meta: { $ref: '#/components/schemas/CursorMeta' }
+    TradeOfferResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data: { $ref: '#/components/schemas/TradeOffer' }
+    NotificationCursorResponse:
+      type: object
+      required: [success, data, meta]
+      properties:
+        success: { type: boolean, const: true }
+        data:
+          { type: array, items: { $ref: '#/components/schemas/Notification' } }
+        meta: { $ref: '#/components/schemas/CursorMeta' }
