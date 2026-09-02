@@ -21,6 +21,16 @@
   cursor: default;
 }
 
+.dropDownIcon {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.3s ease;
+}
+
+.dropDownIconOpen {
+  transform: rotate(180deg);
+}
+
 .options {
   position: absolute;
   top: calc(100% + 5px);

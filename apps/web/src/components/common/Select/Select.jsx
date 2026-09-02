@@ -55,10 +55,13 @@ export default function Select({
         <span>{selectedOption?.label ?? ''}</span>
 
         <Image
-          src={isOpen ? '/icons/arrow-up.png' : '/icons/arrow-down.png'}
+          src="/icons/drop-down.svg"
           alt=""
           width={24}
           height={24}
+          className={`${styles.dropDownIcon} ${
+            isOpen ? styles.dropDownIconOpen : ''
+          }`}
         />
       </button>
 
