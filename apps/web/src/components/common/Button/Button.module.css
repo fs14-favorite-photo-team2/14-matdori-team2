@@ -1,0 +1,29 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 55px;
+  padding: 0 24px;
+  border: 1px solid transparent;
+  font-size: var(--font-size-18);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+.primary {
+  background-color: var(--color-main);
+  color: var(--color-black);
+}
+
+.secondary {
+  background-color: var(--color-black);
+  color: var(--color-white);
+  border-color: var(--color-gray-100);
+}
+
+.button:disabled {
+  background-color: var(--color-gray-400);
+  color: var(--color-gray-300);
+  border-color: transparent;
+  cursor: default;
+}

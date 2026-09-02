@@ -1,7 +1,63 @@
+:root {
+  /* Colors */
+  --color-black: #0f0f0f;
+  --color-gray-500: #161616;
+  --color-gray-400: #5a5a5a;
+  --color-gray-300: #a4a4a4;
+  --color-gray-200: #dddddd;
+  --color-gray-100: #eeeeee;
+  --color-white: #ffffff;
+  --color-red: #ff483d;
+  --color-blue: #29c9f9;
+  --color-purple: #a77eff;
+  --color-pink: #ff2a6a;
+  --color-main: #efff04;
+
+  /* Font Sizes */
+  --font-size-62: 62px;
+  --font-size-48: 48px;
+  --font-size-46: 46px;
+  --font-size-40: 40px;
+  --font-size-32: 32px;
+  --font-size-28: 28px;
+  --font-size-24: 24px;
+  --font-size-22: 22px;
+  --font-size-20: 20px;
+  --font-size-18: 18px;
+  --font-size-16: 16px;
+  --font-size-14: 14px;
+  --font-size-12: 12px;
+  --font-size-10: 10px;
+
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-bold: 700;
+}
+
+body {
+  background-color: var(--color-black);
+  color: var(--color-white);
+  font-family: var(--font-noto-sans-kr), sans-serif;
+}
+
+.font-baskin-robbins {
+  font-family: var(--font-baskin-robbins);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
