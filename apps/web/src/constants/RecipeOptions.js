@@ -33,7 +33,6 @@ export const LISTING_STATUS_OPTIONS = [
 export const LISTING_TYPE_OPTIONS = [
   { value: 'SALE', label: '판매' },
   { value: 'EXCHANGE', label: '교환' },
-  { value: 'BOTH', label: '판매·교환' },
 ]
 
 const DIFFICULTY_FILTER_GROUP = {

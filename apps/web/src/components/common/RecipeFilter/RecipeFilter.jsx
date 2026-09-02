@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   DEFAULT_FILTERS,
   MARKETPLACE_FILTER_GROUPS,
-} from '../constants/RecipeOptions'
+} from '@/constants/RecipeOptions'
 import styles from './RecipeFilter.module.css'
 
 export default function RecipeFilter({
@@ -264,7 +264,9 @@ export default function RecipeFilter({
                   <span>{option.label}</span>
 
                   {counts[activeGroup.key]?.[option.value] !== undefined && (
-                    <span>{counts[activeGroup.key][option.value]}개</span>
+                    <span className={styles.optionCount}>
+                      {counts[activeGroup.key][option.value]}개
+                    </span>
                   )}
                 </button>
               ))}
