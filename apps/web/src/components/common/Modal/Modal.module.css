@@ -17,6 +17,8 @@
   max-width: 480px;
   width: 90%;
   text-align: center;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .title {
