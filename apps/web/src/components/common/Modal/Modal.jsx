@@ -4,7 +4,6 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import styles from './Modal.module.css'
-import closeIcon from './icons/type_close.svg'
 
 export default function Modal({ isOpen, onClose, title, children }) {
   useEffect(() => {
@@ -39,7 +38,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
           onClick={onClose}
           aria-label="닫기"
         >
-          <Image src={closeIcon} alt="" width={24} height={24} />
+          <Image src="/icons/type_close.svg" alt="" width={24} height={24} />
         </button>
         {title && <h2 className={styles.title}>{title}</h2>}
         {children}
