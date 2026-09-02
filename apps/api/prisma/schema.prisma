@@ -65,7 +65,7 @@ model User {
   email                  String    @unique
   passwordHash           String?
   googleId               String?   @unique
-  nickname               String    @unique
+  nickname               String    @unique @db.Citext
   points                 Int       @default(0)
   lastRandomBoxClaimedAt DateTime?
   createdAt              DateTime  @default(now())
