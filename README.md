@@ -66,6 +66,7 @@ Copy-Item apps/web/.env.example apps/web/.env.local
 | 이름                  | 기본값/예시                       | 설명                            |
 | --------------------- | --------------------------------- | ------------------------------- |
 | `PORT`                | `3001`                            | Express 서버 포트               |
+| `NODE_ENV`            | `development`                     | 실행 환경 (`production` 등)     |
 | `CLIENT_ORIGIN`       | `http://localhost:3000`           | CORS에서 허용할 프론트엔드 주소 |
 | `DATABASE_URL`        | `postgresql://.../matdori_market` | PostgreSQL 연결 문자열          |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:3001`           | 프론트엔드에서 사용할 API 주소  |
@@ -112,6 +113,10 @@ npm run dev:api
 | Frontend     | `http://localhost:3000`        |
 | Backend      | `http://localhost:3001`        |
 | Health Check | `http://localhost:3001/health` |
+| Ready Check  | `http://localhost:3001/ready`  |
+| API Docs     | `http://localhost:3001/docs`   |
+
+`/health`는 서버 프로세스의 생존 여부를 확인하고, `/ready`는 데이터베이스 연결을 포함한 요청 처리 준비 여부를 확인합니다. API 문서는 개발 환경에서만 제공되며, `NODE_ENV=production`에서는 `/docs` 경로가 등록되지 않습니다. API 명세는 프로젝트 루트의 `openapi.yaml`에서 관리합니다.
 
 ## 주요 명령어
 
