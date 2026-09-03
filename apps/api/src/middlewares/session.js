@@ -3,6 +3,13 @@ import session from 'express-session'
 
 const SESSION_TTL_SECONDS = Number(process.env.SESSION_TTL_SECONDS ?? 604800)
 const isProduction = process.env.NODE_ENV === 'production'
+export const sessionCookieName = process.env.SESSION_COOKIE_NAME ?? 'session'
+export const sessionCookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? 'none' : 'lax',
+  path: '/',
+}
 
 if (!Number.isFinite(SESSION_TTL_SECONDS) || SESSION_TTL_SECONDS <= 0) {
   throw new Error('SESSION_TTL_SECONDS는 양수여야 합니다.')
@@ -24,16 +31,13 @@ const sessionMiddleware = session({
     ttl: SESSION_TTL_SECONDS,
     createTableIfMissing: false,
   }),
-  name: process.env.SESSION_COOKIE_NAME ?? 'session',
+  name: sessionCookieName,
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   rolling: true,
   cookie: {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
-    path: '/',
+    ...sessionCookieOptions,
     maxAge: SESSION_TTL_SECONDS * 1000,
   },
 })
