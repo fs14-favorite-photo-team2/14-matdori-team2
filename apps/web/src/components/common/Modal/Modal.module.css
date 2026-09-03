@@ -1,0 +1,57 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  position: relative;
+  background: var(--color-gray-500);
+  color: var(--color-white);
+  border-radius: 2px;
+  padding: 32px 24px 24px;
+  max-width: 480px;
+  width: 90%;
+  text-align: center;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.title {
+  font-size: var(--font-size-20);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: 12px;
+}
+
+.closeButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-white);
+}
+
+/* 태블릿 */
+@media (max-width: 1023px) {
+  .dialog {
+    max-width: 420px;
+  }
+}
+
+/* 모바일 */
+@media (max-width: 743px) {
+  .dialog {
+    max-width: 90%;
+    padding: 24px 20px 20px;
+  }
+
+  .title {
+    font-size: var(--font-size-16);
+  }
+}
