@@ -12,20 +12,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid #b4b2a9;
-  border-radius: 8px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 2px;
+  background: var(--color-black);
   padding: 10px 12px;
   min-width: 0;
 }
 
 .placeholder {
-  font-size: 14px;
-  color: #8a8880;
+  font-size: var(--font-size-14);
+  color: var(--color-gray-300);
 }
 
 .fileName {
-  font-size: 14px;
-  color: #2c2c2a;
+  font-size: var(--font-size-14);
+  color: var(--color-white);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -35,7 +36,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #8a8880;
+  color: var(--color-gray-300);
   flex-shrink: 0;
   margin-left: 8px;
   display: flex;
@@ -43,13 +44,19 @@
 
 .selectButton {
   flex-shrink: 0;
-  padding: 10px 16px;
-  border: 1px solid #2c2c2a;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 14px;
+  width: 120px;
+  height: 60px;
+  padding: 18px 28px;
+  border: 1px solid var(--color-main);
+  border-radius: 2px;
+  background: var(--color-black);
+  color: var(--color-main);
+  font-size: var(--font-size-14);
   cursor: pointer;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .hiddenInput {
@@ -58,8 +65,8 @@
 
 .errorText {
   margin-top: 6px;
-  font-size: 13px;
-  color: #e0483f;
+  font-size: var(--font-size-12);
+  color: var(--color-red);
 }
 
 @media (max-width: 743px) {
@@ -67,7 +74,9 @@
     gap: 6px;
   }
   .selectButton {
+    width: auto;
+    height: auto;
     padding: 10px 12px;
-    font-size: 13px;
+    font-size: var(--font-size-12);
   }
 }
