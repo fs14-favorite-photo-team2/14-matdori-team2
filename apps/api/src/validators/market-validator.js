@@ -1,4 +1,5 @@
 import {
+  array,
   boolean,
   coerce,
   defaulted,
@@ -9,6 +10,8 @@ import {
   min,
   object,
   optional,
+  refine,
+  size,
   string,
 } from 'superstruct'
 
@@ -28,6 +31,8 @@ const CATEGORIES = [
 ]
 
 const LISTING_TYPES = ['SALE', 'EXCHANGE', 'BOTH']
+
+const SORT_OPTIONS = ['newest', 'oldest', 'price_asc', 'price_desc']
 
 const keyword = optional(
   coerce(
@@ -65,6 +70,10 @@ const soldOut = optional(
   coerce(boolean(), soldOutString, (value) => value === 'true'),
 )
 
+const queryInteger = coerce(min(integer(), 0), string(), (value) =>
+  Number(value),
+)
+
 const cursor = optional(
   coerce(min(integer(), 1), string(), (value) => Number(value)),
 )
@@ -74,10 +83,14 @@ const limit = defaulted(
   20,
 )
 
-export const getMarketListingsRequest = object({
-  body: object({}),
-  params: object({}),
-  query: object({
+const minPrice = optional(queryInteger)
+
+const maxPrice = optional(queryInteger)
+
+const sort = defaulted(enums(SORT_OPTIONS), 'newest')
+
+const marketListingsQuery = refine(
+  object({
     keyword,
     difficulty,
     category,
@@ -85,5 +98,65 @@ export const getMarketListingsRequest = object({
     soldOut,
     cursor,
     limit,
+    minPrice,
+    maxPrice,
+    sort,
   }),
+  'price range',
+  ({ minPrice: minimumPrice, maxPrice: maximumPrice }) => {
+    if (
+      minimumPrice !== undefined &&
+      maximumPrice !== undefined &&
+      minimumPrice > maximumPrice
+    ) {
+      return 'minPrice는 maxPrice보다 클 수 없습니다.'
+    }
+
+    return true
+  },
+)
+
+export const getMarketListingsRequest = object({
+  body: object({}),
+  params: object({}),
+  query: marketListingsQuery,
+})
+
+const recipeCopyIds = refine(
+  size(array(min(integer(), 1)), 1, 10),
+  'unique recipe copy ids',
+  (values) => {
+    return (
+      new Set(values).size === values.length ||
+      'recipeCopyIds에는 중복된 사본 ID를 넣을 수 없습니다.'
+    )
+  },
+)
+
+const createMarketListingBody = refine(
+  object({
+    recipeCopyIds,
+    listingType: enums(LISTING_TYPES),
+    price: optional(max(min(integer(), 0), 100_000_000)),
+    wantedDifficulty: optional(enums(DIFFICULTIES)),
+    wantedCategory: optional(enums(CATEGORIES)),
+    wantedDescription: optional(size(string(), 0, 500)),
+  }),
+  'listing type requirements',
+  ({ listingType, price }) => {
+    if (
+      (listingType === 'SALE' || listingType === 'BOTH') &&
+      price === undefined
+    ) {
+      return 'SALE 또는 BOTH 방식에서는 price가 필요합니다.'
+    }
+
+    return true
+  },
+)
+
+export const createMarketListingRequest = object({
+  body: createMarketListingBody,
+  params: object({}),
+  query: object({}),
 })

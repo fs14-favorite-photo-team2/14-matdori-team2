@@ -5,7 +5,9 @@ import { PrismaClient } from '../src/generated/prisma/client.ts'
 
 config({ path: ['.env.local', '.env'] })
 
-const adapter = new PrismaPg(process.env.DATABASE_URL)
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
+})
 const prisma = new PrismaClient({ adapter })
 
 // ============================================
@@ -33,6 +35,7 @@ const prisma = new PrismaClient({ adapter })
 // 생성 수
 // - User: 100
 // - Recipe: 100
+// - RecipeImage: 550
 // - RecipeCopy: 300
 // - MarketListing: 100
 // - Purchase: 100
@@ -45,6 +48,7 @@ const USER_COUNT = 100
 const RECIPE_COUNT = 100
 const COPY_PER_RECIPE = 3
 const LISTING_COUNT = 100
+const MAX_IMAGE_COUNT = 10
 const PURCHASE_COUNT = 100
 const TRADE_OFFER_COUNT = 100
 const NOTIFICATION_COUNT = 100
@@ -263,6 +267,7 @@ async function clearDatabase() {
   await prisma.purchase.deleteMany()
   await prisma.recipeCopy.deleteMany()
   await prisma.marketListing.deleteMany()
+  await prisma.recipeImage.deleteMany()
   await prisma.recipe.deleteMany()
   await prisma.user.deleteMany()
 }
@@ -310,11 +315,13 @@ async function seedRecipes(users) {
     const creator = users[(i * 11 + 7) % users.length]
     const number = String(i + 1).padStart(3, '0')
 
+    // 레시피마다 1장부터 10장까지 반복해서 생성
+    const imageCount = (i % MAX_IMAGE_COUNT) + 1
+
     const recipe = await prisma.recipe.create({
       data: {
         creatorId: creator.id,
         title,
-        imageUrl: `https://picsum.photos/seed/recipe-${number}/800/600`,
         minPrice: 1000 + (i % 10) * 500,
         difficulty,
         category,
@@ -328,6 +335,13 @@ async function seedRecipes(users) {
         ].join('\n'),
         totalSupply: COPY_PER_RECIPE,
         createdAt: dateByIndex(i, 14),
+
+        images: {
+          create: Array.from({ length: imageCount }, (_, imageIndex) => ({
+            imageUrl: `https://picsum.photos/seed/recipe-${number}-${imageIndex + 1}/800/600`,
+            sortOrder: imageIndex,
+          })),
+        },
       },
     })
 
@@ -863,6 +877,7 @@ async function printCounts() {
   const [
     users,
     recipes,
+    recipeImages,
     copies,
     listings,
     purchases,
@@ -871,6 +886,7 @@ async function printCounts() {
   ] = await Promise.all([
     prisma.user.count(),
     prisma.recipe.count(),
+    prisma.recipeImage.count(),
     prisma.recipeCopy.count(),
     prisma.marketListing.count(),
     prisma.purchase.count(),
@@ -883,6 +899,7 @@ async function printCounts() {
   console.log('============================================')
   console.log(`User          : ${users}`)
   console.log(`Recipe        : ${recipes}`)
+  console.log(`RecipeImage   : ${recipeImages}`)
   console.log(`RecipeCopy    : ${copies}`)
   console.log(`MarketListing : ${listings}`)
   console.log(`Purchase      : ${purchases}`)

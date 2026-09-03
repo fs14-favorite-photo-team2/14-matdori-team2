@@ -85,7 +85,6 @@ model Recipe {
   id          Int        @id @default(autoincrement())
   creatorId   Int
   title       String
-  imageUrl    String
   minPrice    Int
   difficulty  Difficulty
   category    Category
@@ -96,12 +95,26 @@ model Recipe {
   updatedAt   DateTime   @updatedAt
 
   creator       User            @relation("RecipeCreator", fields: [creatorId], references: [id])
+  images        RecipeImage[]
   copies        RecipeCopy[]
   listings      MarketListing[]
   notifications Notification[]
 
   @@index([creatorId])
   @@index([difficulty, category])
+}
+
+model RecipeImage {
+  id        Int      @id @default(autoincrement())
+  recipeId  Int
+  imageUrl  String
+  sortOrder Int
+  createdAt DateTime @default(now())
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, sortOrder])
+  @@index([recipeId])
 }
 
 model RecipeCopy {

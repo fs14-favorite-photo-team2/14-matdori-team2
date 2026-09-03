@@ -1094,11 +1094,18 @@ components:
         ]
     RecipeSummary:
       type: object
-      required: [id, title, imageUrl, difficulty, category, summary, minPrice]
+      required: [id, title, imageUrls, difficulty, category, summary, minPrice]
       properties:
         id: { type: integer, minimum: 1, description: 레시피 ID, example: 42 }
         title: { type: string, minLength: 1, maxLength: 100 }
-        imageUrl: { type: string, format: uri }
+        imageUrls:
+          {
+            type: array,
+            minItems: 1,
+            maxItems: 10,
+            uniqueItems: true,
+            items: { type: string, format: uri },
+          }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         category: { $ref: '#/components/schemas/Category' }
         summary: { type: string, minLength: 1, maxLength: 1000 }
@@ -1133,7 +1140,7 @@ components:
       required:
         [
           title,
-          image,
+          images,
           content,
           minPrice,
           difficulty,
@@ -1143,7 +1150,13 @@ components:
         ]
       properties:
         title: { type: string, minLength: 1, maxLength: 100 }
-        image: { type: string, format: binary }
+        images:
+          {
+            type: array,
+            minItems: 1,
+            maxItems: 10,
+            items: { type: string, format: binary },
+          }
         content: { type: string, minLength: 1, maxLength: 20000 }
         minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
@@ -1156,7 +1169,13 @@ components:
       minProperties: 1
       properties:
         title: { type: string, minLength: 1, maxLength: 100 }
-        image: { type: string, format: binary }
+        images:
+          {
+            type: array,
+            minItems: 1,
+            maxItems: 10,
+            items: { type: string, format: binary },
+          }
         content: { type: string, minLength: 1, maxLength: 20000 }
         minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         difficulty: { $ref: '#/components/schemas/Difficulty' }

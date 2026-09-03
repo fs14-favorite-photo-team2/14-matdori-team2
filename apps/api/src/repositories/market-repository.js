@@ -7,11 +7,19 @@ const marketListingSelect = {
     select: {
       id: true,
       title: true,
-      imageUrl: true,
       difficulty: true,
       category: true,
       summary: true,
       minPrice: true,
+      images: {
+        select: {
+          imageUrl: true,
+          sortOrder: true,
+        },
+        orderBy: {
+          sortOrder: 'asc',
+        },
+      },
     },
   },
   seller: {
@@ -131,5 +139,82 @@ export function findMarketListings({
       },
       skip: 1,
     }),
+  })
+}
+
+// 판매글에 등록할 사본 조회
+export function findRecipeCopiesByIds(recipeCopyIds) {
+  return prisma.recipeCopy.findMany({
+    where: {
+      id: {
+        in: recipeCopyIds,
+      },
+    },
+    select: {
+      id: true,
+      recipeId: true,
+      ownerId: true,
+      listingId: true,
+      state: true,
+    },
+  })
+}
+
+// 판매글 생성 및 사본 상태 변경
+// MarketListing 생성, RecipeCopy 상태를 LISTED로 변경
+export function createMarketListingRecord({
+  sellerId,
+  recipeId,
+  recipeCopyIds,
+  listingType,
+  price,
+  wantedDifficulty,
+  wantedCategory,
+  wantedDescription,
+}) {
+  return prisma.$transaction(async (transaction) => {
+    const listing = await transaction.marketListing.create({
+      data: {
+        sellerId,
+        recipeId,
+        listingType,
+        initialQuantity: recipeCopyIds.length,
+        price: listingType === 'EXCHANGE' ? null : price,
+        wantedDifficulty: listingType === 'SALE' ? null : wantedDifficulty,
+        wantedCategory: listingType === 'SALE' ? null : wantedCategory,
+        wantedDescription: listingType === 'SALE' ? null : wantedDescription,
+      },
+    })
+
+    const updateResult = await transaction.recipeCopy.updateMany({
+      where: {
+        id: {
+          in: recipeCopyIds,
+        },
+        ownerId: sellerId,
+        recipeId,
+        state: 'OWNED',
+        listingId: null,
+      },
+      data: {
+        state: 'LISTED',
+        listingId: listing.id,
+      },
+    })
+
+    // Service에서 검사한 후 다른 요청이 먼저 사본을 등록하는 상황 방지
+    if (updateResult.count !== recipeCopyIds.length) {
+      const error = new Error('레시피 사본 예약에 실패했습니다.')
+      error.code = 'RECIPE_COPY_RESERVATION_FAILED'
+
+      throw error
+    }
+
+    return transaction.marketListing.findUnique({
+      where: {
+        id: listing.id,
+      },
+      select: marketListingSelect,
+    })
   })
 }
