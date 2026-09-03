@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
 import styles from './RecipeCard.module.css'
 
 const BADGE_LABELS = {
@@ -6,23 +7,11 @@ const BADGE_LABELS = {
   exchangePending: '교환 제시 대기 중',
 }
 
-const DIFFICULTY_INFO = {
-  EASY: {
-    label: '요알못 구원자',
-    className: styles.difficultyEasy,
-  },
-  NORMAL: {
-    label: '당당한 요린이',
-    className: styles.difficultyNormal,
-  },
-  HARD: {
-    label: '숨은 집밥 고수',
-    className: styles.difficultyHard,
-  },
-  MASTER: {
-    label: '장금이의 후예',
-    className: styles.difficultyMaster,
-  },
+const DIFFICULTY_CLASS_NAMES = {
+  easy: styles.difficultyEasy,
+  normal: styles.difficultyNormal,
+  hard: styles.difficultyHard,
+  master: styles.difficultyMaster,
 }
 
 export default function RecipeCard({
@@ -41,9 +30,16 @@ export default function RecipeCard({
 
   const displayedRemaining = isSoldOut ? 0 : remainingQuantity
 
-  const difficultyInfo = DIFFICULTY_INFO[difficulty]
-  const difficultyLabel = difficultyInfo?.label ?? difficulty
-  const difficultyClassName = difficultyInfo?.className ?? ''
+  const difficultyOption = DIFFICULTY_OPTIONS.find(
+    (option) => option.value === difficulty,
+  )
+  const categoryOption = CATEGORY_OPTIONS.find(
+    (option) => option.value === category,
+  )
+  const difficultyLabel = difficultyOption?.label ?? difficulty
+  const difficultyClassName =
+    DIFFICULTY_CLASS_NAMES[difficultyOption?.tone] ?? ''
+  const categoryLabel = categoryOption?.label ?? category
 
   return (
     <article className={styles.card}>
@@ -88,7 +84,7 @@ export default function RecipeCard({
 
             <span className={styles.metaDivider}>|</span>
 
-            <span className={styles.category}>{category}</span>
+            <span className={styles.category}>{categoryLabel}</span>
           </div>
 
           {sellerNickname && (
