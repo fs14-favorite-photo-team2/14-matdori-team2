@@ -1,0 +1,105 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 10px;
+}
+
+.label {
+  color: var(--color-white);
+  font-size: var(--font-size-18);
+  font-weight: var(--font-weight-regular);
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  height: 60px;
+  padding: 0 20px;
+  border: 1px solid var(--color-gray-200);
+  background-color: var(--color-black);
+}
+
+.inputWrapper:focus-within {
+  background-color: var(--color-gray-500);
+}
+
+.inputWrapperError {
+  border-color: var(--color-red);
+}
+
+.fieldDisabled .label {
+  color: var(--color-gray-400);
+}
+
+.fieldDisabled .inputWrapper {
+  border-color: var(--color-gray-400);
+}
+
+.fieldDisabled .input::placeholder {
+  color: var(--color-gray-400);
+}
+
+.input {
+  min-width: 0;
+  flex: 1;
+  border: none;
+  background-color: transparent;
+  color: var(--color-white);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-regular);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--color-gray-200);
+  font-weight: var(--font-weight-light);
+}
+
+.input:disabled {
+  color: var(--color-gray-400);
+  cursor: default;
+}
+
+.visibilityButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.visibilityButton:disabled {
+  cursor: default;
+}
+
+.errorMessage {
+  color: var(--color-red);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-light);
+}
+
+@media (max-width: 1023px) {
+  .label {
+    font-size: var(--font-size-16);
+  }
+
+  .inputWrapper {
+    height: 55px;
+  }
+
+  .input {
+    font-size: var(--font-size-14);
+  }
+
+  .errorMessage {
+    font-size: var(--font-size-14);
+  }
+}
