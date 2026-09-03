@@ -1,7 +1,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,9 +10,9 @@
 
 .dialog {
   position: relative;
-  background: #2c2c2a;
-  color: #fff;
-  border-radius: 12px;
+  background: var(--color-gray-500);
+  color: var(--color-white);
+  border-radius: 2px;
   padding: 32px 24px 24px;
   max-width: 480px;
   width: 90%;
@@ -22,8 +22,8 @@
 }
 
 .title {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: var(--font-size-20);
+  font-weight: var(--font-weight-bold);
   margin-bottom: 12px;
 }
 
@@ -34,7 +34,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #fff;
+  color: var(--color-white);
 }
 
 /* 태블릿 */
@@ -52,6 +52,6 @@
   }
 
   .title {
-    font-size: 1rem;
+    font-size: var(--font-size-16);
   }
 }
