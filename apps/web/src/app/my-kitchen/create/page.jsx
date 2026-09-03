@@ -2,19 +2,28 @@
 
 import { useState } from 'react'
 import Button from '@/components/common/Button/Button'
-import Select from '@/components/common/Select/Select'
+import FormSelect from '@/components/common/FormSelect/FormSelect'
 import ImageUploader from '@/components/common/ImageUploader/ImageUploader'
 import styles from './page.module.css'
 
 const DIFFICULTY_OPTIONS = [
-  { value: 'EASY', label: '초급' },
-  { value: 'MEDIUM', label: '중급' },
-  { value: 'HARD', label: '고급' },
+  { value: 'COMMON', label: '요알못 구원자' },
+  { value: 'RARE', label: '당당한 요린이' },
+  { value: 'SUPER RARE', label: '숨은 집밥 고수' },
+  { value: 'LEGENDARY', label: '장금이의 후예' },
 ]
 
 const CATEGORY_OPTIONS = [
   { value: 'KOREAN', label: '한식' },
   { value: 'WESTERN', label: '양식' },
+  { value: 'CHINESE', label: '중식' },
+  { value: 'JAPANESE', label: '일식' },
+  { value: 'ASIAN', label: '아시안' },
+  { value: 'BAKING', label: '홈 베이킹' },
+  { value: 'BEVERAGE', label: '음료' },
+  { value: 'SAUCE', label: '양념장' },
+  { value: 'CONVENIENCE', label: '편의점' },
+  { value: 'FUSION', label: '퓨전음식' },
 ]
 
 const MAX_SUPPLY = 10
@@ -68,7 +77,7 @@ export default function CreateRecipePage() {
         <div className={styles.row}>
           <div className={styles.field}>
             <label className={styles.label}>난이도</label>
-            <Select
+            <FormSelect
               options={DIFFICULTY_OPTIONS}
               value={difficulty}
               onChange={setDifficulty}
@@ -78,7 +87,7 @@ export default function CreateRecipePage() {
 
           <div className={styles.field}>
             <label className={styles.label}>카테고리</label>
-            <Select
+            <FormSelect
               options={CATEGORY_OPTIONS}
               value={category}
               onChange={setCategory}
