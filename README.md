@@ -63,13 +63,20 @@ Copy-Item apps/web/.env.example apps/web/.env.local
 
 생성한 `apps/api/.env`의 `DATABASE_URL`을 각자의 로컬 PostgreSQL 환경에 맞게 수정합니다. `apps/web/.env.local`의 `NEXT_PUBLIC_API_URL`은 브라우저에서 요청할 Express 서버 주소입니다. `NEXT_PUBLIC_` 접두사가 붙은 값은 브라우저에 공개되므로 비밀값을 넣지 않습니다. 실제 환경 변수 파일은 커밋하지 않습니다.
 
-| 이름                  | 기본값/예시                       | 설명                            |
-| --------------------- | --------------------------------- | ------------------------------- |
-| `PORT`                | `3001`                            | Express 서버 포트               |
-| `NODE_ENV`            | `development`                     | 실행 환경 (`production` 등)     |
-| `CLIENT_ORIGIN`       | `http://localhost:3000`           | CORS에서 허용할 프론트엔드 주소 |
-| `DATABASE_URL`        | `postgresql://.../matdori_market` | PostgreSQL 연결 문자열          |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:3001/api`       | 프론트엔드에서 사용할 API 주소  |
+| 이름                  | 기본값/예시                          | 설명                                       |
+| --------------------- | ------------------------------------ | ------------------------------------------ |
+| `PORT`                | `3001`                               | Express 서버 포트                          |
+| `NODE_ENV`            | `development`                        | 실행 환경 (`production` 등)                |
+| `CLIENT_ORIGIN`       | `http://localhost:3000`              | CORS 허용 주소. 여러 주소는 쉼표로 구분    |
+| `SESSION_COOKIE_NAME` | `session`                            | HttpOnly 로그인 세션 쿠키 이름             |
+| `SESSION_SECRET`      | `replace-with-at-least-32-random...` | 세션 ID 서명용 비밀값(최소 32바이트 권장)  |
+| `SESSION_TTL_SECONDS` | `604800`                             | 활동 시 연장되는 세션 비활성 제한 시간(초) |
+| `DATABASE_URL`        | `postgresql://.../matdori_market`    | PostgreSQL 연결 문자열                     |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:3001/api`          | 프론트엔드에서 사용할 API 주소             |
+
+세션 쿠키는 로컬 개발에서 `HttpOnly`, `SameSite=Lax`를 사용하고, 프로덕션에서는
+`Secure`, `HttpOnly`, `SameSite=None`을 사용합니다. `SESSION_SECRET`에는 예시
+문자열 대신 충분히 긴 무작위 값을 사용하고 커밋하지 않습니다.
 
 `npm run build`와 Prisma 명령어는 API의 Prisma 설정을 불러오므로 먼저 `apps/api/.env`를 만들어야 합니다. Prisma Client 생성 자체는 데이터베이스에 연결하지 않으므로 PostgreSQL을 실행하지 않은 상태에서도 예시 URL을 사용할 수 있습니다.
 
