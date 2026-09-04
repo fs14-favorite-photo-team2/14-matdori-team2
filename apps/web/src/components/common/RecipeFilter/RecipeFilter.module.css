@@ -81,14 +81,6 @@
   background-color: var(--color-black);
 }
 
-.optionCount {
-  color: var(--color-gray-300);
-}
-
-.mobileOptionSelected .optionCount {
-  color: var(--color-gray-100);
-}
-
 .optionButton {
   width: 100%;
   padding: 12px 28px;
@@ -256,8 +248,7 @@
     min-height: 48px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    justify-content: flex-start;
     padding: 0 28px;
     border: none;
     background: transparent;

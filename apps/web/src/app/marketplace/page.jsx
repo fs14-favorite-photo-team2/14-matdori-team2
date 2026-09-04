@@ -8,10 +8,7 @@ import { DEFAULT_FILTERS } from '@/constants/RecipeOptions'
 import { SORT_OPTIONS } from '@/constants/SortOptions'
 import Link from 'next/link'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
-import {
-  MOCK_FILTER_COUNTS,
-  MOCK_MARKET_LISTINGS,
-} from '@/features/marketplace/mockListings'
+import { MOCK_MARKET_LISTINGS } from '@/features/marketplace/mockListings'
 import styles from './page.module.css'
 
 function getFilteredListings(listings, keyword, selectedFilters) {
@@ -131,7 +128,6 @@ export default function MarketplacePage() {
               sortOptions={SORT_OPTIONS}
               sort={sort}
               isMobileOpen={isMobileOpen}
-              counts={MOCK_FILTER_COUNTS}
               resultCount={draftFilteredListings.length}
               onFilterChange={handleFilterChange}
               onDraftFilterChange={handleDraftFilterChange}

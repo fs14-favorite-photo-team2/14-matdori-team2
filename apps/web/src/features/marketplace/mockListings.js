@@ -184,28 +184,3 @@ export const MOCK_MARKET_LISTINGS = [
     updatedAt: '2026-08-28T08:00:00.000Z',
   },
 ]
-
-export const MOCK_FILTER_COUNTS = {
-  difficulty: {
-    EASY: 2,
-    NORMAL: 2,
-    HARD: 2,
-    MASTER: 2,
-  },
-  category: {
-    KOREAN: 3,
-    WESTERN: 1,
-    CHINESE: 1,
-    JAPANESE: 0,
-    ASIAN: 0,
-    HOME_BAKING: 2,
-    BEVERAGE: 0,
-    SAUCE: 0,
-    CONVENIENCE: 0,
-    FUSION: 1,
-  },
-  status: {
-    ON_SALE: 7,
-    SOLD_OUT: 1,
-  },
-}
