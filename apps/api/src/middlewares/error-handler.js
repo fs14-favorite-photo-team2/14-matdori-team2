@@ -1,25 +1,26 @@
-import { ERROR_CODES } from '../constants/error-codes.js'
+import { ERROR_CATALOG, ERROR_CODES } from '../constants/error-codes.js'
 import { AppError } from '../errors/app-error.js'
-import { sendError } from '../utils/response.js'
+import { sendError } from '../http/response.js'
 
-function isInvalidJson(error) {
-  return error instanceof SyntaxError && error.status === 400 && 'body' in error
-}
+export function errorHandler(error, _request, response, _next) {
+  if (error instanceof AppError) {
+    const { status, code, message, details } = error
 
-function normalizeError(error) {
-  if (error instanceof AppError) return error
+    return sendError(response, status, code, message, details)
+  }
 
-  if (isInvalidJson(error)) {
-    return AppError.from(ERROR_CODES.BAD_REQUEST)
+  if (error.status >= 400 && error.status < 500) {
+    return sendError(
+      response,
+      error.status,
+      ERROR_CODES.BAD_REQUEST,
+      error.message,
+    )
   }
 
   console.error(error)
 
-  return AppError.from(ERROR_CODES.INTERNAL_SERVER_ERROR)
-}
+  const { status, message } = ERROR_CATALOG[ERROR_CODES.INTERNAL_SERVER_ERROR]
 
-export function errorHandler(error, _request, response, _next) {
-  const { status, code, message, details } = normalizeError(error)
-
-  return sendError(response, status, code, message, details)
+  return sendError(response, status, ERROR_CODES.INTERNAL_SERVER_ERROR, message)
 }

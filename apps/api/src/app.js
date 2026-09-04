@@ -8,7 +8,7 @@ import { checkDatabaseConnection } from './db/prisma.js'
 import { errorHandler } from './middlewares/error-handler.js'
 import { notFoundHandler } from './middlewares/not-found.js'
 import apiRouter from './routes/index.js'
-import { sendSuccess } from './utils/response.js'
+import { sendSuccess } from './http/response.js'
 
 const app = express()
 
