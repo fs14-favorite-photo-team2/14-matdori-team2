@@ -10,10 +10,12 @@ export default function AuthInput({
   type = 'text',
   value,
   onChange,
+  onBlur,
   placeholder,
   autoComplete,
   error,
   disabled = false,
+  ref,
 }) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
 
@@ -40,12 +42,14 @@ export default function AuthInput({
         }`}
       >
         <input
+          ref={ref}
           id={name}
           name={name}
           className={styles.input}
           type={inputType}
           value={value}
           onChange={onChange}
+          onBlur={onBlur}
           placeholder={placeholder}
           autoComplete={autoComplete}
           disabled={disabled}
@@ -60,6 +64,7 @@ export default function AuthInput({
             onClick={() => setIsPasswordVisible((prev) => !prev)}
             disabled={disabled}
             aria-label={isPasswordVisible ? '비밀번호 숨기기' : '비밀번호 보기'}
+            aria-pressed={isPasswordVisible}
           >
             <Image src={passwordIconSrc} alt="" width={24} height={24} />
           </button>
