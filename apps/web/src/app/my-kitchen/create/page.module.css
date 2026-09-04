@@ -55,6 +55,10 @@
   font-size: var(--font-size-16);
 }
 
+.inputError {
+  border-color: var(--color-red);
+}
+
 .textarea {
   height: auto;
   padding: 16px 20px;

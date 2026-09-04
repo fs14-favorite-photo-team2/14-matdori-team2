@@ -4,27 +4,8 @@ import { useState } from 'react'
 import Button from '@/components/common/Button/Button'
 import FormSelect from '@/components/common/FormSelect/FormSelect'
 import ImageUploader from '@/components/common/ImageUploader/ImageUploader'
+import { DIFFICULTY_OPTIONS, CATEGORY_OPTIONS } from '@/constants/RecipeOptions'
 import styles from './page.module.css'
-
-const DIFFICULTY_OPTIONS = [
-  { value: 'COMMON', label: '요알못 구원자' },
-  { value: 'RARE', label: '당당한 요린이' },
-  { value: 'SUPER RARE', label: '숨은 집밥 고수' },
-  { value: 'LEGENDARY', label: '장금이의 후예' },
-]
-
-const CATEGORY_OPTIONS = [
-  { value: 'KOREAN', label: '한식' },
-  { value: 'WESTERN', label: '양식' },
-  { value: 'CHINESE', label: '중식' },
-  { value: 'JAPANESE', label: '일식' },
-  { value: 'ASIAN', label: '아시안' },
-  { value: 'BAKING', label: '홈 베이킹' },
-  { value: 'BEVERAGE', label: '음료' },
-  { value: 'SAUCE', label: '양념장' },
-  { value: 'CONVENIENCE', label: '편의점' },
-  { value: 'FUSION', label: '퓨전음식' },
-]
 
 const MAX_SUPPLY = 10
 
@@ -35,7 +16,7 @@ export default function CreateRecipePage() {
   const [totalSupply, setTotalSupply] = useState('')
   const [summary, setSummary] = useState('')
   const [content, setContent] = useState('')
-  const [imageFile, setImageFile] = useState(null)
+  const [imageFiles, setImageFiles] = useState([])
 
   const isSupplyValid =
     totalSupply !== '' &&
@@ -47,7 +28,7 @@ export default function CreateRecipePage() {
     difficulty !== '' &&
     category !== '' &&
     isSupplyValid &&
-    imageFile !== null &&
+    imageFiles.length > 0 &&
     summary.trim() !== '' &&
     content.trim() !== ''
 
@@ -102,10 +83,15 @@ export default function CreateRecipePage() {
           </label>
           <input
             id="totalSupply"
-            type="number"
-            className={styles.input}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            className={`${styles.input} ${totalSupply !== '' && !isSupplyValid ? styles.inputError : ''}`}
             value={totalSupply}
-            onChange={(e) => setTotalSupply(e.target.value)}
+            onChange={(e) => {
+              const onlyNums = e.target.value.replace(/[^0-9]/g, '')
+              setTotalSupply(onlyNums)
+            }}
             placeholder="총 발행량을 입력해 주세요"
           />
           {totalSupply !== '' && !isSupplyValid && (
@@ -117,7 +103,7 @@ export default function CreateRecipePage() {
 
         <div className={styles.field}>
           <span className={styles.label}>사진 업로드</span>
-          <ImageUploader value={imageFile} onChange={setImageFile} />
+          <ImageUploader onChange={setImageFiles} />
         </div>
 
         <div className={styles.field}>
