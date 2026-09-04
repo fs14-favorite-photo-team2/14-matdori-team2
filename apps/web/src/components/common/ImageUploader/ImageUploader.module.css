@@ -2,81 +2,177 @@
   width: 100%;
 }
 
-.row {
+.hiddenInput,
+.hiddenCanvas {
+  display: none;
+}
+
+.uploadBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  border: 1px dashed var(--color-gray-300);
+  background-color: var(--color-gray-800);
+  cursor: pointer;
+}
+
+.plusIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--color-gray-300);
+  color: var(--color-gray-300);
+  font-size: var(--font-size-18);
+  line-height: 1;
+}
+
+.uploadText {
+  font-size: var(--font-size-13);
+  color: var(--color-gray-300);
+}
+
+.previewCard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.previewFrame {
+  width: 360px;
+  height: 270px;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: var(--color-black);
+  border: 1px solid var(--color-gray-300);
+}
+
+.previewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center center;
+}
+
+.zoomRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.zoomLabel {
+  font-size: var(--font-size-13);
+  color: var(--color-gray-300);
+  white-space: nowrap;
+}
+
+.zoomPercent {
+  font-size: var(--font-size-13);
+  color: var(--color-gray-300);
+  width: 40px;
+  text-align: right;
+}
+
+.zoomSlider {
+  flex: 1;
+  accent-color: var(--color-main);
+}
+
+.actions {
   display: flex;
   gap: 8px;
 }
 
-.fileField {
+.removeButton,
+.changeButton {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border: 1px solid var(--color-gray-200);
-  border-radius: 2px;
-  background: var(--color-black);
-  padding: 10px 12px;
-  min-width: 0;
-}
-
-.placeholder {
-  font-size: var(--font-size-14);
-  color: var(--color-gray-300);
-}
-
-.fileName {
-  font-size: var(--font-size-14);
-  color: var(--color-white);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  height: 40px;
+  border-radius: 999px;
+  border: none;
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
 }
 
 .removeButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-gray-300);
-  flex-shrink: 0;
-  margin-left: 8px;
-  display: flex;
+  background-color: var(--color-red);
+  color: var(--color-white);
 }
 
-.selectButton {
-  flex-shrink: 0;
-  width: 120px;
-  height: 60px;
-  padding: 18px 28px;
-  border: 1px solid var(--color-main);
-  border-radius: 2px;
-  background: var(--color-black);
-  color: var(--color-main);
-  font-size: var(--font-size-14);
+.changeButton {
+  background-color: var(--color-gray-800);
+  color: var(--color-white);
+  border: 1px solid var(--color-gray-300);
+}
+
+.changeButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.thumbnailRow {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+  max-width: 360px;
+}
+
+.thumbnail {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid transparent;
   cursor: pointer;
-  white-space: nowrap;
+}
+
+.thumbnailActive {
+  border-color: var(--color-main);
+}
+
+.thumbnailImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnailRemove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: none;
+  border-radius: 0 0 0 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--color-white);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
 }
 
-.hiddenInput {
-  display: none;
+.countText {
+  margin-top: 8px;
+  font-size: var(--font-size-12);
+  color: var(--color-gray-300);
 }
 
 .errorText {
   margin-top: 6px;
   font-size: var(--font-size-12);
   color: var(--color-red);
-}
-
-@media (max-width: 743px) {
-  .row {
-    gap: 6px;
-  }
-  .selectButton {
-    width: auto;
-    height: auto;
-    padding: 10px 12px;
-    font-size: var(--font-size-12);
-  }
 }
