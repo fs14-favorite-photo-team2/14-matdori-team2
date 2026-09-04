@@ -1,5 +1,5 @@
 import { signup } from '../services/auth-service.js'
-import { sendSuccess } from '../utils/response.js'
+import { sendSuccess } from '../http/response.js'
 
 export async function signupController(request, response, next) {
   try {
