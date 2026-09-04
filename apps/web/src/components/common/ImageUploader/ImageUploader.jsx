@@ -3,8 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import styles from './ImageUploader.module.css'
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png']
-const MAX_SIZE_MB = 5
 const MAX_IMAGES = 10
 const OUTPUT_SIZE = 400
 const MIN_ZOOM = 1
@@ -38,11 +36,8 @@ export default function ImageUploader({ onChange }) {
   }, [])
 
   function validateFile(file) {
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return 'jpg, png 형식만 업로드 할 수 있어요'
-    }
-    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      return `${MAX_SIZE_MB}MB 이하 파일만 업로드 할 수 있어요.`
+    if (!file.type.startsWith('image/')) {
+      return '이미지 파일만 업로드 할 수 있어요.'
     }
     return ''
   }
@@ -165,7 +160,7 @@ export default function ImageUploader({ onChange }) {
       <input
         ref={inputRef}
         type="file"
-        accept={ALLOWED_TYPES.join(',')}
+        accept="image/*"
         multiple
         onChange={handleFileChange}
         className={styles.hiddenInput}
