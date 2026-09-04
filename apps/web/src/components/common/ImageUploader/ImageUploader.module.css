@@ -1,0 +1,82 @@
+.wrapper {
+  width: 100%;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.fileField {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 2px;
+  background: var(--color-black);
+  padding: 10px 12px;
+  min-width: 0;
+}
+
+.placeholder {
+  font-size: var(--font-size-14);
+  color: var(--color-gray-300);
+}
+
+.fileName {
+  font-size: var(--font-size-14);
+  color: var(--color-white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.removeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-gray-300);
+  flex-shrink: 0;
+  margin-left: 8px;
+  display: flex;
+}
+
+.selectButton {
+  flex-shrink: 0;
+  width: 120px;
+  height: 60px;
+  padding: 18px 28px;
+  border: 1px solid var(--color-main);
+  border-radius: 2px;
+  background: var(--color-black);
+  color: var(--color-main);
+  font-size: var(--font-size-14);
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.errorText {
+  margin-top: 6px;
+  font-size: var(--font-size-12);
+  color: var(--color-red);
+}
+
+@media (max-width: 743px) {
+  .row {
+    gap: 6px;
+  }
+  .selectButton {
+    width: auto;
+    height: auto;
+    padding: 10px 12px;
+    font-size: var(--font-size-12);
+  }
+}
