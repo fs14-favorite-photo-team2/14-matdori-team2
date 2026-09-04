@@ -161,8 +161,8 @@ npm run dev:api
               page.jsx                # 판매 항목 상세
               purchase/success/page.jsx
               exchange/success/page.jsx
-          my-recipes/
-            page.jsx                  # 내 레시피 목록
+          my-kitchen/
+            page.jsx                  # 마이키친 목록
             create/
               page.jsx                # 레시피 생성
               success/page.jsx
@@ -188,7 +188,7 @@ npm run dev:api
         features/                     # 도메인별 기능 모듈
           auth/
           marketplace/
-          my-recipes/
+          my-kitchen/
           sales/
           random-point/
           notifications/
