@@ -18,3 +18,16 @@ export function createUser({ email, nickname, passwordHash }) {
     },
   })
 }
+
+export function findUserByEmail(email) {
+  return prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      nickname: true,
+      points: true,
+      passwordHash: true,
+    },
+  })
+}
