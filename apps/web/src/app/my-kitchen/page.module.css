@@ -1,0 +1,99 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  color: var(--color-white);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--color-gray-400);
+}
+
+.pageTitle {
+  font-size: var(--font-size-62);
+}
+
+.summarySection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.summaryText {
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+}
+
+.summaryCount {
+  font-weight: var(--font-weight-regular);
+  color: var(--color-gray-300);
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 4px 12px;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: var(--font-size-13);
+  font-weight: var(--font-weight-bold);
+  background-color: transparent;
+}
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 60px;
+  margin: 20px 0 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-gray-400);
+}
+
+.searchField {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+.searchField form {
+  height: 50px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.emptyText {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--color-gray-300);
+}
+
+.sentinel {
+  height: 1px;
+}
+
+@media (max-width: 1023px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 743px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .filterBar {
+    flex-wrap: wrap;
+  }
+}
