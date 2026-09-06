@@ -1,0 +1,465 @@
+.page {
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 72px 24px 120px;
+}
+
+.pageLabel {
+  margin-bottom: 40px;
+  color: var(--color-gray-300);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+}
+
+.title {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-gray-200);
+  font-size: var(--font-size-32);
+}
+
+.productSection {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+  gap: 64px;
+  margin-top: 56px;
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.thumbnail {
+  object-fit: cover;
+}
+
+.productInfo {
+  min-width: 0;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-gray-400);
+}
+
+.recipeMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--font-size-18);
+  font-weight: var(--font-weight-bold);
+}
+
+.difficulty {
+  font-weight: var(--font-weight-bold);
+}
+
+.difficultyEasy {
+  color: var(--color-main);
+}
+
+.difficultyNormal {
+  color: var(--color-blue);
+}
+
+.difficultyHard {
+  color: var(--color-purple);
+}
+
+.difficultyMaster {
+  color: var(--color-pink);
+}
+
+.metaDivider,
+.category {
+  color: var(--color-gray-300);
+}
+
+.sellerNickname {
+  color: var(--color-gray-100);
+  font-size: var(--font-size-18);
+  font-weight: var(--font-weight-bold);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.summaryWrapper {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--color-gray-400);
+}
+
+.summary {
+  max-height: 6em;
+  padding-right: 8px;
+  overflow-y: auto;
+  font-size: var(--font-size-16);
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gray-400) transparent;
+}
+
+.summary::-webkit-scrollbar {
+  width: 6px;
+}
+
+.summary::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.summary::-webkit-scrollbar-thumb {
+  background-color: var(--color-gray-400);
+  border-radius: 999px;
+}
+
+.priceInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--color-gray-400);
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.infoLabel {
+  color: var(--color-gray-300);
+  font-size: var(--font-size-16);
+}
+
+.infoValue {
+  font-size: var(--font-size-18);
+  font-weight: var(--font-weight-bold);
+}
+
+.purchaseButton {
+  width: 100%;
+  margin-top: 48px;
+}
+
+.button:disabled {
+  background-color: var(--color-gray-400);
+  color: var(--color-gray-300);
+}
+
+.exchangeSection {
+  margin-top: 96px;
+}
+
+.exchangeHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.exchangeTitle {
+  font-size: var(--font-size-28);
+}
+
+.exchangeButton {
+  width: 360px;
+  flex-shrink: 0;
+}
+
+.exchangeContent {
+  padding-top: 36px;
+}
+
+.wantedDescription {
+  font-size: var(--font-size-18);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.wantedMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: var(--font-size-18);
+}
+
+.myTradeSection {
+  margin-top: 80px;
+}
+
+.tradeSectionTitle {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-gray-200);
+  font-size: var(--font-size-28);
+}
+
+.myTradeList {
+  display: grid;
+  grid-template-columns: repeat(3, 360px);
+  gap: 35px;
+  margin-top: 36px;
+}
+
+.tradeCard {
+  display: flex;
+  flex-direction: column;
+  width: 360px;
+  padding: 16px;
+  border: 1px solid var(--color-gray-400);
+  background-color: var(--color-gray-500);
+}
+
+.tradeImageWrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background-color: var(--color-gray-500);
+  border: 1px dashed var(--color-gray-300);
+}
+
+.tradeImage {
+  object-fit: cover;
+}
+
+.tradeCardTitle {
+  margin-top: 16px;
+  font-size: var(--font-size-20);
+}
+
+.tradeCardMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: var(--font-size-14);
+}
+
+.tradeRecipeMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.proposerNickname {
+  flex-shrink: 0;
+  color: var(--color-gray-200);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.tradeDescription {
+  flex: 1;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-gray-400);
+  font-size: var(--font-size-14);
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.cancelTradeButton {
+  width: 100%;
+  margin-top: 24px;
+}
+
+@media (max-width: 1023px) {
+  .container {
+    padding: 64px 16px 100px;
+  }
+
+  .pageLabel {
+    margin-bottom: 32px;
+  }
+
+  .productSection {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    margin-top: 36px;
+  }
+
+  .recipeMeta,
+  .sellerNickname {
+    font-size: var(--font-size-16);
+  }
+
+  .summaryWrapper,
+  .priceInfo {
+    padding: 20px 0;
+  }
+
+  .purchaseButton {
+    margin-top: 36px;
+  }
+
+  .exchangeSection {
+    margin-top: 80px;
+  }
+
+  .exchangeButton {
+    width: calc(50% - 12px);
+  }
+
+  .myTradeList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 28px;
+  }
+
+  .tradeCard {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .tradeCardTitle {
+    font-size: var(--font-size-18);
+  }
+
+  .tradeCardMeta,
+  .tradeDescription {
+    font-size: var(--font-size-12);
+  }
+
+  .tradeCard .cancelTradeButton {
+    height: 48px;
+    font-size: var(--font-size-14);
+  }
+}
+
+@media (max-width: 743px) {
+  .container {
+    padding: 24px 16px 80px;
+  }
+
+  .pageLabel {
+    margin-bottom: 32px;
+    text-align: center;
+    font-size: var(--font-size-14);
+  }
+
+  .title {
+    padding-bottom: 16px;
+    font-size: var(--font-size-28);
+  }
+
+  .productSection {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    margin-top: 20px;
+  }
+
+  .recipeMeta,
+  .sellerNickname {
+    font-size: var(--font-size-16);
+  }
+
+  .summaryWrapper,
+  .priceInfo {
+    padding: 20px 0;
+  }
+
+  .purchaseButton {
+    margin-top: 32px;
+  }
+
+  .exchangeSection {
+    display: flex;
+    flex-direction: column;
+    margin-top: 64px;
+  }
+
+  .exchangeHeader {
+    display: contents;
+  }
+
+  /* order: html을 바꾸지 않고 css에서 순서만 변경 */
+  .exchangeTitle {
+    order: 1;
+    width: 100%;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--color-gray-200);
+    font-size: var(--font-size-24);
+  }
+
+  .exchangeContent {
+    order: 2;
+    padding-top: 24px;
+  }
+
+  .exchangeButton {
+    order: 3;
+    width: 100%;
+    margin-top: 32px;
+  }
+
+  .myTradeSection {
+    margin-top: 64px;
+  }
+
+  .tradeSectionTitle {
+    padding-bottom: 12px;
+    font-size: var(--font-size-20);
+  }
+
+  .myTradeList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 24px;
+  }
+
+  .tradeCard {
+    width: 100%;
+    padding: 8px;
+  }
+
+  .tradeCardTitle {
+    margin-top: 8px;
+    font-size: var(--font-size-12);
+  }
+
+  .tradeCardMeta {
+    gap: 4px;
+    margin-top: 4px;
+    font-size: var(--font-size-10);
+  }
+
+  .tradeRecipeMeta {
+    gap: 4px;
+  }
+
+  .proposerNickname {
+    text-underline-offset: 2px;
+  }
+
+  .tradeDescription {
+    margin-top: 8px;
+    padding-top: 8px;
+    font-size: var(--font-size-10);
+    line-height: 1.4;
+  }
+
+  .tradeCard .cancelTradeButton {
+    height: 36px;
+    margin-top: 12px;
+    padding: 0 8px;
+    font-size: var(--font-size-10);
+  }
+}
