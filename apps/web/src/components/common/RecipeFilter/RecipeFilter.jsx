@@ -15,7 +15,6 @@ export default function RecipeFilter({
   sortOptions = [],
   sort = '',
   isMobileOpen = false,
-  counts = {},
   resultCount = 0,
   onFilterChange,
   onDraftFilterChange,
@@ -264,12 +263,6 @@ export default function RecipeFilter({
                   }
                 >
                   <span>{option.label}</span>
-
-                  {counts[activeGroup.key]?.[option.value] !== undefined && (
-                    <span className={styles.optionCount}>
-                      {counts[activeGroup.key][option.value]}개
-                    </span>
-                  )}
                 </button>
               ))}
             </div>
