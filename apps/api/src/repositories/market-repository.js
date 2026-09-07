@@ -11,15 +11,8 @@ const marketListingSelect = {
       category: true,
       summary: true,
       minPrice: true,
-      images: {
-        select: {
-          imageUrl: true,
-          sortOrder: true,
-        },
-        orderBy: {
-          sortOrder: 'asc',
-        },
-      },
+      imageUrls: true,
+      ingredients: true,
     },
   },
   seller: {

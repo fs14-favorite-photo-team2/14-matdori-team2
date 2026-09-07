@@ -1155,6 +1155,7 @@ components:
         - id
         - title
         - imageUrl
+        - imageUrls
         - difficulty
         - category
         - summary
@@ -1168,6 +1169,14 @@ components:
             type: string,
             format: uri,
             description: 저장된 imageUrls의 첫 번째 URL을 반환하는 대표 이미지입니다.,
+          }
+        imageUrls:
+          {
+            type: array,
+            minItems: 1,
+            maxItems: 10,
+            description: 업로드 순서대로 반환하는 전체 이미지 URL 목록입니다.,
+            items: { type: string, format: uri },
           }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         category: { $ref: '#/components/schemas/Category' }

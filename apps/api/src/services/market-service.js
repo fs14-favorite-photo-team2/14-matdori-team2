@@ -8,13 +8,11 @@ import {
 
 // DB 조회 결과를 API 응답 형태로 변경
 function formatMarketListing({ _count, recipe, ...listing }) {
-  const { images, ...recipeData } = recipe
-
   return {
     ...listing,
     recipe: {
-      ...recipeData,
-      imageUrls: images.map((image) => image.imageUrl),
+      ...recipe,
+      imageUrl: recipe.imageUrls[0],
     },
     remainingQuantity: _count.copies,
   }
