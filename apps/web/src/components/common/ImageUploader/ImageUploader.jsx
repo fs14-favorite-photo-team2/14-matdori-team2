@@ -142,13 +142,11 @@ export default function ImageUploader({ onChange }) {
           activeImage.rawFile?.name || 'cropped.jpg',
           { type: 'image/jpeg' },
         )
-        setImages((prev) => {
-          const updated = prev.map((img) =>
-            img.id === activeImage.id ? { ...img, croppedFile } : img,
-          )
-          emitChange(updated)
-          return updated
-        })
+        const updated = images.map((img) =>
+          img.id === activeImage.id ? { ...img, croppedFile } : img,
+        )
+        setImages(updated)
+        emitChange(updated)
       },
       'image/jpeg',
       0.9,
