@@ -135,6 +135,16 @@ export function findMarketListings({
   })
 }
 
+// 판매중인 레시피 중 id값으로 단일 레시피 가져오기
+export function findMarketListingById(listingId) {
+  return prisma.marketListing.findUnique({
+    where: {
+      id: listingId,
+    },
+    select: marketListingSelect,
+  })
+}
+
 // 판매글에 등록할 사본 조회
 export function findRecipeCopiesByIds(recipeCopyIds) {
   return prisma.recipeCopy.findMany({
@@ -209,5 +219,16 @@ export function createMarketListingRecord({
       },
       select: marketListingSelect,
     })
+  })
+}
+
+// 판매글 수정
+export function updateMarketListingById(listingId, data) {
+  return prisma.marketListing.update({
+    where: {
+      id: listingId,
+    },
+    data,
+    select: marketListingSelect,
   })
 }

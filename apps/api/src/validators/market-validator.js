@@ -116,11 +116,7 @@ const marketListingsQuery = refine(
   },
 )
 
-export const getMarketListingsRequest = object({
-  body: object({}),
-  params: object({}),
-  query: marketListingsQuery,
-})
+const listingId = coerce(min(integer(), 1), string(), (value) => Number(value))
 
 const recipeCopyIds = refine(
   size(array(min(integer(), 1)), 1, 10),
@@ -155,8 +151,43 @@ const createMarketListingBody = refine(
   },
 )
 
+const updateMarketListingBody = refine(
+  object({
+    price: optional(max(min(integer(), 0), 100_000_000)),
+    listingType: optional(enums(LISTING_TYPES)),
+    wantedDifficulty: optional(enums(DIFFICULTIES)),
+    wantedCategory: optional(enums(CATEGORIES)),
+    wantedDescription: optional(size(string(), 0, 500)),
+  }),
+  'update market listing',
+  (value) =>
+    Object.keys(value).length > 0 || '수정할 필드를 하나 이상 입력해야 합니다.',
+)
+
+export const getMarketListingsRequest = object({
+  body: object({}),
+  params: object({}),
+  query: marketListingsQuery,
+})
+
+export const getMarketListingRequest = object({
+  body: object({}),
+  params: object({
+    listingId,
+  }),
+  query: object({}),
+})
+
 export const createMarketListingRequest = object({
   body: createMarketListingBody,
   params: object({}),
+  query: object({}),
+})
+
+export const updateMarketListingRequest = object({
+  body: updateMarketListingBody,
+  params: object({
+    listingId,
+  }),
   query: object({}),
 })

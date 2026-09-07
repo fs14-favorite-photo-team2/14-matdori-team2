@@ -1,6 +1,8 @@
 import {
-  createMarketListing,
+  getMarketListing,
   getMarketListings,
+  createMarketListing,
+  updateMarketListing,
 } from '../services/market-service.js'
 import { sendSuccess } from '../http/response.js'
 
@@ -17,6 +19,17 @@ export async function getMarketListingsController(request, response, next) {
   }
 }
 
+// 판매글 상세 조회
+export async function getMarketListingController(request, response, next) {
+  try {
+    const listing = await getMarketListing(request.validated.params.listingId)
+
+    return sendSuccess(response, listing)
+  } catch (error) {
+    return next(error)
+  }
+}
+
 // 판매글 등록
 export async function createMarketListingController(request, response, next) {
   try {
@@ -28,6 +41,21 @@ export async function createMarketListingController(request, response, next) {
     return sendSuccess(response, listing, {
       status: 201,
     })
+  } catch (error) {
+    return next(error)
+  }
+}
+
+// 판매글 수정
+export async function updateMarketListingController(request, response, next) {
+  try {
+    const listing = await updateMarketListing(
+      request.user.id,
+      request.validated.params.listingId,
+      request.validated.body,
+    )
+
+    return sendSuccess(response, listing)
   } catch (error) {
     return next(error)
   }

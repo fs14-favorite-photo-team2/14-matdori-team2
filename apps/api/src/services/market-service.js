@@ -1,9 +1,11 @@
 import { ERROR_CODES } from '../constants/error-codes.js'
 import { AppError } from '../errors/app-error.js'
 import {
-  createMarketListingRecord,
+  findMarketListingById,
   findMarketListings,
   findRecipeCopiesByIds,
+  createMarketListingRecord,
+  updateMarketListingById,
 } from '../repositories/market-repository.js'
 
 // DB 조회 결과를 API 응답 형태로 변경
@@ -13,6 +15,9 @@ function formatMarketListing({ _count, recipe, ...listing }) {
     recipe: {
       ...recipe,
       imageUrl: recipe.imageUrls[0],
+      ingredients: Array.isArray(recipe.ingredients)
+        ? recipe.ingredients.filter((ingredient) => ingredient.isHighlight)
+        : [],
     },
     remainingQuantity: _count.copies,
   }
@@ -51,6 +56,16 @@ export async function getMarketListings(query) {
     // 예상치 못한
     throw AppError.from(ERROR_CODES.INTERNAL_SERVER_ERROR)
   }
+}
+
+export async function getMarketListing(listingId) {
+  const listing = await findMarketListingById(listingId)
+
+  if (!listing) {
+    throw AppError.from(ERROR_CODES.RESOURCE_NOT_FOUND)
+  }
+
+  return formatMarketListing(listing)
 }
 
 // 판매글 등록
@@ -135,4 +150,60 @@ export async function createMarketListing(userId, input) {
 
     throw error
   }
+}
+
+export async function updateMarketListing(userId, listingId, input) {
+  const listing = await findMarketListingById(listingId)
+
+  // 수정할 수 있는 상태 유무 검증
+  if (!listing) {
+    throw AppError.from(ERROR_CODES.RESOURCE_NOT_FOUND)
+  }
+
+  if (listing.seller.id !== userId) {
+    throw AppError.from(ERROR_CODES.FORBIDDEN)
+  }
+
+  if (listing.status !== 'ON_SALE') {
+    throw AppError.from(ERROR_CODES.CONFLICT)
+  }
+
+  // 기존 판매글과 비교 후 수정사항만 적용
+  const nextListingType = input.listingType ?? listing.listingType
+
+  const nextPrice = input.price !== undefined ? input.price : listing.price
+
+  // 판매중상태와 가격 같이 있는지 확인
+  if (
+    (nextListingType === 'SALE' || nextListingType === 'BOTH') &&
+    nextPrice === null
+  ) {
+    throw AppError.from(ERROR_CODES.VALIDATION_ERROR, [
+      {
+        field: 'price',
+        reason: 'SALE 또는 BOTH 방식에서는 price가 필요합니다.',
+      },
+    ])
+  }
+
+  const data = {
+    ...input,
+    listingType: nextListingType,
+  }
+
+  if (nextListingType === 'EXCHANGE') {
+    data.price = null
+  } else {
+    data.price = nextPrice
+  }
+
+  if (nextListingType === 'SALE') {
+    data.wantedDifficulty = null
+    data.wantedCategory = null
+    data.wantedDescription = null
+  }
+
+  const updatedListing = await updateMarketListingById(listingId, data)
+
+  return formatMarketListing(updatedListing)
 }
