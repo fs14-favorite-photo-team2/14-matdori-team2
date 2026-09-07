@@ -320,7 +320,11 @@ async function seedRecipes(users) {
       data: {
         creatorId: creator.id,
         title,
-        imageUrls: [`https://picsum.photos/seed/recipe-${number}/800/600`],
+        imageUrls: Array.from(
+          { length: imageCount },
+          (_, imageIndex) =>
+            `https://picsum.photos/seed/recipe-${number}-${imageIndex + 1}/800/600`,
+        ),
         ingredients: [
           { name: '예시 재료', amount: '적당량', isHighlight: false },
         ],
@@ -337,13 +341,6 @@ async function seedRecipes(users) {
         ].join('\n'),
         totalSupply: COPY_PER_RECIPE,
         createdAt: dateByIndex(i, 14),
-
-        images: {
-          create: Array.from({ length: imageCount }, (_, imageIndex) => ({
-            imageUrl: `https://picsum.photos/seed/recipe-${number}-${imageIndex + 1}/800/600`,
-            sortOrder: imageIndex,
-          })),
-        },
       },
     })
 
