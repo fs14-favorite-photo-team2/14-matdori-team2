@@ -35,15 +35,15 @@ export default function ImageUploader({ onChange }) {
     }
   }, [images])
 
+  useEffect(() => {
+    onChange?.(images.map((img) => img.croppedFile))
+  }, [images, onChange])
+
   function validateFile(file) {
     if (!file.type.startsWith('image/')) {
       return '이미지 파일만 업로드 할 수 있어요.'
     }
     return ''
-  }
-
-  function emitChange(imageList) {
-    onChange?.(imageList.map((img) => img.croppedFile))
   }
 
   function handleSelectClick() {
@@ -82,7 +82,6 @@ export default function ImageUploader({ onChange }) {
     const updated = [...images, ...newImages]
     setImages(updated)
     setActiveId(newImages[0].id)
-    emitChange(updated)
   }
 
   function handleSelectThumbnail(id) {
@@ -98,7 +97,6 @@ export default function ImageUploader({ onChange }) {
     setActiveId((current) =>
       current === id ? (updated[0]?.id ?? null) : current,
     )
-    emitChange(updated)
   }
 
   function handleZoomChange(event) {
@@ -142,13 +140,11 @@ export default function ImageUploader({ onChange }) {
           activeImage.rawFile?.name || 'cropped.jpg',
           { type: 'image/jpeg' },
         )
-        setImages((prev) => {
-          const updated = prev.map((img) =>
+        setImages((prev) =>
+          prev.map((img) =>
             img.id === activeImage.id ? { ...img, croppedFile } : img,
-          )
-          emitChange(updated)
-          return updated
-        })
+          ),
+        )
       },
       'image/jpeg',
       0.9,
