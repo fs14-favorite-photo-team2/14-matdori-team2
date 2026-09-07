@@ -55,6 +55,7 @@ export function findMarketListings({
   sort,
 }) {
   const where = {
+    deleteAt: null,
     status:
       soldOut === undefined
         ? { in: ['ON_SALE', 'SOLD_OUT'] }
@@ -230,5 +231,30 @@ export function updateMarketListingById(listingId, data) {
     },
     data,
     select: marketListingSelect,
+  })
+}
+
+// 판매글 내리기 + 판매글에 달린 사본 복구
+export function withdrawMarketListingRecord(listingId) {
+  return prisma.$transaction(async (transaction) => {
+    await transaction.marketListing.update({
+      where: {
+        id: listingId,
+      },
+      data: {
+        status: 'WITHDRAWN',
+      },
+    })
+
+    await transaction.recipeCopy.updateMany({
+      where: {
+        listingId,
+        state: 'LISTED',
+      },
+      data: {
+        listingId: null,
+        state: 'OWNED',
+      },
+    })
   })
 }

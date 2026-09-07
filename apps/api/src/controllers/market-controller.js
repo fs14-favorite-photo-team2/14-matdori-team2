@@ -3,6 +3,7 @@ import {
   getMarketListings,
   createMarketListing,
   updateMarketListing,
+  withdrawMarketListing,
 } from '../services/market-service.js'
 import { sendSuccess } from '../http/response.js'
 
@@ -56,6 +57,20 @@ export async function updateMarketListingController(request, response, next) {
     )
 
     return sendSuccess(response, listing)
+  } catch (error) {
+    return next(error)
+  }
+}
+
+// 판매글 내리기
+export async function withdrawMarketListingController(request, response, next) {
+  try {
+    await withdrawMarketListing(
+      request.user.id,
+      request.validated.params.listingId,
+    )
+
+    return response.status(204).send()
   } catch (error) {
     return next(error)
   }

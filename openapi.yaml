@@ -572,12 +572,30 @@ paths:
     delete:
       tags: [마켓플레이스]
       summary: 판매글 판매 종료
-      description: 판매글 상태를 WITHDRAWN으로 변경하고 남은 사본의 예약을 해제합니다.
+      description: 판매가 종료된 판매글을 현재 사용자의 판매글 목록에서 제거합니다. 데이터와 거래 기록은 실제로 삭제하지 않고 deletedAt을 기록합니다.
       operationId: stopMarketListing
       parameters:
         - $ref: '#/components/parameters/ListingId'
       responses:
-        '204': { description: 판매가 중지됨. 응답 본문은 없음 }
+        '204': { description: 판매글이 삭제 처리됨. 응답 본문은 없음 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /market-listings/{listingId}/withdraw:
+    post:
+      tags: [마켓플레이스]
+      summary: 판매글 판매 내리기
+      description: >-
+        판매 중인 판매글의 상태를 WITHDRAWN으로 변경하고,
+        판매글에 등록된 남은 레시피 사본을 다시 OWNED 상태로 돌립니다.
+        판매글은 현재 사용자의 판매글 목록에는 계속 표시됩니다.
+      operationId: withdrawMarketListing
+      parameters:
+        - $ref: '#/components/parameters/ListingId'
+      responses:
+        '204':
+          description: 판매글이 내려감. 응답 본문은 없음
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }

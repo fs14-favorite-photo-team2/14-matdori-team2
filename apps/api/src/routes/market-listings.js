@@ -5,6 +5,7 @@ import {
   getMarketListingsController,
   createMarketListingController,
   updateMarketListingController,
+  withdrawMarketListingController,
 } from '../controllers/market-controller.js'
 import { validateRequest } from '../middlewares/validate-request.js'
 import {
@@ -19,7 +20,7 @@ const marketRouter = Router()
 // 로컬 테스트용 임시 인증
 function mockAuthenticate(request, _response, next) {
   request.user = {
-    id: 38,
+    id: 31,
   }
 
   return next()
@@ -52,7 +53,15 @@ marketRouter.patch(
   updateMarketListingController,
 )
 
-// 판매글 내리기(마켓플레이스 > 마이키친)
+// 판매글 내리기
+marketRouter.post(
+  '/:listingId/withdraw',
+  mockAuthenticate,
+  validateRequest(getMarketListingRequest),
+  withdrawMarketListingController,
+)
+
+// 판매글 삭제하기
 
 // 포인트로 레시피 사본
 
