@@ -5,6 +5,7 @@ import Image from 'next/image'
 import styles from './page.module.css'
 import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
 import Button from '@/components/common/Button/Button'
+import MobileHeader from '@/components/layout/Header/MobileHeader/MobileHeader'
 
 const DIFFICULTY_CLASS_NAMES = {
   easy: styles.difficultyEasy,
@@ -58,6 +59,8 @@ export default function SellerListingDetail({ listing }) {
   return (
     <main className={styles.page}>
       <div className={styles.container}>
+        <MobileHeader title="마켓플레이스" backHref="/marketplace" />
+
         <p className={styles.pageLabel}>마켓플레이스</p>
 
         <h1 className={`${styles.title} font-baskin-robbins`}>

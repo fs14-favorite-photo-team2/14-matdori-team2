@@ -88,7 +88,9 @@ export default function RecipeCard({
           </div>
 
           {sellerNickname && (
-            <span className={styles.sellerNickname}>{sellerNickname}</span>
+            <span className={styles.sellerNickname} title={sellerNickname}>
+              {sellerNickname}
+            </span>
           )}
         </div>
 

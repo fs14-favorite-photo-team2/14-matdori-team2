@@ -6,6 +6,7 @@ import {
   MOCK_LISTING_DETAIL,
 } from '@/features/marketplace/mockListingDetail'
 import SellerListingDetail from './SellerListingDetail'
+import MobileHeader from '@/components/layout/Header/MobileHeader/MobileHeader'
 import styles from './page.module.css'
 
 const DIFFICULTY_CLASS_NAMES = {
@@ -52,6 +53,8 @@ export default function MarketplaceListingPage() {
   return (
     <main className={styles.page}>
       <div className={styles.container}>
+        <MobileHeader title="마켓플레이스" backHref="/marketplace" />
+
         <p className={styles.pageLabel}>마켓플레이스</p>
         <h1 className={`${styles.title} font-baskin-robbins`}>
           {recipe.title}

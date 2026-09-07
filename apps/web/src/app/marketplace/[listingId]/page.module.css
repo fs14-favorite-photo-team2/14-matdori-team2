@@ -558,9 +558,7 @@
   }
 
   .pageLabel {
-    margin-bottom: 32px;
-    text-align: center;
-    font-size: var(--font-size-14);
+    display: none;
   }
 
   .title {
