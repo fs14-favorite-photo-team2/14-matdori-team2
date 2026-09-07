@@ -94,7 +94,8 @@ model Recipe {
   id          Int        @id @default(autoincrement())
   creatorId   Int
   title       String
-  imageUrl    String
+  imageUrls   String[]
+  ingredients Json
   minPrice    Int
   difficulty  Difficulty
   category    Category
@@ -190,6 +191,7 @@ model TradeOffer {
   proposerId     Int
   offeredCopyId  Int
   receivedCopyId Int?
+  message        String?          @db.VarChar(500)
   status         TradeOfferStatus @default(PENDING)
   createdAt      DateTime         @default(now())
   decidedAt      DateTime?
