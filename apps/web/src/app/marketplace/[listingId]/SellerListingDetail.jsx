@@ -127,50 +127,8 @@ export default function SellerListingDetail({ listing }) {
 
               <span className={styles.sellerNickname}>{seller.nickname}</span>
             </div>
-            {isRecipeDetailOpen ? (
-              <section className={styles.recipeDetailPanel}>
-                <div className={styles.recipeDetailHeader}>
-                  <h2
-                    id="recipe-detail-title"
-                    className={styles.recipeDetailTitle}
-                  >
-                    상세 레시피
-                  </h2>
 
-                  <button
-                    type="button"
-                    className={styles.recipeDetailCloseButton}
-                    onClick={() => setIsRecipeDetailOpen(false)}
-                    aria-label="상세 레시피 닫기"
-                  >
-                    <Image
-                      src="/icons/close.svg"
-                      alt=""
-                      width={24}
-                      height={24}
-                    />
-                  </button>
-                </div>
-
-                <div className={styles.recipeDetailBody}>
-                  <div className={styles.ingredientSection}>
-                    <p className={styles.ingredientText}>
-                      <span className={styles.ingredientLabel}>재료:</span>{' '}
-                      {recipe.ingredients
-                        .map(
-                          (ingredient) =>
-                            `${ingredient.name} ${ingredient.amount}`,
-                        )
-                        .join(', ')}
-                    </p>
-                  </div>
-
-                  <div className={styles.recipeContentSection}>
-                    <p className={styles.fullRecipeContent}>{recipe.content}</p>
-                  </div>
-                </div>
-              </section>
-            ) : (
+            <div className={styles.sellerInfoContent}>
               <div className={styles.recipePreview}>
                 <p className={styles.recipePreviewContent}>{recipe.content}</p>
 
@@ -182,52 +140,99 @@ export default function SellerListingDetail({ listing }) {
                   더보기
                 </button>
               </div>
-            )}
 
-            <div className={styles.priceInfo}>
-              <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>가격</span>
-                <span className={styles.infoValue}>{listing.price} P</span>
+              <div className={styles.priceInfo}>
+                <div className={styles.infoRow}>
+                  <span className={styles.infoLabel}>가격</span>
+                  <span className={styles.infoValue}>{listing.price} P</span>
+                </div>
+
+                <div className={styles.infoRow}>
+                  <span className={styles.infoLabel}>잔여</span>
+                  <span className={styles.infoValue}>
+                    {listing.remainingQuantity}
+                  </span>
+                </div>
               </div>
 
-              <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>잔여</span>
-                <span className={styles.infoValue}>
-                  {listing.remainingQuantity}
-                </span>
-              </div>
+              <section className={styles.sellerExchangeInfo}>
+                <h2 className={styles.sellerExchangeTitle}>
+                  <Image
+                    src="/icons/reset.svg"
+                    alt=""
+                    width={40}
+                    height={40}
+                    className={styles.sellerExchangeIcon}
+                  />
+                  교환 희망 정보
+                </h2>
+
+                <div className={styles.sellerWantedMeta}>
+                  <span
+                    className={`${styles.difficulty} ${wantedDifficultyClassName}`}
+                  >
+                    {wantedDifficultyOption?.label ?? listing.wantedDifficulty}
+                  </span>
+
+                  <span className={styles.metaDivider}>|</span>
+
+                  <span className={styles.category}>
+                    {wantedCategoryOption?.label ?? listing.wantedCategory}
+                  </span>
+                </div>
+
+                <p className={styles.sellerWantedDescription}>
+                  {listing.wantedDescription}
+                </p>
+              </section>
+
+              {isRecipeDetailOpen && (
+                <section className={styles.recipeDetailPanel}>
+                  <div className={styles.recipeDetailHeader}>
+                    <h2
+                      id="recipe-detail-title"
+                      className={styles.recipeDetailTitle}
+                    >
+                      상세 레시피
+                    </h2>
+
+                    <button
+                      type="button"
+                      className={styles.recipeDetailCloseButton}
+                      onClick={() => setIsRecipeDetailOpen(false)}
+                      aria-label="상세 레시피 닫기"
+                    >
+                      <Image
+                        src="/icons/close.svg"
+                        alt=""
+                        width={24}
+                        height={24}
+                      />
+                    </button>
+                  </div>
+
+                  <div className={styles.recipeDetailBody}>
+                    <div className={styles.ingredientSection}>
+                      <p className={styles.ingredientText}>
+                        <span className={styles.ingredientLabel}>재료:</span>{' '}
+                        {recipe.ingredients
+                          .map(
+                            (ingredient) =>
+                              `${ingredient.name} ${ingredient.amount}`,
+                          )
+                          .join(', ')}
+                      </p>
+                    </div>
+
+                    <div className={styles.recipeContentSection}>
+                      <p className={styles.fullRecipeContent}>
+                        {recipe.content}
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              )}
             </div>
-
-            <section className={styles.sellerExchangeInfo}>
-              <h2 className={styles.sellerExchangeTitle}>
-                <Image
-                  src="/icons/reset.svg"
-                  alt=""
-                  width={40}
-                  height={40}
-                  className={styles.sellerExchangeIcon}
-                />
-                교환 희망 정보
-              </h2>
-
-              <div className={styles.sellerWantedMeta}>
-                <span
-                  className={`${styles.difficulty} ${wantedDifficultyClassName}`}
-                >
-                  {wantedDifficultyOption?.label ?? listing.wantedDifficulty}
-                </span>
-
-                <span className={styles.metaDivider}>|</span>
-
-                <span className={styles.category}>
-                  {wantedCategoryOption?.label ?? listing.wantedCategory}
-                </span>
-              </div>
-
-              <p className={styles.sellerWantedDescription}>
-                {listing.wantedDescription}
-              </p>
-            </section>
 
             <div className={styles.sellerActions}>
               <Button type="button" className={styles.sellerActionButton}>
