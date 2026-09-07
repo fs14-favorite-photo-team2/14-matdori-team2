@@ -35,6 +35,19 @@ export default function CreateRecipePage() {
   function handleSubmit(event) {
     event.preventDefault()
     if (!isFormValid) return
+
+    const [thumbnailFile, ...otherImageFiles] = imageFiles
+
+    const payload = {
+      title,
+      difficulty,
+      category,
+      totalSupply: Number(totalSupply),
+      summary,
+      content,
+      thumbnailFile,
+      imageFiles: otherImageFiles,
+    }
   }
 
   return (
