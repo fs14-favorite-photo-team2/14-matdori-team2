@@ -15,7 +15,7 @@ const DIFFICULTY_CLASS_NAMES = {
 }
 
 export default function RecipeCard({
-  imageUrl,
+  thumbnailUrl,
   title,
   difficulty,
   category,
@@ -58,7 +58,7 @@ export default function RecipeCard({
           className={`${styles.recipeImage} ${
             isSoldOut ? styles.soldOutImage : ''
           }`}
-          src={imageUrl}
+          src={thumbnailUrl}
           alt={title}
           width={500}
           height={375}
