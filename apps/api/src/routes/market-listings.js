@@ -6,6 +6,7 @@ import {
   createMarketListingController,
   updateMarketListingController,
   withdrawMarketListingController,
+  deleteMarketListingController,
 } from '../controllers/market-controller.js'
 import { validateRequest } from '../middlewares/validate-request.js'
 import {
@@ -62,6 +63,12 @@ marketRouter.post(
 )
 
 // 판매글 삭제하기
+marketRouter.delete(
+  '/:listingId',
+  mockAuthenticate,
+  validateRequest(getMarketListingRequest),
+  deleteMarketListingController,
+)
 
 // 포인트로 레시피 사본
 

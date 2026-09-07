@@ -7,6 +7,7 @@ import {
   createMarketListingRecord,
   updateMarketListingById,
   withdrawMarketListingRecord,
+  deleteMarketListingRecord,
 } from '../repositories/market-repository.js'
 
 // DB 조회 결과를 API 응답 형태로 변경
@@ -224,4 +225,22 @@ export async function withdrawMarketListing(userId, listingId) {
   }
 
   await withdrawMarketListingRecord(listingId)
+}
+
+export async function deleteMarketListing(userId, listingId) {
+  const listing = await findMarketListingById(listingId)
+
+  if (!listing) {
+    throw AppError.from(ERROR_CODES.RESOURCE_NOT_FOUND)
+  }
+
+  if (listing.seller.id !== userId) {
+    throw AppError.from(ERROR_CODES.FORBIDDEN)
+  }
+
+  if (listing.status === 'ON_SALE') {
+    throw AppError.from(ERROR_CODES.CONFLICT)
+  }
+
+  await deleteMarketListingRecord(listingId)
 }

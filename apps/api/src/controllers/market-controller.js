@@ -4,6 +4,7 @@ import {
   createMarketListing,
   updateMarketListing,
   withdrawMarketListing,
+  deleteMarketListing,
 } from '../services/market-service.js'
 import { sendSuccess } from '../http/response.js'
 
@@ -66,6 +67,20 @@ export async function updateMarketListingController(request, response, next) {
 export async function withdrawMarketListingController(request, response, next) {
   try {
     await withdrawMarketListing(
+      request.user.id,
+      request.validated.params.listingId,
+    )
+
+    return response.status(204).send()
+  } catch (error) {
+    return next(error)
+  }
+}
+
+// 판매글 삭제(마이키친)
+export async function deleteMarketListingController(request, response, next) {
+  try {
+    await deleteMarketListing(
       request.user.id,
       request.validated.params.listingId,
     )

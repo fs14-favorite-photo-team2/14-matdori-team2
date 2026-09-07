@@ -141,6 +141,7 @@ export function findMarketListingById(listingId) {
   return prisma.marketListing.findUnique({
     where: {
       id: listingId,
+      deletedAt: null,
     },
     select: marketListingSelect,
   })
@@ -256,5 +257,17 @@ export function withdrawMarketListingRecord(listingId) {
         state: 'OWNED',
       },
     })
+  })
+}
+
+// 판매글 삭제 (soft):데이터는 남기기
+export function deleteMarketListingRecord(listingId) {
+  return prisma.marketListing.update({
+    where: {
+      id: listingId,
+    },
+    data: {
+      deletedAt: new Date(),
+    },
   })
 }
