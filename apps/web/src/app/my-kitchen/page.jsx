@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import Button from '@/components/common/Button/Button'
 import SearchBar from '@/components/common/SearchBar/SearchBar'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
@@ -63,12 +65,28 @@ function createMockRecipeCopies(count) {
 }
 // ---------------------------------------------------------
 
+function getFilteredCopies(copies, keyword, targetFilters) {
+  return copies.filter((c) => {
+    const matchesKeyword = c.recipe.title.includes(keyword.trim())
+    const matchesDifficulty =
+      targetFilters.difficulty === '' ||
+      c.recipe.difficulty === targetFilters.difficulty
+    const matchesCategory =
+      targetFilters.category === '' ||
+      c.recipe.category === targetFilters.category
+    return matchesKeyword && matchesDifficulty && matchesCategory
+  })
+}
+
 export default function MyKitchenPage() {
-  const nickname = '유디' // TODO: GET /api/users/me
+  const router = useRouter()
+  const nickname = '유디'
 
   const [copies] = useState(() => createMockRecipeCopies(24))
   const [keyword, setKeyword] = useState('')
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
+  const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS)
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [prevFilterKey, setPrevFilterKey] = useState('')
 
@@ -82,16 +100,15 @@ export default function MyKitchenPage() {
     }))
   }, [copies])
 
-  const filteredCopies = useMemo(() => {
-    return copies.filter((c) => {
-      const matchesKeyword = c.recipe.title.includes(keyword.trim())
-      const matchesDifficulty =
-        filters.difficulty === '' || c.recipe.difficulty === filters.difficulty
-      const matchesCategory =
-        filters.category === '' || c.recipe.category === filters.category
-      return matchesKeyword && matchesDifficulty && matchesCategory
-    })
-  }, [copies, keyword, filters])
+  const filteredCopies = useMemo(
+    () => getFilteredCopies(copies, keyword, filters),
+    [copies, keyword, filters],
+  )
+
+  const draftFilteredCopies = useMemo(
+    () => getFilteredCopies(copies, keyword, draftFilters),
+    [copies, keyword, draftFilters],
+  )
 
   const visibleCopies = filteredCopies.slice(0, visibleCount)
   const hasNext = visibleCount < filteredCopies.length
@@ -123,11 +140,50 @@ export default function MyKitchenPage() {
     setFilters((prev) => ({ ...prev, [key]: value }))
   }
 
+  function handleDraftFilterChange(key, value) {
+    setDraftFilters((prev) => ({
+      ...prev,
+      [key]: prev[key] === value ? '' : value,
+    }))
+  }
+
+  function handleOpenMobile() {
+    setDraftFilters(filters)
+    setIsMobileOpen(true)
+  }
+
+  function handleCloseMobile() {
+    setIsMobileOpen(false)
+  }
+
+  function handleReset() {
+    setDraftFilters(DEFAULT_FILTERS)
+  }
+
+  function handleApply(nextFilters) {
+    setFilters(nextFilters)
+    setIsMobileOpen(false)
+  }
+
+  function handleBack() {
+    router.back()
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
+        <button
+          type="button"
+          className={styles.backButton}
+          onClick={handleBack}
+          aria-label="뒤로가기"
+        >
+          <Image src="/icons/left.svg" alt="" width={24} height={24} />
+        </button>
+
         <h1 className={`${styles.pageTitle} font-baskin-robbins`}>마이 키친</h1>
-        <Link href="/my-kitchen/create">
+
+        <Link href="/my-kitchen/create" className={styles.mobileCreateButton}>
           <Button variant="primary">레시피 생성하기</Button>
         </Link>
       </div>
@@ -161,11 +217,21 @@ export default function MyKitchenPage() {
           />
         </div>
 
-        <RecipeFilter
-          filterGroups={MY_KITCHEN_FILTER_GROUPS}
-          filters={filters}
-          onFilterChange={handleFilterChange}
-        />
+        <div className={styles.filterTrigger}>
+          <RecipeFilter
+            filterGroups={MY_KITCHEN_FILTER_GROUPS}
+            filters={filters}
+            draftFilters={draftFilters}
+            isMobileOpen={isMobileOpen}
+            resultCount={draftFilteredCopies.length}
+            onFilterChange={handleFilterChange}
+            onDraftFilterChange={handleDraftFilterChange}
+            onOpenMobile={handleOpenMobile}
+            onCloseMobile={handleCloseMobile}
+            onReset={handleReset}
+            onApply={handleApply}
+          />
+        </div>
       </div>
 
       {visibleCopies.length === 0 ? (
