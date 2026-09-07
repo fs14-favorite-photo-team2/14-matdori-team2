@@ -35,7 +35,6 @@ const prisma = new PrismaClient({ adapter })
 // 생성 수
 // - User: 100
 // - Recipe: 100
-// - RecipeImage: 550
 // - RecipeCopy: 300
 // - MarketListing: 100
 // - Purchase: 100
@@ -267,7 +266,6 @@ async function clearDatabase() {
   await prisma.purchase.deleteMany()
   await prisma.recipeCopy.deleteMany()
   await prisma.marketListing.deleteMany()
-  await prisma.recipeImage.deleteMany()
   await prisma.recipe.deleteMany()
   await prisma.user.deleteMany()
 }
@@ -322,6 +320,10 @@ async function seedRecipes(users) {
       data: {
         creatorId: creator.id,
         title,
+        imageUrls: [`https://picsum.photos/seed/recipe-${number}/800/600`],
+        ingredients: [
+          { name: '예시 재료', amount: '적당량', isHighlight: false },
+        ],
         minPrice: 1000 + (i % 10) * 500,
         difficulty,
         category,
@@ -877,7 +879,6 @@ async function printCounts() {
   const [
     users,
     recipes,
-    recipeImages,
     copies,
     listings,
     purchases,
@@ -886,7 +887,6 @@ async function printCounts() {
   ] = await Promise.all([
     prisma.user.count(),
     prisma.recipe.count(),
-    prisma.recipeImage.count(),
     prisma.recipeCopy.count(),
     prisma.marketListing.count(),
     prisma.purchase.count(),
@@ -899,7 +899,6 @@ async function printCounts() {
   console.log('============================================')
   console.log(`User          : ${users}`)
   console.log(`Recipe        : ${recipes}`)
-  console.log(`RecipeImage   : ${recipeImages}`)
   console.log(`RecipeCopy    : ${copies}`)
   console.log(`MarketListing : ${listings}`)
   console.log(`Purchase      : ${purchases}`)
