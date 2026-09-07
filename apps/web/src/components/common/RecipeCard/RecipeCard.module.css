@@ -1,0 +1,202 @@
+.card {
+  width: 100%;
+  padding: 32px;
+  border: 1px solid var(--color-gray-400);
+  background-color: var(--color-gray-500);
+}
+
+.imageWrapper {
+  width: 100%;
+  position: relative;
+  aspect-ratio: 4 / 3; /* 이미지 비율 */
+  overflow: hidden;
+}
+
+.recipeImage {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.statusBadge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
+  padding: 4px 8px;
+  background-color: rgba(15, 15, 15, 0.6);
+  color: var(--color-white);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-regular);
+}
+
+.exchangePendingBadge {
+  color: var(--color-main);
+}
+
+.soldOutBadge {
+  width: 48%;
+  max-width: 160px;
+  height: auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  transform: translate(-50%, -50%);
+}
+
+.soldOutImage {
+  filter: brightness(0.45); /* 솔드아웃 레시피 이미지 어둡게 처리 */
+}
+
+.content {
+  padding-top: 20px;
+}
+
+.title {
+  color: var(--color-white);
+  font-size: var(--font-size-20);
+  font-weight: var(--font-weight-bold);
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.recipeMeta {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-regular);
+  white-space: nowrap;
+}
+
+.difficultyEasy {
+  color: var(--color-main);
+}
+
+.difficultyNormal {
+  color: var(--color-blue);
+}
+
+.difficultyHard {
+  color: var(--color-purple);
+}
+
+.difficultyMaster {
+  color: var(--color-pink);
+}
+
+.metaDivider {
+  margin: 0 8px;
+  color: var(--color-gray-400);
+}
+
+.category {
+  color: var(--color-gray-300);
+}
+
+.sellerNickname {
+  flex-shrink: 0;
+  color: var(--color-white);
+  font-size: var(--font-size-14);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.divider {
+  height: 1px;
+  margin: 18px 0;
+  border: 0;
+  background-color: var(--color-gray-400);
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detailRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.detailLabel {
+  color: var(--color-gray-300);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-regular);
+}
+
+.detailValue {
+  color: var(--color-white);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-regular);
+}
+
+.brandLogo {
+  width: 135px;
+  height: auto;
+  display: block;
+  margin: 48px auto 0;
+}
+
+/* 태블릿 */
+@media (max-width: 1023px) {
+  .card {
+    padding: 20px;
+  }
+}
+
+/* 모바일 */
+@media (max-width: 743px) {
+  .card {
+    padding: 10px;
+  }
+
+  .content {
+    padding-top: 10px;
+  }
+
+  .title {
+    font-size: var(--font-size-14);
+  }
+
+  .metaRow {
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  .recipeMeta,
+  .sellerNickname {
+    font-size: var(--font-size-10);
+  }
+
+  .metaDivider {
+    margin: 0 4px;
+  }
+
+  .divider {
+    margin: 10px 0;
+  }
+
+  .details {
+    gap: 4px;
+  }
+
+  .detailLabel,
+  .detailValue {
+    font-size: var(--font-size-10);
+  }
+
+  .brandLogo {
+    display: none;
+  }
+}

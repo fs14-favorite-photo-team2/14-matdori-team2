@@ -1,6 +1,6 @@
 export function sendSuccess(response, data, options = {}) {
   const { meta, status = 200 } = options
-  const body = { success: true, data }
+  const body = { success: true, data: data ?? null }
 
   if (meta !== undefined) {
     body.meta = meta
