@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import styles from './ImageUploader.module.css'
 
 const MAX_IMAGES = 10
-const OUTPUT_SIZE = 400
+const OUTPUT_WIDTH = 360
+const OUTPUT_HEIGHT = 270
 const MIN_ZOOM = 1
 const MAX_ZOOM = 3
 const ZOOM_STEP = 0.01
@@ -116,22 +117,22 @@ export default function ImageUploader({ onChange }) {
     if (!img || !canvas) return
 
     const ctx = canvas.getContext('2d')
-    canvas.width = OUTPUT_SIZE
-    canvas.height = OUTPUT_SIZE
+    canvas.width = OUTPUT_WIDTH
+    canvas.height = OUTPUT_HEIGHT
 
     const { naturalWidth, naturalHeight } = img
     const coverScale = Math.max(
-      OUTPUT_SIZE / naturalWidth,
-      OUTPUT_SIZE / naturalHeight,
+      OUTPUT_WIDTH / naturalWidth,
+      OUTPUT_HEIGHT / naturalHeight,
     )
     const scale = coverScale * activeImage.zoom
 
     const drawWidth = naturalWidth * scale
     const drawHeight = naturalHeight * scale
-    const offsetX = (OUTPUT_SIZE - drawWidth) / 2
-    const offsetY = (OUTPUT_SIZE - drawHeight) / 2
+    const offsetX = (OUTPUT_WIDTH - drawWidth) / 2
+    const offsetY = (OUTPUT_HEIGHT - drawHeight) / 2
 
-    ctx.clearRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE)
+    ctx.clearRect(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT)
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight)
 
     canvas.toBlob(
