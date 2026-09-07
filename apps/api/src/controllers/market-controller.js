@@ -2,7 +2,7 @@ import {
   createMarketListing,
   getMarketListings,
 } from '../services/market-service.js'
-import { sendSuccess } from '../utils/response.js'
+import { sendSuccess } from '../http/response.js'
 
 // 서비스로 요청 보내기, 나중에 응답 받기
 
