@@ -1,9 +1,14 @@
 'use client'
 
 import Button from '@/components/common/Button/Button'
+import Modal from '@/components/common/Modal/Modal'
+import { signup } from '@/features/auth/api'
 import AuthInput from '@/features/auth/components/AuthInput/AuthInput'
+import { useMutation } from '@tanstack/react-query'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import styles from './page.module.css'
 
@@ -18,15 +23,79 @@ const PASSWORD_MIN_LENGTH = 8
 const PASSWORD_MAX_LENGTH = 24
 
 export default function SignupPage() {
+  const router = useRouter()
+
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
+
   const {
     register,
     handleSubmit,
     getValues,
     trigger,
+    setError,
     formState: { errors, isValid, touchedFields, isSubmitted },
   } = useForm({ mode: 'onChange' })
 
-  function onSubmit() {}
+  const signupMutation = useMutation({
+    mutationFn: signup,
+    onSuccess: () => {
+      router.replace('/marketplace')
+    },
+    onError: (error) => {
+      const serverError = error.response?.data?.error
+
+      if (serverError?.code === 'EMAIL_ALREADY_EXISTS') {
+        setError('email', {
+          type: 'server',
+          message: serverError.message,
+        })
+
+        return
+      }
+
+      if (serverError?.code === 'NICKNAME_ALREADY_EXISTS') {
+        setError('nickname', {
+          type: 'server',
+          message: serverError.message,
+        })
+
+        return
+      }
+
+      if (
+        serverError?.code === 'VALIDATION_ERROR' &&
+        Array.isArray(serverError.details)
+      ) {
+        const formFields = [
+          'email',
+          'nickname',
+          'password',
+          'passwordConfirmation',
+        ]
+
+        let hasFieldError = false
+
+        serverError.details.forEach(({ field, reason }) => {
+          if (formFields.includes(field)) {
+            setError(field, {
+              type: 'server',
+              message: reason,
+            })
+
+            hasFieldError = true
+          }
+        })
+
+        if (hasFieldError) return
+      }
+
+      setIsErrorModalOpen(true)
+    },
+  })
+
+  function onSubmit(data) {
+    signupMutation.mutate(data)
+  }
 
   return (
     <main className={styles.page}>
@@ -144,9 +213,9 @@ export default function SignupPage() {
           <Button
             type="submit"
             className={styles.signupButton}
-            disabled={!isValid}
+            disabled={!isValid || signupMutation.isPending}
           >
-            가입하기
+            {signupMutation.isPending ? '가입 중...' : '가입하기'}
           </Button>
         </form>
 
@@ -162,6 +231,14 @@ export default function SignupPage() {
           </Link>
         </p>
       </div>
+
+      <Modal
+        isOpen={isErrorModalOpen}
+        onClose={() => setIsErrorModalOpen(false)}
+        title={'회원가입 실패'}
+      >
+        <p>일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.</p>
+      </Modal>
     </main>
   )
 }
