@@ -15,7 +15,9 @@ import {
 } from '@/constants/RecipeOptions'
 import styles from './page.module.css'
 
-const PAGE_SIZE = 9
+const PAGE_SIZE_DESKTOP = 12
+const PAGE_SIZE_MOBILE = 8
+const DESKTOP_BREAKPOINT = 1023
 
 const DIFFICULTY_TONE_VARS = {
   easy: 'var(--color-main)',
@@ -78,19 +80,37 @@ function getFilteredCopies(copies, keyword, targetFilters) {
   })
 }
 
+function getInitialPageSize() {
+  if (typeof window === 'undefined') return PAGE_SIZE_DESKTOP
+  return window.innerWidth <= DESKTOP_BREAKPOINT
+    ? PAGE_SIZE_MOBILE
+    : PAGE_SIZE_DESKTOP
+}
+
 export default function MyKitchenPage() {
   const router = useRouter()
   const nickname = '유디'
 
+  const [pageSize, setPageSize] = useState(getInitialPageSize)
   const [copies] = useState(() => createMockRecipeCopies(24))
   const [keyword, setKeyword] = useState('')
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [visibleCount, setVisibleCount] = useState(getInitialPageSize)
   const [prevFilterKey, setPrevFilterKey] = useState('')
 
   const sentinelRef = useRef(null)
+
+  useEffect(() => {
+    function handleResize() {
+      const isMobile = window.innerWidth <= DESKTOP_BREAKPOINT
+      setPageSize(isMobile ? PAGE_SIZE_MOBILE : PAGE_SIZE_DESKTOP)
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const difficultyCounts = useMemo(() => {
     return DIFFICULTY_OPTIONS.map((option) => ({
@@ -116,7 +136,7 @@ export default function MyKitchenPage() {
   const filterKey = `${keyword}|${filters.difficulty}|${filters.category}`
   if (filterKey !== prevFilterKey) {
     setPrevFilterKey(filterKey)
-    setVisibleCount(PAGE_SIZE)
+    setVisibleCount(pageSize)
   }
 
   useEffect(() => {
@@ -126,7 +146,7 @@ export default function MyKitchenPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => prev + PAGE_SIZE)
+          setVisibleCount((prev) => prev + pageSize)
         }
       },
       { rootMargin: '200px' },
@@ -134,7 +154,7 @@ export default function MyKitchenPage() {
 
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [hasNext])
+  }, [hasNext, pageSize])
 
   function handleFilterChange(key, value) {
     setFilters((prev) => ({ ...prev, [key]: value }))
