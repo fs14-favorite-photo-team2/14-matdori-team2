@@ -33,7 +33,7 @@ export default function ImageUploader({ onChange }) {
     return () => {
       images.forEach((img) => URL.revokeObjectURL(img.previewUrl))
     }
-  }, [])
+  }, [images])
 
   function validateFile(file) {
     if (!file.type.startsWith('image/')) {
