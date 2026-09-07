@@ -837,22 +837,19 @@ components:
       in: cookie
       name: session
       description: >-
-        불투명 세션 토큰을 담은 HttpOnly 쿠키입니다. 브라우저가 자동으로 전송하므로
+        서명된 세션 ID를 담은 HttpOnly 쿠키입니다. 브라우저가 자동으로 전송하므로
         클라이언트는 요청에 `credentials: 'include'`만 지정하면 됩니다.
 
-
-        `SameSite`와 `Secure` 속성은 배포 환경에 따라 달라집니다. 로컬 개발에서는
-        `SameSite=Lax`를 사용하고, 웹과 API를 서로 다른 도메인에 배포한 경우에는
-        `SameSite=None; Secure`를 사용합니다.
-
+        로컬 개발에서는 `SameSite=Lax`를 사용합니다. 프로덕션에서는
+        `SameSite=None; Secure`를 사용하므로 HTTPS 연결에서만 설정되고 전송됩니다.
 
         세션 만료는 마지막 활동 기준 7일입니다. 인증된 요청이 들어오면 만료 시각이
-        연장되므로, 인증이 필요한 응답에는 갱신된 `Set-Cookie` 헤더가 포함될 수 있습니다.
+        연장되므로 인증이 필요한 응답에는 갱신된 `Set-Cookie` 헤더가 포함될 수 있습니다.
   headers:
     SessionCookie:
       description: >-
         로그인 세션을 생성하거나 만료 시각을 연장하는 HttpOnly 쿠키입니다.
-        `Secure`와 `SameSite` 값은 배포 환경에 따라 달라집니다.
+        로컬에서는 `SameSite=Lax`, 프로덕션에서는 `Secure`와 `SameSite=None`을 사용합니다.
       schema:
         type: string
         example: 'session=opaque-token; Path=/; Expires=Wed, 10 Sep 2026 05:00:00 GMT; HttpOnly; Secure; SameSite=None'
