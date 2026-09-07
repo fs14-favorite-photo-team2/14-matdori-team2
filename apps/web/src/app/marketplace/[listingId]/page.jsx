@@ -1,7 +1,11 @@
 import Image from 'next/image'
 import Button from '@/components/common/Button/Button'
 import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
-import { MOCK_LISTING_DETAIL } from '@/features/marketplace/mockListingDetail'
+import {
+  MOCK_CURRENT_USER,
+  MOCK_LISTING_DETAIL,
+} from '@/features/marketplace/mockListingDetail'
+import SellerListingDetail from './SellerListingDetail'
 import styles from './page.module.css'
 
 const DIFFICULTY_CLASS_NAMES = {
@@ -13,6 +17,7 @@ const DIFFICULTY_CLASS_NAMES = {
 
 export default function MarketplaceListingPage() {
   const listing = MOCK_LISTING_DETAIL
+  const isSeller = MOCK_CURRENT_USER.id === listing.sellerId
   const { recipe, seller, myTradeOffers } = listing
   const thumbnailUrl = recipe.imageUrls[0]
   const difficultyOption = DIFFICULTY_OPTIONS.find(
@@ -39,6 +44,10 @@ export default function MarketplaceListingPage() {
 
   const wantedDifficultyClassName =
     DIFFICULTY_CLASS_NAMES[wantedDifficultyOption?.tone] ?? ''
+
+  if (isSeller) {
+    return <SellerListingDetail listing={listing} />
+  }
 
   return (
     <main className={styles.page}>
