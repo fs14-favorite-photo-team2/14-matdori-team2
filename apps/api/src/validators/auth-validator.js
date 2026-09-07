@@ -66,3 +66,9 @@ export const signupRequest = object({
   params: object({}),
   query: object({}),
 })
+
+export const loginRequest = object({
+  body: object({ email, password }),
+  params: object({}),
+  query: object({}),
+})
