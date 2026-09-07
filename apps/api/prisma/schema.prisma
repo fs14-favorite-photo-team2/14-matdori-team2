@@ -81,6 +81,15 @@ model User {
   actedNotifications Notification[]  @relation("NotificationActor")
 }
 
+model ExpressSession {
+  sid    String   @id @db.VarChar
+  sess   Json     @db.Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire])
+  @@map("session")
+}
+
 model Recipe {
   id          Int        @id @default(autoincrement())
   creatorId   Int
