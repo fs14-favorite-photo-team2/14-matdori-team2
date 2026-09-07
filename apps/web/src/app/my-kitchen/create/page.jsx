@@ -9,6 +9,21 @@ import styles from './page.module.css'
 
 const MAX_SUPPLY = 10
 
+let nextIngredientId = 0
+function createIngredientId() {
+  nextIngredientId += 1
+  return `ingredient-${nextIngredientId}`
+}
+
+function createEmptyIngredient() {
+  return {
+    id: createIngredientId(),
+    name: '',
+    amount: '',
+    isHighlight: false,
+  }
+}
+
 export default function CreateRecipePage() {
   const [title, setTitle] = useState('')
   const [difficulty, setDifficulty] = useState('')
@@ -17,11 +32,25 @@ export default function CreateRecipePage() {
   const [summary, setSummary] = useState('')
   const [content, setContent] = useState('')
   const [imageFiles, setImageFiles] = useState([])
+  const [ingredients, setIngredients] = useState(() =>
+    Array.from({ length: 4 }, () => createEmptyIngredient()),
+  )
 
   const isSupplyValid =
     totalSupply !== '' &&
     Number(totalSupply) > 0 &&
     Number(totalSupply) <= MAX_SUPPLY
+
+  function isIngredientListValid(list) {
+    return list.every(
+      (ingredient) =>
+        ingredient.name.trim() !== '' && ingredient.amount.trim() !== '',
+    )
+  }
+
+  function hasHighlightedIngredient(list) {
+    return list.some((ingredient) => ingredient.isHighlight)
+  }
 
   const isFormValid =
     title.trim() !== '' &&
@@ -30,7 +59,38 @@ export default function CreateRecipePage() {
     isSupplyValid &&
     imageFiles.length > 0 &&
     summary.trim() !== '' &&
-    content.trim() !== ''
+    content.trim() !== '' &&
+    isIngredientListValid(ingredients) &&
+    hasHighlightedIngredient(ingredients)
+
+  function handleIngredientChange(id, field, value) {
+    setIngredients((prev) =>
+      prev.map((ingredient) =>
+        ingredient.id === id ? { ...ingredient, [field]: value } : ingredient,
+      ),
+    )
+  }
+
+  function handleAddIngredient() {
+    setIngredients((prev) => [...prev, createEmptyIngredient()])
+  }
+
+  function handleRemoveIngredient(id) {
+    setIngredients((prev) => {
+      if (prev.length === 1) return prev
+      return prev.filter((ingredient) => ingredient.id !== id)
+    })
+  }
+
+  function handleToggleHighlight(id) {
+    setIngredients((prev) =>
+      prev.map((ingredient) =>
+        ingredient.id === id
+          ? { ...ingredient, isHighlight: !ingredient.isHighlight }
+          : ingredient,
+      ),
+    )
+  }
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -43,6 +103,11 @@ export default function CreateRecipePage() {
       difficulty,
       category,
       totalSupply: Number(totalSupply),
+      ingredients: ingredients.map(({ name, amount, isHighlight }) => ({
+        name,
+        amount,
+        isHighlight,
+      })),
       summary,
       content,
       thumbnailFile,
@@ -117,6 +182,67 @@ export default function CreateRecipePage() {
         <div className={styles.field}>
           <span className={styles.label}>사진 업로드</span>
           <ImageUploader onChange={setImageFiles} />
+        </div>
+
+        <div className={styles.field}>
+          {ingredients.map((ingredient) => (
+            <div key={ingredient.id} className={styles.ingredientRow}>
+              <div className={styles.ingredientRowGrid}>
+                <button
+                  type="button"
+                  className={`${styles.highlightButton} ${styles.areaHighlight}`}
+                  onClick={() => handleToggleHighlight(ingredient.id)}
+                >
+                  재료명 {ingredient.isHighlight ? '⭐' : '☆'}
+                </button>
+                <span className={`${styles.label} ${styles.areaQtyLabel}`}>
+                  수량
+                </span>
+
+                <input
+                  className={`${styles.input} ${styles.areaNameInput}`}
+                  value={ingredient.name}
+                  onChange={(e) =>
+                    handleIngredientChange(
+                      ingredient.id,
+                      'name',
+                      e.target.value,
+                    )
+                  }
+                  placeholder="재료를 입력해 주세요"
+                />
+                <input
+                  className={`${styles.input} ${styles.areaQtyInput}`}
+                  value={ingredient.amount}
+                  onChange={(e) =>
+                    handleIngredientChange(
+                      ingredient.id,
+                      'amount',
+                      e.target.value,
+                    )
+                  }
+                  placeholder="수량을 입력해 주세요"
+                />
+              </div>
+
+              <button
+                type="button"
+                className={styles.removeIngredientButton}
+                onClick={() => handleRemoveIngredient(ingredient.id)}
+                disabled={ingredients.length === 1}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            className={styles.addIngredientButton}
+            onClick={handleAddIngredient}
+          >
+            +
+          </button>
         </div>
 
         <div className={styles.field}>
