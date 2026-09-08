@@ -454,6 +454,9 @@ paths:
         content:
           multipart/form-data:
             schema: { $ref: '#/components/schemas/CreateRecipeRequest' }
+            encoding:
+              ingredients:
+                contentType: application/json
       responses:
         '201':
           description: 레시피가 생성됨
@@ -485,7 +488,10 @@ paths:
     get:
       tags: [레시피]
       summary: 레시피 상세 정보 조회
-      description: 인증된 사용자가 해당 레시피의 사본을 소유하거나 레시피를 생성한 경우에만 상세 정보와 전체 조리 내용을 반환합니다.
+      description: >-
+        인증된 사용자가 해당 레시피의 사본을 소유하거나 레시피를 생성한 경우에만
+        상세 정보와 전체 재료 목록, 전체 조리 내용을 반환합니다. 권한이 없는 사용자는
+        마켓플레이스 목록의 RecipeSummary에서 강조 재료만 확인할 수 있습니다.
       operationId: getRecipe
       parameters:
         - $ref: '#/components/parameters/RecipeId'
@@ -515,6 +521,9 @@ paths:
         content:
           multipart/form-data:
             schema: { $ref: '#/components/schemas/UpdateRecipeRequest' }
+            encoding:
+              ingredients:
+                contentType: application/json
       responses:
         '200':
           description: 수정된 레시피 정보
@@ -688,6 +697,10 @@ paths:
                     description: 교환을 제안할 레시피 사본 ID,
                     example: 84,
                   }
+                message:
+                  type: string
+                  maxLength: 500
+                  description: 선택 입력하는 교환 제시글. 생략하면 null로 저장합니다.
       responses:
         '201':
           description: 교환 제안이 생성되고 제안한 사본이 예약됨
@@ -1199,20 +1212,47 @@ components:
         ]
     RecipeSummary:
       type: object
-      required: [id, title, imageUrl, difficulty, category, summary, minPrice]
+      required:
+        - id
+        - title
+        - imageUrl
+        - difficulty
+        - category
+        - summary
+        - minPrice
+        - ingredients
       properties:
         id: { type: integer, minimum: 1, description: 레시피 ID, example: 42 }
         title: { type: string, minLength: 1, maxLength: 100 }
-        imageUrl: { type: string, format: uri }
+        imageUrl:
+          {
+            type: string,
+            format: uri,
+            description: 저장된 imageUrls의 첫 번째 URL을 반환하는 대표 이미지입니다.,
+          }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         category: { $ref: '#/components/schemas/Category' }
         summary: { type: string, minLength: 1, maxLength: 1000 }
         minPrice: { type: integer, minimum: 0, maximum: 100000000 }
+        ingredients:
+          type: array
+          description: >-
+            isHighlight가 true인 재료만 반환합니다. 전체 재료 목록은 레시피 사본을
+            소유하거나 생성한 사용자에게 RecipeDetail로만 제공하므로, 로그인하지 않은
+            사용자와 사본을 소유하지 않은 사용자는 강조 재료만 확인할 수 있습니다.
+            강조한 재료가 없거나 마이그레이션 이전 레시피는 빈 배열일 수 있습니다.
+          items:
+            $ref: '#/components/schemas/Ingredient'
     RecipeDetail:
       allOf:
         - $ref: '#/components/schemas/RecipeSummary'
         - type: object
-          required: [creator, totalSupply, createdAt]
+          required:
+            - creator
+            - totalSupply
+            - createdAt
+            - imageUrls
+            - ingredients
           properties:
             creator: { $ref: '#/components/schemas/PublicUser' }
             totalSupply: { type: integer, minimum: 1, maximum: 10 }
@@ -1220,6 +1260,22 @@ components:
               type: string
               description: 현재 사용자가 조리 내용을 볼 권한이 있는 경우에만 포함됩니다.
             createdAt: { type: string, format: date-time }
+            imageUrls:
+              type: array
+              minItems: 1
+              maxItems: 10
+              description: 업로드 순서대로 반환하는 이미지 URL 목록. 첫 URL은 imageUrl과 같습니다.
+              items:
+                type: string
+                format: uri
+            ingredients:
+              type: array
+              description: >-
+                레시피 사본을 소유하거나 생성한 사용자에게 제공하는 전체 재료 목록으로,
+                강조 재료만 반환하는 RecipeSummary의 규칙을 대체합니다.
+                마이그레이션 이전 레시피는 재료를 보완하기 전까지 빈 배열일 수 있습니다.
+              items:
+                $ref: '#/components/schemas/Ingredient'
     PublicUser:
       type: object
       required: [id, nickname]
@@ -1236,37 +1292,54 @@ components:
       type: object
       additionalProperties: false
       required:
-        [
-          title,
-          image,
-          content,
-          minPrice,
-          difficulty,
-          totalSupply,
-          category,
-          summary,
-        ]
+        - title
+        - images
+        - content
+        - minPrice
+        - difficulty
+        - totalSupply
+        - category
+        - summary
+        - ingredients
       properties:
         title: { type: string, minLength: 1, maxLength: 100 }
-        image: { type: string, format: binary }
         content: { type: string, minLength: 1, maxLength: 20000 }
         minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         totalSupply: { type: integer, minimum: 1, maximum: 10 }
         category: { $ref: '#/components/schemas/Category' }
         summary: { type: string, minLength: 1, maxLength: 1000 }
+        images:
+          type: array
+          minItems: 1
+          maxItems: 10
+          description: 이미지 파일 1~10개. images 필드를 반복하여 전송하며 첫 번째 파일이 대표 이미지입니다. 수정 시 생략하면 기존 이미지를 유지하고, 전송하면 전체 이미지 목록을 교체합니다.
+          items:
+            type: string
+            format: binary
+        ingredients:
+          $ref: '#/components/schemas/Ingredients'
     UpdateRecipeRequest:
       type: object
       additionalProperties: false
       minProperties: 1
       properties:
         title: { type: string, minLength: 1, maxLength: 100 }
-        image: { type: string, format: binary }
         content: { type: string, minLength: 1, maxLength: 20000 }
         minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         category: { $ref: '#/components/schemas/Category' }
         summary: { type: string, minLength: 1, maxLength: 1000 }
+        images:
+          type: array
+          minItems: 1
+          maxItems: 10
+          description: 이미지 파일 1~10개. images 필드를 반복하여 전송하며 첫 번째 파일이 대표 이미지입니다. 수정 시 생략하면 기존 이미지를 유지하고, 전송하면 전체 이미지 목록을 교체합니다.
+          items:
+            type: string
+            format: binary
+        ingredients:
+          $ref: '#/components/schemas/Ingredients'
     RecipeCopy:
       type: object
       required: [id, recipe, state, everPurchased, createdAt, updatedAt]
@@ -1404,7 +1477,14 @@ components:
               }
     TradeOffer:
       type: object
-      required: [id, listingId, proposer, offeredCopy, status, createdAt]
+      required:
+        - id
+        - listingId
+        - proposer
+        - offeredCopy
+        - status
+        - createdAt
+        - message
       properties:
         id:
           { type: integer, minimum: 1, description: 교환 제안 ID, example: 205 }
@@ -1422,6 +1502,12 @@ components:
         status: { $ref: '#/components/schemas/TradeOfferStatus' }
         createdAt: { type: string, format: date-time }
         decidedAt: { type: [string, 'null'], format: date-time }
+        message:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+          description: 교환 제시글. 입력하지 않은 경우 null입니다.
     Notification:
       type: object
       required: [id, type, message, isRead, createdAt]
@@ -1555,6 +1641,33 @@ components:
         data:
           { type: array, items: { $ref: '#/components/schemas/Notification' } }
         meta: { $ref: '#/components/schemas/CursorMeta' }
+    Ingredient:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - amount
+      properties:
+        name:
+          type: string
+          minLength: 1
+          pattern: \S
+          example: 트러플
+        amount:
+          type: string
+          minLength: 1
+          pattern: \S
+          description: 단위를 포함한 분량 또는 약간, 취향껏 등의 표현
+          example: 10g
+        isHighlight:
+          type: boolean
+          default: false
+    Ingredients:
+      type: array
+      description: 재료를 최소 1개 입력합니다. 수정 시 생략하면 유지하고 전송하면 전체 목록을 교체합니다. isHighlight 생략값은 false이며 강조할 재료 개수에는 제한이 없습니다.
+      items:
+        $ref: '#/components/schemas/Ingredient'
+      minItems: 1
 
 security:
   - sessionCookie: []
