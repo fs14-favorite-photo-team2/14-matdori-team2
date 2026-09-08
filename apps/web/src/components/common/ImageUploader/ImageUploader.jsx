@@ -90,6 +90,17 @@ export default function ImageUploader({ onChange }) {
     setActiveId(id)
   }
 
+  function handleSetRepresentative(id) {
+    if (images[0]?.id === id) return
+
+    const target = images.find((img) => img.id === id)
+    if (!target) return
+
+    const updated = [target, ...images.filter((img) => img.id !== id)]
+    setImages(updated)
+    emitChange(updated)
+  }
+
   function handleRemove(id) {
     const target = images.find((img) => img.id === id)
     if (target) URL.revokeObjectURL(target.previewUrl)
@@ -226,7 +237,7 @@ export default function ImageUploader({ onChange }) {
 
       {images.length > 0 && (
         <div className={styles.thumbnailRow}>
-          {images.map((img) => (
+          {images.map((img, index) => (
             <div
               key={img.id}
               className={`${styles.thumbnail} ${img.id === activeId ? styles.thumbnailActive : ''}`}
@@ -237,6 +248,23 @@ export default function ImageUploader({ onChange }) {
                 alt=""
                 className={styles.thumbnailImage}
               />
+
+              {index === 0 ? (
+                <span className={styles.thumbnailBadge}>썸네일</span>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.thumbnailSetMain}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleSetRepresentative(img.id)
+                  }}
+                  aria-label="썸네일로 지정"
+                >
+                  썸네일 선택
+                </button>
+              )}
+
               <button
                 type="button"
                 className={styles.thumbnailRemove}
