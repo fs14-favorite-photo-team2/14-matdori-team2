@@ -1,0 +1,190 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  color: var(--color-white);
+}
+
+.header {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--color-gray-400);
+}
+
+.backButton {
+  display: none;
+}
+
+.pageTitle {
+  font-size: var(--font-size-62);
+}
+
+.summarySection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.summaryText {
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+}
+
+.summaryCount {
+  font-weight: var(--font-weight-regular);
+  color: var(--color-gray-300);
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 4px 12px;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-bold);
+  background-color: transparent;
+}
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 60px;
+  margin: 20px 0 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-gray-400);
+}
+
+.searchField {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+.searchField form {
+  height: 50px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.emptyText {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--color-gray-300);
+}
+
+.sentinel {
+  height: 1px;
+}
+
+@media (max-width: 1023px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 모바일 전용 스타일 (743px 이하) */
+@media (max-width: 743px) {
+  .container {
+    padding: 20px 16px 100px;
+  }
+
+  .header {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 16px;
+  }
+
+  /* 모바일 뒤로가기 버튼 */
+  .backButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--color-white);
+    cursor: pointer;
+  }
+
+  .pageTitle {
+    font-size: var(--font-size-20);
+    white-space: nowrap;
+  }
+
+  .summarySection {
+    margin-top: 16px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .filterBar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+    padding-bottom: 16px;
+  }
+
+  .searchField {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    order: 2;
+  }
+
+  .searchField form {
+    width: 100%;
+    height: 44px;
+  }
+
+  .searchField input {
+    font-size: var(--font-size-14);
+  }
+
+  .filterTrigger {
+    flex-shrink: 0;
+    width: 35px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    order: 1;
+  }
+
+  .chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chip {
+    flex-shrink: 0;
+  }
+}
