@@ -351,7 +351,7 @@
 
 .myTradeList {
   display: grid;
-  grid-template-columns: repeat(3, 360px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 35px;
   margin-top: 36px;
 }
@@ -359,7 +359,8 @@
 .tradeCard {
   display: flex;
   flex-direction: column;
-  width: 360px;
+  width: 100%;
+  min-width: 0;
   padding: 16px;
   border: 1px solid var(--color-gray-400);
   background-color: var(--color-gray-500);
