@@ -38,6 +38,8 @@ export default function CreateRecipePage() {
   const [ingredients, setIngredients] = useState(() =>
     Array.from({ length: 4 }, () => createEmptyIngredient()),
   )
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   const isSupplyValid =
     totalSupply !== '' &&
@@ -99,26 +101,47 @@ export default function CreateRecipePage() {
     router.back()
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
     if (!isFormValid) return
 
-    const [thumbnailFile, ...otherImageFiles] = imageFiles
+    setIsSubmitting(true)
+    setSubmitError('')
 
     const payload = {
       title,
+      imageUrls: [],
       difficulty,
       category,
+      summary,
+      content,
       totalSupply: Number(totalSupply),
       ingredients: ingredients.map(({ name, amount, isHighlight }) => ({
         name,
         amount,
         isHighlight,
       })),
-      summary,
-      content,
-      thumbnailFile,
-      imageFiles: otherImageFiles,
+    }
+
+    try {
+      const response = await fetch('/api/recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const result = await response.json()
+
+      if (!result.success) {
+        setSubmitError(result.error?.message ?? '레시피 생성에 실패했어요.')
+        return
+      }
+
+      router.push('/my-kitchen/create/success')
+    } catch (error) {
+      console.error('레시피 생성 실패', error)
+      setSubmitError('네트워크 오류가 발생했어요. 다시 시도해 주세요.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -293,13 +316,14 @@ export default function CreateRecipePage() {
           />
         </div>
 
+        {submitError && <p className={styles.errorText}>{submitError}</p>}
         <Button
           type="submit"
           variant="primary"
           className={styles.submitButton}
-          disabled={!isFormValid}
+          disabled={!isFormValid || isSubmitting}
         >
-          생성하기
+          {isSubmitting ? '생성 중...' : '생성하기'}
         </Button>
       </form>
     </div>
