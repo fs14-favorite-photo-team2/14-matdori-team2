@@ -49,3 +49,23 @@ export function createGoogleUser({ email, googleId, nickname }) {
     select: authUserSelect,
   })
 }
+
+export const publicUserSelect = {
+  id: true,
+  nickname: true,
+}
+
+export function findUserById(id) {
+  return prisma.user.findUnique({
+    where: { id },
+    select: { ...authUserSelect, lastRandomBoxClaimedAt: true },
+  })
+}
+
+export function updateNickname(id, nickname) {
+  return prisma.user.update({
+    where: { id },
+    data: { nickname },
+    select: authUserSelect,
+  })
+}
