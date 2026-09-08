@@ -55,7 +55,7 @@ export function findMarketListings({
   sort,
 }) {
   const where = {
-    deleteAt: null,
+    deletedAt: null,
     status:
       soldOut === undefined
         ? { in: ['ON_SALE', 'SOLD_OUT'] }
@@ -161,6 +161,11 @@ export function findRecipeCopiesByIds(recipeCopyIds) {
       ownerId: true,
       listingId: true,
       state: true,
+      recipe: {
+        select: {
+          creatorId: true,
+        },
+      },
     },
   })
 }

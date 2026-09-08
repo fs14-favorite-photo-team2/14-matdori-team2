@@ -55,8 +55,8 @@ export async function getMarketListings(query) {
       throw error
     }
 
-    // 예상치 못한
-    throw AppError.from(ERROR_CODES.INTERNAL_SERVER_ERROR)
+    // 예상치 못한 > 미들웨어로 넘기기
+    throw error
   }
 }
 
@@ -122,6 +122,19 @@ export async function createMarketListing(userId, input) {
       {
         field: 'recipeCopyIds',
         reason: '이미 판매 또는 교환에 사용 중인 사본이 포함되어 있습니다.',
+      },
+    ])
+  }
+
+  // 구매한 레시피는 재판매할 수 없음
+  if (
+    (listingType === 'SALE' || listingType === 'BOTH') &&
+    copies.some((copy) => copy.recipe.creatorId !== userId)
+  ) {
+    throw AppError.from(ERROR_CODES.FORBIDDEN, [
+      {
+        field: 'recipeCopyIds',
+        reason: '직접 생성한 레시피의 사본만 판매할 수 있습니다.',
       },
     ])
   }

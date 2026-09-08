@@ -15,17 +15,9 @@ import {
   createMarketListingRequest,
   updateMarketListingRequest,
 } from '../validators/market-validator.js'
+import { requireAuthentication } from '../middlewares/require-authentication.js'
 
 const marketRouter = Router()
-
-// 로컬 테스트용 임시 인증
-function mockAuthenticate(request, _response, next) {
-  request.user = {
-    id: 31,
-  }
-
-  return next()
-}
 
 marketRouter.get(
   '/',
@@ -35,21 +27,21 @@ marketRouter.get(
 
 marketRouter.get(
   '/:listingId',
-  mockAuthenticate,
+  requireAuthentication,
   validateRequest(getMarketListingRequest),
   getMarketListingController,
 )
 
 marketRouter.post(
   '/',
-  mockAuthenticate,
+  requireAuthentication,
   validateRequest(createMarketListingRequest),
   createMarketListingController,
 )
 
 marketRouter.patch(
   '/:listingId',
-  mockAuthenticate,
+  requireAuthentication,
   validateRequest(updateMarketListingRequest),
   updateMarketListingController,
 )
@@ -57,7 +49,7 @@ marketRouter.patch(
 // 판매글 내리기
 marketRouter.post(
   '/:listingId/withdraw',
-  mockAuthenticate,
+  requireAuthentication,
   validateRequest(getMarketListingRequest),
   withdrawMarketListingController,
 )
@@ -65,7 +57,7 @@ marketRouter.post(
 // 판매글 삭제하기
 marketRouter.delete(
   '/:listingId',
-  mockAuthenticate,
+  requireAuthentication,
   validateRequest(getMarketListingRequest),
   deleteMarketListingController,
 )

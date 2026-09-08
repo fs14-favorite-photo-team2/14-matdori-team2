@@ -36,7 +36,7 @@ export async function getMarketListingController(request, response, next) {
 export async function createMarketListingController(request, response, next) {
   try {
     const listing = await createMarketListing(
-      request.user.id,
+      request.userId,
       request.validated.body,
     )
 
@@ -52,7 +52,7 @@ export async function createMarketListingController(request, response, next) {
 export async function updateMarketListingController(request, response, next) {
   try {
     const listing = await updateMarketListing(
-      request.user.id,
+      request.userId,
       request.validated.params.listingId,
       request.validated.body,
     )
@@ -67,7 +67,7 @@ export async function updateMarketListingController(request, response, next) {
 export async function withdrawMarketListingController(request, response, next) {
   try {
     await withdrawMarketListing(
-      request.user.id,
+      request.userId,
       request.validated.params.listingId,
     )
 
@@ -81,7 +81,7 @@ export async function withdrawMarketListingController(request, response, next) {
 export async function deleteMarketListingController(request, response, next) {
   try {
     await deleteMarketListing(
-      request.user.id,
+      request.userId,
       request.validated.params.listingId,
     )
 
