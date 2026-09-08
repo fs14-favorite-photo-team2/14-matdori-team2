@@ -314,7 +314,10 @@ async function seedRecipes(users) {
       data: {
         creatorId: creator.id,
         title,
-        imageUrl: `https://picsum.photos/seed/recipe-${number}/800/600`,
+        imageUrls: [`https://picsum.photos/seed/recipe-${number}/800/600`],
+        ingredients: [
+          { name: '예시 재료', amount: '적당량', isHighlight: false },
+        ],
         minPrice: 1000 + (i % 10) * 500,
         difficulty,
         category,

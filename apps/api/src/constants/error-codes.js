@@ -4,6 +4,11 @@ export const ERROR_CODES = Object.freeze({
   MONTHLY_RECIPE_LIMIT_REACHED: 'MONTHLY_RECIPE_LIMIT_REACHED',
   AUTHENTICATION_REQUIRED: 'AUTHENTICATION_REQUIRED',
   INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  GOOGLE_ACCOUNT_ONLY: 'GOOGLE_ACCOUNT_ONLY',
+  GOOGLE_OAUTH_NOT_CONFIGURED: 'GOOGLE_OAUTH_NOT_CONFIGURED',
+  GOOGLE_EMAIL_REQUIRED: 'GOOGLE_EMAIL_REQUIRED',
+  GOOGLE_ACCOUNT_CONFLICT: 'GOOGLE_ACCOUNT_CONFLICT',
+  NICKNAME_GENERATION_FAILED: 'NICKNAME_GENERATION_FAILED',
   FORBIDDEN: 'FORBIDDEN',
   RESOURCE_NOT_FOUND: 'RESOURCE_NOT_FOUND',
   CONFLICT: 'CONFLICT',
@@ -33,6 +38,26 @@ export const ERROR_CATALOG = Object.freeze({
   [ERROR_CODES.INVALID_CREDENTIALS]: {
     status: 401,
     message: '이메일 또는 비밀번호가 올바르지 않습니다.',
+  },
+  [ERROR_CODES.GOOGLE_ACCOUNT_ONLY]: {
+    status: 401,
+    message: 'Google 계정으로 가입한 이메일입니다. Google로 로그인해 주세요.',
+  },
+  [ERROR_CODES.GOOGLE_OAUTH_NOT_CONFIGURED]: {
+    status: 503,
+    message: 'Google 로그인이 설정되지 않았습니다.',
+  },
+  [ERROR_CODES.GOOGLE_EMAIL_REQUIRED]: {
+    status: 400,
+    message: 'Google 계정에서 확인된 이메일을 가져올 수 없습니다.',
+  },
+  [ERROR_CODES.GOOGLE_ACCOUNT_CONFLICT]: {
+    status: 409,
+    message: '이미 다른 Google 계정과 연결된 이메일입니다.',
+  },
+  [ERROR_CODES.NICKNAME_GENERATION_FAILED]: {
+    status: 500,
+    message: '사용 가능한 닉네임을 생성하지 못했습니다.',
   },
   [ERROR_CODES.FORBIDDEN]: {
     status: 403,
