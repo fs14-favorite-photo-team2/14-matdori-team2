@@ -27,7 +27,6 @@ const DIFFICULTY_TONE_VARS = {
 }
 
 const STATE_TO_BADGE = {
-  LISTED: 'selling',
   OFFERED: 'exchangePending',
 }
 
@@ -51,7 +50,7 @@ function createMockRecipeCopies(count) {
     const state = i % 5 === 0 ? 'LISTED' : i % 5 === 1 ? 'OFFERED' : 'OWNED'
 
     return {
-      id: `recipe-copy-${i}`,
+      id: `recipe-item-${i}`,
       state,
       recipe: {
         id: `recipe-${i}`,
@@ -80,58 +79,91 @@ function getFilteredCopies(copies, keyword, targetFilters) {
   })
 }
 
-function getInitialPageSize() {
-  if (typeof window === 'undefined') return PAGE_SIZE_DESKTOP
-  return window.innerWidth <= DESKTOP_BREAKPOINT
-    ? PAGE_SIZE_MOBILE
-    : PAGE_SIZE_DESKTOP
+function excludeListed(copies) {
+  return copies.filter((c) => c.state !== 'LISTED')
+}
+
+function groupByRecipe(copies) {
+  const groups = new Map()
+
+  for (const item of copies) {
+    const recipeId = item.recipe.id
+    const existing = groups.get(recipeId)
+
+    if (existing) {
+      existing.quantity += 1
+      if (item.state === 'OFFERED') {
+        existing.hasOffered = true
+      }
+    } else {
+      groups.set(recipeId, {
+        id: recipeId,
+        recipe: item.recipe,
+        quantity: 1,
+        hasOffered: item.state === 'OFFERED',
+      })
+    }
+  }
+
+  return Array.from(groups.values())
 }
 
 export default function MyKitchenPage() {
   const router = useRouter()
   const nickname = '유디'
 
-  const [pageSize, setPageSize] = useState(getInitialPageSize)
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_DESKTOP)
   const [copies] = useState(() => createMockRecipeCopies(24))
   const [keyword, setKeyword] = useState('')
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [visibleCount, setVisibleCount] = useState(getInitialPageSize)
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE_DESKTOP)
   const [prevFilterKey, setPrevFilterKey] = useState('')
 
   const sentinelRef = useRef(null)
 
   useEffect(() => {
-    function handleResize() {
+    function applySize() {
       const isMobile = window.innerWidth <= DESKTOP_BREAKPOINT
-      setPageSize(isMobile ? PAGE_SIZE_MOBILE : PAGE_SIZE_DESKTOP)
+      const nextSize = isMobile ? PAGE_SIZE_MOBILE : PAGE_SIZE_DESKTOP
+      setPageSize(nextSize)
+      setVisibleCount(nextSize)
     }
 
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    applySize()
+    window.addEventListener('resize', applySize)
+    return () => window.removeEventListener('resize', applySize)
   }, [])
+
+  const nonListedCopies = useMemo(() => excludeListed(copies), [copies])
 
   const difficultyCounts = useMemo(() => {
     return DIFFICULTY_OPTIONS.map((option) => ({
       label: option.label,
       color: DIFFICULTY_TONE_VARS[option.tone],
-      count: copies.filter((c) => c.recipe.difficulty === option.value).length,
+      count: nonListedCopies.filter((c) => c.recipe.difficulty === option.value)
+        .length,
     }))
-  }, [copies])
+  }, [nonListedCopies])
 
   const filteredCopies = useMemo(
-    () => getFilteredCopies(copies, keyword, filters),
-    [copies, keyword, filters],
+    () => getFilteredCopies(nonListedCopies, keyword, filters),
+    [nonListedCopies, keyword, filters],
   )
 
   const draftFilteredCopies = useMemo(
-    () => getFilteredCopies(copies, keyword, draftFilters),
-    [copies, keyword, draftFilters],
+    () => getFilteredCopies(nonListedCopies, keyword, draftFilters),
+    [nonListedCopies, keyword, draftFilters],
   )
 
-  const visibleCopies = filteredCopies.slice(0, visibleCount)
-  const hasNext = visibleCount < filteredCopies.length
+  const groupedRecipes = useMemo(
+    () => groupByRecipe(filteredCopies),
+    [filteredCopies],
+  )
+
+  const visibleRecipes = groupedRecipes.slice(0, visibleCount)
+  const hasNext = visibleCount < groupedRecipes.length
 
   const filterKey = `${keyword}|${filters.difficulty}|${filters.category}`
   if (filterKey !== prevFilterKey) {
@@ -211,7 +243,9 @@ export default function MyKitchenPage() {
       <div className={styles.summarySection}>
         <p className={styles.summaryText}>
           {nickname}님이 보유한 레시피{' '}
-          <span className={styles.summaryCount}>({copies.length}장)</span>
+          <span className={styles.summaryCount}>
+            ({nonListedCopies.length}장)
+          </span>
         </p>
 
         <div className={styles.chips}>
@@ -254,21 +288,21 @@ export default function MyKitchenPage() {
         </div>
       </div>
 
-      {visibleCopies.length === 0 ? (
+      {visibleRecipes.length === 0 ? (
         <p className={styles.emptyText}>조건에 맞는 레시피가 없어요.</p>
       ) : (
         <div className={styles.grid}>
-          {visibleCopies.map((copy) => (
+          {visibleRecipes.map((item) => (
             <RecipeCard
-              key={copy.id}
-              imageUrl={copy.recipe.imageUrl}
-              title={copy.recipe.title}
-              difficulty={copy.recipe.difficulty}
-              category={copy.recipe.category}
-              sellerNickname={copy.recipe.creatorNickname}
-              price={copy.recipe.minPrice}
-              remainingQuantity={1}
-              badgeType={STATE_TO_BADGE[copy.state]}
+              key={item.id}
+              thumbnailUrl={item.recipe.imageUrl}
+              title={item.recipe.title}
+              difficulty={item.recipe.difficulty}
+              category={item.recipe.category}
+              sellerNickname={item.recipe.creatorNickname}
+              price={item.recipe.minPrice}
+              remainingQuantity={item.quantity}
+              badgeType={item.hasOffered ? STATE_TO_BADGE.OFFERED : undefined}
             />
           ))}
         </div>
