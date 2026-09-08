@@ -1,0 +1,105 @@
+.container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 100dvh;
+  padding: 120px 24px 48px;
+  color: var(--color-white);
+}
+
+.toastWrapper {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  width: max-content;
+  max-width: 100%;
+  /* 토스트를 부모요소의 가운데 배치 */
+  transform: translateX(-50%);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  text-align: center;
+}
+
+.title {
+  font-size: var(--font-size-40);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+}
+
+.success {
+  color: var(--color-main);
+}
+
+.failure {
+  color: var(--color-gray-300);
+}
+
+.description {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 32px;
+  font-size: var(--font-size-18);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.5;
+  /* 단어 단위로만 줄 바꿈 */
+  word-break: keep-all;
+}
+
+.redirectButton {
+  width: 440px;
+  margin-top: 60px;
+}
+
+@media (max-width: 1023px) {
+  .toastWrapper {
+    top: 40px;
+  }
+
+  .title {
+    font-size: var(--font-size-32);
+  }
+
+  .description {
+    margin-top: 28px;
+    font-size: var(--font-size-16);
+  }
+
+  .redirectButton {
+    width: 280px;
+    margin-top: 48px;
+  }
+}
+
+@media (max-width: 743px) {
+  .container {
+    padding: 100px 20px 32px;
+  }
+
+  .toastWrapper {
+    top: 24px;
+  }
+
+  .title {
+    font-size: var(--font-size-24);
+  }
+
+  .description {
+    flex-direction: column;
+    gap: 0;
+    margin-top: 24px;
+    font-size: var(--font-size-14);
+  }
+
+  .redirectButton {
+    width: 220px;
+    margin-top: 40px;
+  }
+}

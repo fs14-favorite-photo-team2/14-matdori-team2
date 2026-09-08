@@ -4,6 +4,7 @@ import { ERROR_CODES } from '../constants/error-codes.js'
 import { AppError } from '../errors/app-error.js'
 import {
   createUser,
+  findUserByEmail,
   findUsersByEmailOrNickname,
 } from '../repositories/user-repository.js'
 
@@ -34,5 +35,22 @@ export async function signup({ email, nickname, password }) {
     }
 
     throw error
+  }
+}
+
+export async function login({ email, password }) {
+  const user = await findUserByEmail(email)
+  const passwordMatches =
+    user?.passwordHash && (await bcrypt.compare(password, user.passwordHash))
+
+  if (!passwordMatches) {
+    throw AppError.from(ERROR_CODES.INVALID_CREDENTIALS)
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    nickname: user.nickname,
+    points: user.points,
   }
 }
