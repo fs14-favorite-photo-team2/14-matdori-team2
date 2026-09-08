@@ -27,6 +27,7 @@ const DIFFICULTY_TONE_VARS = {
 }
 
 const STATE_TO_BADGE = {
+  LISTED: 'selling',
   OFFERED: 'exchangePending',
 }
 
@@ -50,7 +51,7 @@ function createMockRecipeCopies(count) {
     const state = i % 5 === 0 ? 'LISTED' : i % 5 === 1 ? 'OFFERED' : 'OWNED'
 
     return {
-      id: `recipe-item-${i}`,
+      id: `recipe-copy-${i}`,
       state,
       recipe: {
         id: `recipe-${i}`,
