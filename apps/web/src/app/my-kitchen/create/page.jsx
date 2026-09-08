@@ -134,7 +134,9 @@ export default function CreateRecipePage() {
           <Image src="/icons/left.svg" alt="" width={24} height={24} />
         </button>
 
-        <h1 className={styles.pageTitle}>레시피 생성</h1>
+        <h1 className={`${styles.pageTitle} font-baskin-robbins`}>
+          레시피 생성
+        </h1>
       </div>
 
       <form className={styles.form} onSubmit={handleSubmit}>
