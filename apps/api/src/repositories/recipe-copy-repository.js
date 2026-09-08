@@ -1,7 +1,11 @@
 import { prisma } from '../db/prisma.js'
 import { RECIPE_COPY_ORDER_BY } from '../utils/sort-orders.js'
 import { findCursorPage } from './cursor-page.js'
-import { recipeFilter, recipeSummarySelect } from './recipe-repository.js'
+import {
+  recipeFilter,
+  recipeSummarySelect,
+  toRecipeSummary,
+} from './recipe-repository.js'
 
 export const recipeCopySelect = {
   id: true,
@@ -11,6 +15,10 @@ export const recipeCopySelect = {
   everPurchased: true,
   createdAt: true,
   updatedAt: true,
+}
+
+export function toRecipeCopy({ recipe, ...copy }) {
+  return { ...copy, recipe: toRecipeSummary(recipe) }
 }
 
 export function findRecipeCopiesByOwner(ownerId, query) {

@@ -2,7 +2,11 @@ import { prisma } from '../db/prisma.js'
 import { CopyState } from '../generated/prisma/enums.ts'
 import { CREATED_AT_ORDER_BY } from '../utils/sort-orders.js'
 import { findCursorPage } from './cursor-page.js'
-import { recipeFilter, recipeSummarySelect } from './recipe-repository.js'
+import {
+  recipeFilter,
+  recipeSummarySelect,
+  toRecipeSummary,
+} from './recipe-repository.js'
 import { publicUserSelect } from './user-repository.js'
 
 export const listingSummarySelect = {
@@ -21,8 +25,12 @@ export const listingSummarySelect = {
   _count: { select: { copies: { where: { state: CopyState.LISTED } } } },
 }
 
-export function toListingSummary({ _count, ...listing }) {
-  return { ...listing, remainingQuantity: _count.copies }
+export function toListingSummary({ _count, recipe, ...listing }) {
+  return {
+    ...listing,
+    recipe: toRecipeSummary(recipe),
+    remainingQuantity: _count.copies,
+  }
 }
 
 export function findListingsBySeller(sellerId, query) {

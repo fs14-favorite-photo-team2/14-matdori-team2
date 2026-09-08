@@ -9,11 +9,15 @@ import {
   findPurchasesByBuyer,
   findPurchasesBySeller,
 } from '../repositories/purchase-repository.js'
-import { findRecipeCopiesByOwner } from '../repositories/recipe-copy-repository.js'
+import {
+  findRecipeCopiesByOwner,
+  toRecipeCopy,
+} from '../repositories/recipe-copy-repository.js'
 import { countRecipesCreatedSince } from '../repositories/recipe-repository.js'
 import {
   findTradeOffersByProposer,
   findTradeOffersBySeller,
+  toTradeOffer,
 } from '../repositories/trade-offer-repository.js'
 import {
   findUserById,
@@ -68,7 +72,7 @@ export async function updateCurrentUser(userId, { nickname }) {
 export async function getMyRecipeCopies(userId, query) {
   const copies = await findRecipeCopiesByOwner(userId, query)
 
-  return toCursorPage(copies, query.limit)
+  return toCursorPage(copies, query.limit, toRecipeCopy)
 }
 
 export async function getMyListings(userId, query) {
@@ -80,13 +84,13 @@ export async function getMyListings(userId, query) {
 export async function getMySentTradeOffers(userId, query) {
   const tradeOffers = await findTradeOffersByProposer(userId, query)
 
-  return toCursorPage(tradeOffers, query.limit)
+  return toCursorPage(tradeOffers, query.limit, toTradeOffer)
 }
 
 export async function getMyReceivedTradeOffers(userId, query) {
   const tradeOffers = await findTradeOffersBySeller(userId, query)
 
-  return toCursorPage(tradeOffers, query.limit)
+  return toCursorPage(tradeOffers, query.limit, toTradeOffer)
 }
 
 export async function getMyPurchases(userId, query) {

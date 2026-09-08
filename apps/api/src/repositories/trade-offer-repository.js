@@ -1,7 +1,7 @@
 import { prisma } from '../db/prisma.js'
 import { CREATED_AT_ORDER_BY } from '../utils/sort-orders.js'
 import { findCursorPage } from './cursor-page.js'
-import { recipeCopySelect } from './recipe-copy-repository.js'
+import { recipeCopySelect, toRecipeCopy } from './recipe-copy-repository.js'
 import { publicUserSelect } from './user-repository.js'
 
 export const tradeOfferSelect = {
@@ -10,9 +10,14 @@ export const tradeOfferSelect = {
   proposer: { select: publicUserSelect },
   offeredCopy: { select: recipeCopySelect },
   receivedCopyId: true,
+  message: true,
   status: true,
   createdAt: true,
   decidedAt: true,
+}
+
+export function toTradeOffer({ offeredCopy, ...tradeOffer }) {
+  return { ...tradeOffer, offeredCopy: toRecipeCopy(offeredCopy) }
 }
 
 function findTradeOffers(where, { status, sort, cursor, limit }) {
