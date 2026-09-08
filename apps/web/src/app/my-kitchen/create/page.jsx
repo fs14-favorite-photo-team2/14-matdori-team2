@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import Button from '@/components/common/Button/Button'
 import FormSelect from '@/components/common/FormSelect/FormSelect'
 import ImageUploader from '@/components/common/ImageUploader/ImageUploader'
@@ -25,6 +27,7 @@ function createEmptyIngredient() {
 }
 
 export default function CreateRecipePage() {
+  const router = useRouter()
   const [title, setTitle] = useState('')
   const [difficulty, setDifficulty] = useState('')
   const [category, setCategory] = useState('')
@@ -92,6 +95,10 @@ export default function CreateRecipePage() {
     )
   }
 
+  function handleBack() {
+    router.back()
+  }
+
   function handleSubmit(event) {
     event.preventDefault()
     if (!isFormValid) return
@@ -117,7 +124,18 @@ export default function CreateRecipePage() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.pageTitle}>레시피 생성</h1>
+      <div className={styles.header}>
+        <button
+          type="button"
+          className={styles.backButton}
+          onClick={handleBack}
+          aria-label="뒤로가기"
+        >
+          <Image src="/icons/left.svg" alt="" width={24} height={24} />
+        </button>
+
+        <h1 className={styles.pageTitle}>레시피 생성</h1>
+      </div>
 
       <form className={styles.form} onSubmit={handleSubmit}>
         <div className={styles.field}>
