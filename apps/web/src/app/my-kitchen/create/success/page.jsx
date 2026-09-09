@@ -1,9 +1,10 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import ActionResult from '@/components/common/ActionResult/ActionResult'
 
-export default function CreateRecipeSuccessPage() {
+function CreateRecipeSuccessContent() {
   const searchParams = useSearchParams()
   const difficultyLabel = searchParams.get('difficultyLabel') ?? ''
   const recipeTitle = searchParams.get('title') ?? ''
@@ -18,5 +19,13 @@ export default function CreateRecipeSuccessPage() {
       redirectTo="/my-kitchen"
       redirectPageName="마이 키친"
     />
+  )
+}
+
+export default function CreateRecipeSuccessPage() {
+  return (
+    <Suspense fallback={null}>
+      <CreateRecipeSuccessContent />
+    </Suspense>
   )
 }
