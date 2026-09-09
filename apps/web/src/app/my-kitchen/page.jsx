@@ -163,6 +163,11 @@ export default function MyKitchenPage() {
     [filteredCopies],
   )
 
+  const draftGroupedRecipes = useMemo(
+    () => groupByRecipe(draftFilteredCopies),
+    [draftFilteredCopies],
+  )
+
   const visibleRecipes = groupedRecipes.slice(0, visibleCount)
   const hasNext = visibleCount < groupedRecipes.length
 
@@ -278,7 +283,7 @@ export default function MyKitchenPage() {
             filters={filters}
             draftFilters={draftFilters}
             isMobileOpen={isMobileOpen}
-            resultCount={draftFilteredCopies.length}
+            resultCount={draftGroupedRecipes.length}
             onFilterChange={handleFilterChange}
             onDraftFilterChange={handleDraftFilterChange}
             onOpenMobile={handleOpenMobile}
