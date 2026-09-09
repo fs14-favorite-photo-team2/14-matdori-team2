@@ -69,3 +69,32 @@ export function updateNickname(id, nickname) {
     select: authUserSelect,
   })
 }
+
+export function findRandomBoxState(id) {
+  return prisma.user.findUnique({
+    where: { id },
+    select: { lastRandomBoxClaimedAt: true },
+  })
+}
+
+export function claimRandomBoxReward({
+  id,
+  claimableSince,
+  rewardPoints,
+  claimedAt,
+}) {
+  return prisma.user.update({
+    where: {
+      id,
+      OR: [
+        { lastRandomBoxClaimedAt: null },
+        { lastRandomBoxClaimedAt: { lt: claimableSince } },
+      ],
+    },
+    data: {
+      points: { increment: rewardPoints },
+      lastRandomBoxClaimedAt: claimedAt,
+    },
+    select: { points: true },
+  })
+}
