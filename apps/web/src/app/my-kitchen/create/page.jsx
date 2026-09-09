@@ -136,7 +136,15 @@ export default function CreateRecipePage() {
         return
       }
 
-      router.push('/my-kitchen/create/success')
+      const difficultyLabel =
+        DIFFICULTY_OPTIONS.find((option) => option.value === difficulty)
+          ?.label ?? ''
+
+      const params = new URLSearchParams({
+        difficultyLabel,
+        title: result.data.title,
+      })
+      router.push(`/my-kitchen/create/success?${params.toString()}`)
     } catch (error) {
       console.error('레시피 생성 실패', error)
       setSubmitError('네트워크 오류가 발생했어요. 다시 시도해 주세요.')
