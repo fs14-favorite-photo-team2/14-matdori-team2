@@ -94,7 +94,8 @@ model Recipe {
   id          Int        @id @default(autoincrement())
   creatorId   Int
   title       String
-  imageUrl    String
+  imageUrls   String[]
+  ingredients Json
   minPrice    Int
   difficulty  Difficulty
   category    Category
@@ -149,6 +150,7 @@ model MarketListing {
   status            ListingStatus @default(ON_SALE)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
 
   seller User   @relation(fields: [sellerId], references: [id])
   recipe Recipe @relation(fields: [recipeId], references: [id])
@@ -190,6 +192,7 @@ model TradeOffer {
   proposerId     Int
   offeredCopyId  Int
   receivedCopyId Int?
+  message        String?          @db.VarChar(500)
   status         TradeOfferStatus @default(PENDING)
   createdAt      DateTime         @default(now())
   decidedAt      DateTime?
