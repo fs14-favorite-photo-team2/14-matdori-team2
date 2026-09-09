@@ -1,4 +1,5 @@
 import { validate } from 'superstruct'
+
 import { ERROR_CODES } from '../constants/error-codes.js'
 import { AppError } from '../errors/app-error.js'
 
@@ -24,7 +25,7 @@ export function validateRequest(struct) {
       }
 
       const details = [...error.failures()].map((failure) => ({
-        field: failure.path.slice(1).join('.') || null,
+        field: toFieldPath(failure.path),
         reason:
           failure.type === 'never' ? UNKNOWN_FIELD_MESSAGE : failure.message,
       }))
@@ -34,4 +35,10 @@ export function validateRequest(struct) {
       return next(error)
     }
   }
+}
+
+function toFieldPath(path) {
+  const [_section, ...fieldPath] = path
+
+  return fieldPath.join('.') || null
 }
