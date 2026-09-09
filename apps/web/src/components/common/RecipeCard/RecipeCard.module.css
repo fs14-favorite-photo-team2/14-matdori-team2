@@ -103,11 +103,15 @@
 }
 
 .sellerNickname {
-  flex-shrink: 0;
+  max-width: 9em;
+  overflow: hidden;
   color: var(--color-white);
   font-size: var(--font-size-14);
   text-decoration: underline;
+  text-overflow: ellipsis;
   text-underline-offset: 3px;
+  white-space: nowrap;
+  cursor: help;
 }
 
 .divider {
@@ -177,6 +181,7 @@
   .recipeMeta,
   .sellerNickname {
     font-size: var(--font-size-10);
+    max-width: 5em;
   }
 
   .metaDivider {

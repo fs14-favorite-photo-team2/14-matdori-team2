@@ -4,7 +4,8 @@ info:
   version: 1.0.0
   description: |
     레시피 생성, 마켓플레이스 판매, 구매, 교환, 알림 및 시간당 랜덤 포인트 보상을
-    제공하는 API입니다. 모든 시각은 ISO 8601 형식의 UTC 문자열로 표현합니다.
+    위한 API 명세입니다. 현재 인증 및 상태 확인 경로가 구현되어 있으며,
+    나머지 경로는 구현 예정인 계약입니다. 모든 시각은 ISO 8601 형식의 UTC 문자열로 표현합니다.
 
     포인트, 재고 또는 소유권을 변경하는 작업은 일부만 반영되지 않도록 함께
     처리합니다. 별도 명시가 없는 한 JSON
@@ -123,7 +124,13 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/AuthResponse' }
         '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/InvalidCredentials' }
+        '401':
+          description: >-
+            이메일 또는 비밀번호가 올바르지 않거나(`INVALID_CREDENTIALS`),
+            비밀번호 없이 Google 계정으로만 가입된 이메일입니다(`GOOGLE_ACCOUNT_ONLY`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
   /auth/logout:
     post:
       tags: [인증]
@@ -145,11 +152,19 @@ paths:
         - $ref: '#/components/parameters/OAuthProvider'
         - name: redirectUri
           in: query
-          description: 인증 후 리디렉션할 프론트엔드 URI
+          description: >-
+            인증 후 이동할 URI입니다. origin이 CLIENT_ORIGIN의 허용 주소와 일치할 때만
+            사용합니다. 생략하거나 잘못된 URI 또는 허용되지 않은 origin을 전달하면 무시하고
+            GOOGLE_OAUTH_SUCCESS_REDIRECT 또는 CLIENT_ORIGIN의 첫 번째 주소를 사용합니다.
           schema: { type: string, format: uri }
       responses:
-        '302': { description: OAuth 제공자로 리디렉션 }
-        '400': { $ref: '#/components/responses/ValidationError' }
+        '302':
+          { description: OAuth 제공자로 리디렉션하며 세션에 state를 저장함 }
+        '503':
+          description: Google OAuth 필수 환경 변수 중 하나 이상이 없어 비활성화됨 (GOOGLE_OAUTH_NOT_CONFIGURED)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
   /auth/{provider}/callback:
     get:
       tags: [인증]
@@ -160,27 +175,43 @@ paths:
         - $ref: '#/components/parameters/OAuthProvider'
         - name: code
           in: query
-          required: true
-          schema: { type: string, maxLength: 2048 }
+          required: false
+          description: Google 인증 성공 시 전달되는 인가 코드입니다. 거부 시에는 code 대신 error가 전달됩니다.
+          schema: { type: string }
         - name: state
           in: query
-          required: true
-          schema: { type: string, maxLength: 512 }
+          required: false
+          description: code를 처리할 때 로그인 시작 세션에 저장한 값과 일치해야 합니다. 누락되거나 일치하지 않으면 인증에 실패합니다.
+          schema: { type: string }
         - name: error
           in: query
           required: false
           description: OAuth provider가 인증을 거부하거나 실패한 경우 반환하는 오류 코드
-          schema: { type: string, maxLength: 200 }
+          schema: { type: string }
       responses:
         '302':
-          description: 인증을 완료하고 프론트엔드로 리디렉션
+          description: >-
+            인증에 성공하면 세션 쿠키를 설정하고 프론트엔드로 리디렉션합니다.
+            같은 이메일의 기존 계정이 있으면 해당 계정에 Google 로그인을 연결합니다.
+            인증에 실패하면 첫 번째 CLIENT_ORIGIN의 로그인 페이지로 `oauthError` 쿼리 파라미터와
+            함께 리디렉션합니다. `oauthError` 값은 `OAUTH_FAILED`,
+            `GOOGLE_EMAIL_REQUIRED`, `GOOGLE_ACCOUNT_CONFLICT`,
+            `NICKNAME_GENERATION_FAILED` 중 하나입니다.
           headers:
             Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
-        '400':
-          description: 잘못된 콜백, state 값 또는 OAuth 제공자 응답
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorResponse' }
+  /auth/{provider}/failure:
+    get:
+      tags: [인증]
+      summary: OAuth 인증 실패 처리
+      operationId: failOAuth
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/OAuthProvider'
+      responses:
+        '302':
+          description: >-
+            OAuth 제공자가 인증을 거부했을 때
+            `oauthError=OAUTH_FAILED`를 붙여 프론트엔드 로그인 페이지로 리디렉션
 
   /users/me:
     get:
@@ -386,6 +417,9 @@ paths:
         content:
           multipart/form-data:
             schema: { $ref: '#/components/schemas/CreateRecipeRequest' }
+            encoding:
+              ingredients:
+                contentType: application/json
       responses:
         '201':
           description: 레시피가 생성됨
@@ -417,7 +451,10 @@ paths:
     get:
       tags: [레시피]
       summary: 레시피 상세 정보 조회
-      description: 인증된 사용자가 해당 레시피의 사본을 소유하거나 레시피를 생성한 경우에만 상세 정보와 전체 조리 내용을 반환합니다.
+      description: >-
+        인증된 사용자가 해당 레시피의 사본을 소유하거나 레시피를 생성한 경우에만
+        상세 정보와 전체 재료 목록, 전체 조리 내용을 반환합니다. 권한이 없는 사용자는
+        마켓플레이스 목록의 RecipeSummary에서 강조 재료만 확인할 수 있습니다.
       operationId: getRecipe
       parameters:
         - $ref: '#/components/parameters/RecipeId'
@@ -447,6 +484,9 @@ paths:
         content:
           multipart/form-data:
             schema: { $ref: '#/components/schemas/UpdateRecipeRequest' }
+            encoding:
+              ingredients:
+                contentType: application/json
       responses:
         '200':
           description: 수정된 레시피 정보
@@ -563,12 +603,30 @@ paths:
     delete:
       tags: [마켓플레이스]
       summary: 판매글 판매 종료
-      description: 판매글 상태를 WITHDRAWN으로 변경하고 남은 사본의 예약을 해제합니다.
+      description: 판매가 종료된 판매글을 현재 사용자의 판매글 목록에서 제거합니다. 데이터와 거래 기록은 실제로 삭제하지 않고 deletedAt을 기록합니다.
       operationId: stopMarketListing
       parameters:
         - $ref: '#/components/parameters/ListingId'
       responses:
-        '204': { description: 판매가 중지됨. 응답 본문은 없음 }
+        '204': { description: 판매글이 삭제 처리됨. 응답 본문은 없음 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /market-listings/{listingId}/withdraw:
+    post:
+      tags: [마켓플레이스]
+      summary: 판매글 판매 내리기
+      description: >-
+        판매 중인 판매글의 상태를 WITHDRAWN으로 변경하고,
+        판매글에 등록된 남은 레시피 사본을 다시 OWNED 상태로 돌립니다.
+        판매글은 현재 사용자의 판매글 목록에는 계속 표시됩니다.
+      operationId: withdrawMarketListing
+      parameters:
+        - $ref: '#/components/parameters/ListingId'
+      responses:
+        '204':
+          description: 판매글이 내려감. 응답 본문은 없음
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -620,6 +678,10 @@ paths:
                     description: 교환을 제안할 레시피 사본 ID,
                     example: 84,
                   }
+                message:
+                  type: string
+                  maxLength: 500
+                  description: 선택 입력하는 교환 제시글. 생략하면 null로 저장합니다.
       responses:
         '201':
           description: 교환 제안이 생성되고 제안한 사본이 예약됨
@@ -843,7 +905,7 @@ components:
         로컬 개발에서는 `SameSite=Lax`를 사용합니다. 프로덕션에서는
         `SameSite=None; Secure`를 사용하므로 HTTPS 연결에서만 설정되고 전송됩니다.
 
-        세션 만료는 마지막 활동 기준 7일입니다. 인증된 요청이 들어오면 만료 시각이
+        쿠키 이름은 SESSION_COOKIE_NAME(기본 session), 만료 시간은 SESSION_TTL_SECONDS(기본 7일)로 설정합니다. 기존 세션으로 요청하면 만료 시각이
         연장되므로 인증이 필요한 응답에는 갱신된 `Set-Cookie` 헤더가 포함될 수 있습니다.
   headers:
     SessionCookie:
@@ -927,20 +989,6 @@ components:
                   message: 로그인이 필요합니다.,
                 },
             }
-    InvalidCredentials:
-      description: 이메일 또는 비밀번호가 올바르지 않음
-      content:
-        application/json:
-          schema: { $ref: '#/components/schemas/ErrorResponse' }
-          example:
-            {
-              success: false,
-              error:
-                {
-                  code: INVALID_CREDENTIALS,
-                  message: 이메일 또는 비밀번호가 올바르지 않습니다.,
-                },
-            }
     Forbidden:
       description: 인증된 사용자가 해당 리소스를 소유하거나 관리할 권한이 없음
       content:
@@ -989,6 +1037,11 @@ components:
         - MONTHLY_RECIPE_LIMIT_REACHED
         - AUTHENTICATION_REQUIRED
         - INVALID_CREDENTIALS
+        - GOOGLE_ACCOUNT_ONLY
+        - GOOGLE_OAUTH_NOT_CONFIGURED
+        - GOOGLE_EMAIL_REQUIRED
+        - GOOGLE_ACCOUNT_CONFLICT
+        - NICKNAME_GENERATION_FAILED
         - FORBIDDEN
         - RESOURCE_NOT_FOUND
         - CONFLICT
@@ -1138,20 +1191,56 @@ components:
         ]
     RecipeSummary:
       type: object
-      required: [id, title, imageUrl, difficulty, category, summary, minPrice]
+      required:
+        - id
+        - title
+        - imageUrl
+        - imageUrls
+        - difficulty
+        - category
+        - summary
+        - minPrice
+        - ingredients
       properties:
         id: { type: integer, minimum: 1, description: 레시피 ID, example: 42 }
         title: { type: string, minLength: 1, maxLength: 100 }
-        imageUrl: { type: string, format: uri }
+        imageUrl:
+          {
+            type: string,
+            format: uri,
+            description: 저장된 imageUrls의 첫 번째 URL을 반환하는 대표 이미지입니다.,
+          }
+        imageUrls:
+          {
+            type: array,
+            minItems: 1,
+            maxItems: 10,
+            description: 업로드 순서대로 반환하는 전체 이미지 URL 목록입니다.,
+            items: { type: string, format: uri },
+          }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         category: { $ref: '#/components/schemas/Category' }
         summary: { type: string, minLength: 1, maxLength: 1000 }
         minPrice: { type: integer, minimum: 0, maximum: 100000000 }
+        ingredients:
+          type: array
+          description: >-
+            isHighlight가 true인 재료만 반환합니다. 전체 재료 목록은 레시피 사본을
+            소유하거나 생성한 사용자에게 RecipeDetail로만 제공하므로, 로그인하지 않은
+            사용자와 사본을 소유하지 않은 사용자는 강조 재료만 확인할 수 있습니다.
+            강조한 재료가 없거나 마이그레이션 이전 레시피는 빈 배열일 수 있습니다.
+          items:
+            $ref: '#/components/schemas/Ingredient'
     RecipeDetail:
       allOf:
         - $ref: '#/components/schemas/RecipeSummary'
         - type: object
-          required: [creator, totalSupply, createdAt]
+          required:
+            - creator
+            - totalSupply
+            - createdAt
+            - imageUrls
+            - ingredients
           properties:
             creator: { $ref: '#/components/schemas/PublicUser' }
             totalSupply: { type: integer, minimum: 1, maximum: 10 }
@@ -1159,6 +1248,22 @@ components:
               type: string
               description: 현재 사용자가 조리 내용을 볼 권한이 있는 경우에만 포함됩니다.
             createdAt: { type: string, format: date-time }
+            imageUrls:
+              type: array
+              minItems: 1
+              maxItems: 10
+              description: 업로드 순서대로 반환하는 이미지 URL 목록. 첫 URL은 imageUrl과 같습니다.
+              items:
+                type: string
+                format: uri
+            ingredients:
+              type: array
+              description: >-
+                레시피 사본을 소유하거나 생성한 사용자에게 제공하는 전체 재료 목록으로,
+                강조 재료만 반환하는 RecipeSummary의 규칙을 대체합니다.
+                마이그레이션 이전 레시피는 재료를 보완하기 전까지 빈 배열일 수 있습니다.
+              items:
+                $ref: '#/components/schemas/Ingredient'
     PublicUser:
       type: object
       required: [id, nickname]
@@ -1175,37 +1280,54 @@ components:
       type: object
       additionalProperties: false
       required:
-        [
-          title,
-          image,
-          content,
-          minPrice,
-          difficulty,
-          totalSupply,
-          category,
-          summary,
-        ]
+        - title
+        - images
+        - content
+        - minPrice
+        - difficulty
+        - totalSupply
+        - category
+        - summary
+        - ingredients
       properties:
         title: { type: string, minLength: 1, maxLength: 100 }
-        image: { type: string, format: binary }
         content: { type: string, minLength: 1, maxLength: 20000 }
         minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         totalSupply: { type: integer, minimum: 1, maximum: 10 }
         category: { $ref: '#/components/schemas/Category' }
         summary: { type: string, minLength: 1, maxLength: 1000 }
+        images:
+          type: array
+          minItems: 1
+          maxItems: 10
+          description: 이미지 파일 1~10개. images 필드를 반복하여 전송하며 첫 번째 파일이 대표 이미지입니다. 수정 시 생략하면 기존 이미지를 유지하고, 전송하면 전체 이미지 목록을 교체합니다.
+          items:
+            type: string
+            format: binary
+        ingredients:
+          $ref: '#/components/schemas/Ingredients'
     UpdateRecipeRequest:
       type: object
       additionalProperties: false
       minProperties: 1
       properties:
         title: { type: string, minLength: 1, maxLength: 100 }
-        image: { type: string, format: binary }
         content: { type: string, minLength: 1, maxLength: 20000 }
         minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         category: { $ref: '#/components/schemas/Category' }
         summary: { type: string, minLength: 1, maxLength: 1000 }
+        images:
+          type: array
+          minItems: 1
+          maxItems: 10
+          description: 이미지 파일 1~10개. images 필드를 반복하여 전송하며 첫 번째 파일이 대표 이미지입니다. 수정 시 생략하면 기존 이미지를 유지하고, 전송하면 전체 이미지 목록을 교체합니다.
+          items:
+            type: string
+            format: binary
+        ingredients:
+          $ref: '#/components/schemas/Ingredients'
     RecipeCopy:
       type: object
       required: [id, recipe, state, everPurchased, createdAt, updatedAt]
@@ -1336,7 +1458,14 @@ components:
         createdAt: { type: string, format: date-time }
     TradeOffer:
       type: object
-      required: [id, listingId, proposer, offeredCopy, status, createdAt]
+      required:
+        - id
+        - listingId
+        - proposer
+        - offeredCopy
+        - status
+        - createdAt
+        - message
       properties:
         id:
           { type: integer, minimum: 1, description: 교환 제안 ID, example: 205 }
@@ -1354,6 +1483,12 @@ components:
         status: { $ref: '#/components/schemas/TradeOfferStatus' }
         createdAt: { type: string, format: date-time }
         decidedAt: { type: [string, 'null'], format: date-time }
+        message:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+          description: 교환 제시글. 입력하지 않은 경우 null입니다.
     Notification:
       type: object
       required: [id, type, message, isRead, createdAt]
@@ -1482,6 +1617,33 @@ components:
         data:
           { type: array, items: { $ref: '#/components/schemas/Notification' } }
         meta: { $ref: '#/components/schemas/CursorMeta' }
+    Ingredient:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - amount
+      properties:
+        name:
+          type: string
+          minLength: 1
+          pattern: \S
+          example: 트러플
+        amount:
+          type: string
+          minLength: 1
+          pattern: \S
+          description: 단위를 포함한 분량 또는 약간, 취향껏 등의 표현
+          example: 10g
+        isHighlight:
+          type: boolean
+          default: false
+    Ingredients:
+      type: array
+      description: 재료를 최소 1개 입력합니다. 수정 시 생략하면 유지하고 전송하면 전체 목록을 교체합니다. isHighlight 생략값은 false이며 강조할 재료 개수에는 제한이 없습니다.
+      items:
+        $ref: '#/components/schemas/Ingredient'
+      minItems: 1
 
 security:
   - sessionCookie: []
