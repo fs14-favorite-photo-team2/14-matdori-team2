@@ -12,7 +12,9 @@ export class AppError extends Error {
   static from(code, details) {
     const entry = ERROR_CATALOG[code]
 
-    if (!entry) throw new Error(`Unknown error code: ${code}`)
+    if (!entry) {
+      throw new Error(`Unknown error code: ${code}`)
+    }
 
     return new AppError(entry.status, code, entry.message, details)
   }

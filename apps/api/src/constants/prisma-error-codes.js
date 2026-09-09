@@ -1,0 +1,4 @@
+export const PRISMA_ERROR_CODES = Object.freeze({
+  UNIQUE_VIOLATION: 'P2002',
+  RECORD_NOT_FOUND: 'P2025',
+})
