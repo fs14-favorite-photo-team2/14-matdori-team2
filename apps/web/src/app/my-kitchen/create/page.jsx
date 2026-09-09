@@ -191,7 +191,7 @@ export default function CreateRecipePage() {
               options={DIFFICULTY_OPTIONS}
               value={difficulty}
               onChange={setDifficulty}
-              placeholder="난이도을 선택해 주세요"
+              placeholder="난이도를 선택해 주세요"
             />
           </div>
 
