@@ -212,14 +212,13 @@ export default function CreateRecipePage() {
           </label>
           <input
             id="totalSupply"
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
+            type="number"
+            min="1"
+            max={MAX_SUPPLY}
             className={`${styles.input} ${totalSupply !== '' && !isSupplyValid ? styles.inputError : ''}`}
             value={totalSupply}
             onChange={(e) => {
-              const onlyNums = e.target.value.replace(/[^0-9]/g, '')
-              setTotalSupply(onlyNums)
+              setTotalSupply(e.target.value)
             }}
             placeholder="총 발행량을 입력해 주세요"
           />
