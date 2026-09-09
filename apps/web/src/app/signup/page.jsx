@@ -1,62 +1,110 @@
 'use client'
 
 import Button from '@/components/common/Button/Button'
+import Modal from '@/components/common/Modal/Modal'
+import { signup } from '@/features/auth/api'
+import styles from '@/features/auth/AuthPage.module.css'
 import AuthInput from '@/features/auth/components/AuthInput/AuthInput'
-import Image from 'next/image'
-import Link from 'next/link'
+import AuthPageLayout from '@/features/auth/components/AuthPageLayout/AuthPageLayout'
+import {
+  EMAIL_VALIDATION_RULES,
+  PASSWORD_VALIDATION_RULES,
+} from '@/features/auth/validation'
+import { useMutation } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import styles from './page.module.css'
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const EMAIL_MAX_LENGTH = 254
 
 const NICKNAME_MIN_LENGTH = 2
 const NICKNAME_MAX_LENGTH = 20
 const NICKNAME_PATTERN = /^[A-Za-z0-9가-힣_-]+$/
 
-const PASSWORD_MIN_LENGTH = 8
-const PASSWORD_MAX_LENGTH = 24
-
 export default function SignupPage() {
+  const router = useRouter()
+
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
+
   const {
     register,
     handleSubmit,
     getValues,
     trigger,
+    setError,
     formState: { errors, isValid, touchedFields, isSubmitted },
   } = useForm({ mode: 'onChange' })
 
-  function onSubmit() {}
+  const signupMutation = useMutation({
+    mutationFn: signup,
+    onSuccess: () => {
+      router.replace('/marketplace')
+    },
+    onError: (error) => {
+      const serverError = error.response?.data?.error
+
+      if (serverError?.code === 'EMAIL_ALREADY_EXISTS') {
+        setError('email', {
+          type: 'server',
+          message: serverError.message,
+        })
+
+        return
+      }
+
+      if (serverError?.code === 'NICKNAME_ALREADY_EXISTS') {
+        setError('nickname', {
+          type: 'server',
+          message: serverError.message,
+        })
+
+        return
+      }
+
+      if (
+        serverError?.code === 'VALIDATION_ERROR' &&
+        Array.isArray(serverError.details)
+      ) {
+        const formFields = [
+          'email',
+          'nickname',
+          'password',
+          'passwordConfirmation',
+        ]
+
+        let hasFieldError = false
+
+        serverError.details.forEach(({ field, reason }) => {
+          if (formFields.includes(field)) {
+            setError(field, {
+              type: 'server',
+              message: reason,
+            })
+
+            hasFieldError = true
+          }
+        })
+
+        if (hasFieldError) return
+      }
+
+      setIsErrorModalOpen(true)
+    },
+  })
+
+  function onSubmit(data) {
+    signupMutation.mutate(data)
+  }
 
   return (
-    <main className={styles.page}>
-      <div className={styles.container}>
-        <Link href="/">
-          <Image
-            src={'/logos/matdori-logo.svg'}
-            alt="맛도리 마켓"
-            width={320}
-            height={71}
-            className={styles.logo}
-            priority
-          />
-        </Link>
-
+    <>
+      <AuthPageLayout
+        guideText="이미 맛도리 마켓 회원이신가요?"
+        guideHref="/login"
+        guideLinkText="로그인하기"
+      >
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className={styles.inputs}>
             <AuthInput
-              {...register('email', {
-                setValueAs: (value) => value.trim(),
-                required: '이메일을 입력해 주세요.',
-                maxLength: {
-                  value: EMAIL_MAX_LENGTH,
-                  message: '이메일은 254자 이하로 입력해 주세요.',
-                },
-                pattern: {
-                  value: EMAIL_PATTERN,
-                  message: '올바른 이메일 형식이 아닙니다.',
-                },
-              })}
+              {...register('email', EMAIL_VALIDATION_RULES)}
               label="이메일"
               type="email"
               placeholder="이메일을 입력해 주세요"
@@ -96,15 +144,7 @@ export default function SignupPage() {
 
             <AuthInput
               {...register('password', {
-                required: '비밀번호를 입력해 주세요.',
-                minLength: {
-                  value: PASSWORD_MIN_LENGTH,
-                  message: '비밀번호를 8자 이상 입력해 주세요.',
-                },
-                maxLength: {
-                  value: PASSWORD_MAX_LENGTH,
-                  message: '비밀번호를 24자 이하로 입력해 주세요.',
-                },
+                ...PASSWORD_VALIDATION_RULES,
                 onChange: () => {
                   if (getValues('passwordConfirmation')) {
                     trigger('passwordConfirmation')
@@ -143,25 +183,21 @@ export default function SignupPage() {
 
           <Button
             type="submit"
-            className={styles.signupButton}
-            disabled={!isValid}
+            className={styles.submitButton}
+            disabled={!isValid || signupMutation.isPending}
           >
-            가입하기
+            {signupMutation.isPending ? '가입 중...' : '가입하기'}
           </Button>
         </form>
+      </AuthPageLayout>
 
-        <Button type="button" className={styles.googleButton}>
-          <Image src="/logos/google-logo.svg" alt="" width={22} height={22} />
-          Google로 시작하기
-        </Button>
-
-        <p className={styles.loginGuide}>
-          이미 맛도리 마켓 회원이신가요?
-          <Link href="/login" className={styles.loginLink}>
-            로그인하기
-          </Link>
-        </p>
-      </div>
-    </main>
+      <Modal
+        isOpen={isErrorModalOpen}
+        onClose={() => setIsErrorModalOpen(false)}
+        title={'회원가입 실패'}
+      >
+        <p>일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.</p>
+      </Modal>
+    </>
   )
 }
