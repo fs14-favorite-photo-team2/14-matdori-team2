@@ -6,7 +6,9 @@ import { PrismaClient } from '../src/generated/prisma/client.ts'
 
 config({ path: ['.env.local', '.env'] })
 
-const adapter = new PrismaPg(process.env.DATABASE_URL)
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
+})
 const prisma = new PrismaClient({ adapter })
 
 // ============================================
@@ -46,6 +48,7 @@ const USER_COUNT = 100
 const RECIPE_COUNT = 100
 const COPY_PER_RECIPE = 3
 const LISTING_COUNT = 100
+const MAX_IMAGE_COUNT = 10
 const PURCHASE_COUNT = 100
 const TRADE_OFFER_COUNT = 100
 const NOTIFICATION_COUNT = 100
@@ -316,11 +319,18 @@ async function seedRecipes(users) {
     const creator = users[(i * 11 + 7) % users.length]
     const number = String(i + 1).padStart(3, '0')
 
+    // 레시피마다 1장부터 10장까지 반복해서 생성
+    const imageCount = (i % MAX_IMAGE_COUNT) + 1
+
     const recipe = await prisma.recipe.create({
       data: {
         creatorId: creator.id,
         title,
-        imageUrls: [`https://picsum.photos/seed/recipe-${number}/800/600`],
+        imageUrls: Array.from(
+          { length: imageCount },
+          (_, imageIndex) =>
+            `https://picsum.photos/seed/recipe-${number}-${imageIndex + 1}/800/600`,
+        ),
         ingredients: [
           { name: '예시 재료', amount: '적당량', isHighlight: false },
         ],
