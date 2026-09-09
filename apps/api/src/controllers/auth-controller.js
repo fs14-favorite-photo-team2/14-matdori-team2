@@ -1,11 +1,11 @@
 import { getClientOrigins } from '../config/client-origins.js'
 import { AppError } from '../errors/app-error.js'
-import { login, signup } from '../services/auth-service.js'
 import { sendSuccess } from '../http/response.js'
 import {
   sessionCookieName,
   sessionCookieOptions,
 } from '../middlewares/session.js'
+import { login, signup } from '../services/auth-service.js'
 import {
   destroySession,
   regenerateSession,
