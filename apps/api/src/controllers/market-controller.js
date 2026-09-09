@@ -5,6 +5,7 @@ import {
   updateMarketListing,
   withdrawMarketListing,
   deleteMarketListing,
+  purchaseMarketListing,
 } from '../services/market-service.js'
 import { sendSuccess } from '../http/response.js'
 
@@ -86,6 +87,20 @@ export async function deleteMarketListingController(request, response, next) {
     )
 
     return response.status(204).send()
+  } catch (error) {
+    return next(error)
+  }
+}
+
+// 포인트로 레시피카드 구매
+export async function purchaseMarketListingController(request, response, next) {
+  try {
+    const purchase = await purchaseMarketListing(
+      request.userId,
+      request.validated.params.listingId,
+    )
+
+    return sendSuccess(response, purchase, { status: 201 })
   } catch (error) {
     return next(error)
   }

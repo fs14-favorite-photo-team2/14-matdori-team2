@@ -276,3 +276,164 @@ export function deleteMarketListingRecord(listingId) {
     },
   })
 }
+
+export function findMarketListingForPurchase(listingId) {
+  return prisma.marketListing.findFirst({
+    where: {
+      id: listingId,
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      sellerId: true,
+      listingType: true,
+      price: true,
+      status: true,
+      copies: {
+        where: {
+          state: 'LISTED',
+        },
+        select: {
+          id: true,
+        },
+        orderBy: {
+          id: 'asc',
+        },
+        take: 1,
+      },
+    },
+  })
+}
+
+// 구매자 포인트 조회
+export function findUserPoints(userId) {
+  return prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      points: true,
+    },
+  })
+}
+
+// 포인트 결제, 사본 이전, 구매 기록 생성을 하나의 트랜잭션으로 처리
+export function purchaseMarketListingRecord({
+  listingId,
+  recipeCopyId,
+  buyerId,
+  sellerId,
+  price,
+}) {
+  return prisma.$transaction(async (transaction) => {
+    // 구매자 포인트 차감
+    const buyerUpdate = await transaction.user.updateMany({
+      where: {
+        id: buyerId,
+        points: {
+          gte: price,
+        },
+      },
+      data: {
+        points: {
+          decrement: price,
+        },
+      },
+    })
+
+    if (buyerUpdate.count !== 1) {
+      const error = new Error('구매자의 포인트가 부족합니다.')
+      error.code = 'INSUFFICIENT_POINTS'
+      throw error
+    }
+
+    // 사본 상태가 그대로 LISTED일 때만 구매자에게 이전
+    const copyUpdate = await transaction.recipeCopy.updateMany({
+      where: {
+        id: recipeCopyId,
+        listingId,
+        ownerId: sellerId,
+        state: 'LISTED',
+      },
+      data: {
+        ownerId: buyerId,
+        listingId: null,
+        state: 'OWNED',
+        everPurchased: true,
+      },
+    })
+
+    if (copyUpdate.count !== 1) {
+      const error = new Error('구매 가능한 사본이 없습니다.')
+      error.code = 'RECIPE_COPY_PURCHASE_FAILED'
+      throw error
+    }
+
+    // 판매자 포인트 증가
+    await transaction.user.update({
+      where: {
+        id: sellerId,
+      },
+      data: {
+        points: {
+          increment: price,
+        },
+      },
+    })
+
+    // 구매 기록 생성
+    const purchase = await transaction.purchase.create({
+      data: {
+        listingId,
+        recipeCopyId,
+        buyerId,
+        sellerId,
+        price,
+      },
+      select: {
+        id: true,
+        listingId: true,
+        recipeCopyId: true,
+        buyerId: true,
+        sellerId: true,
+        price: true,
+        createdAt: true,
+      },
+    })
+
+    // 현재 판매글에 남은 사본 수 확인
+    const remainingQuantity = await transaction.recipeCopy.count({
+      where: {
+        listingId,
+        state: 'LISTED',
+      },
+    })
+
+    // 마지막 사본이 판매된 경우 품절 처리
+    if (remainingQuantity === 0) {
+      await transaction.marketListing.update({
+        where: {
+          id: listingId,
+        },
+        data: {
+          status: 'SOLD_OUT',
+        },
+      })
+    }
+
+    // 차감 후 구매자 잔여 포인트 조회
+    const buyer = await transaction.user.findUnique({
+      where: {
+        id: buyerId,
+      },
+      select: {
+        points: true,
+      },
+    })
+
+    return {
+      ...purchase,
+      remainingPoints: buyer.points,
+    }
+  })
+}

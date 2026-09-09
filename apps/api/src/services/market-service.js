@@ -8,6 +8,8 @@ import {
   updateMarketListingById,
   withdrawMarketListingRecord,
   deleteMarketListingRecord,
+  findMarketListingForPurchase,
+  purchaseMarketListingRecord,
 } from '../repositories/market-repository.js'
 
 // DB 조회 결과를 API 응답 형태로 변경
@@ -256,4 +258,95 @@ export async function deleteMarketListing(userId, listingId) {
   }
 
   await deleteMarketListingRecord(listingId)
+}
+
+export async function purchaseMarketListing(userId, listingId) {
+  const listing = await findMarketListingForPurchase(listingId)
+
+  // 판매글 존재 여부
+  if (!listing) {
+    throw AppError.from(ERROR_CODES.RESOURCE_NOT_FOUND)
+  }
+
+  // 본인 판매글 구매 방지
+  if (listing.sellerId === userId) {
+    throw AppError.from(ERROR_CODES.CONFLICT, [
+      {
+        field: 'listingId',
+        reason: '본인이 등록한 판매글은 구매할 수 없습니다.',
+      },
+    ])
+  }
+
+  // 판매 중인 글만 구매 가능
+  if (listing.status !== 'ON_SALE') {
+    throw AppError.from(ERROR_CODES.CONFLICT, [
+      {
+        field: 'listingId',
+        reason: '현재 구매할 수 없는 판매글입니다.',
+      },
+    ])
+  }
+
+  // 교환 전용 판매글 구매 방지
+  if (listing.listingType === 'EXCHANGE') {
+    throw AppError.from(ERROR_CODES.CONFLICT, [
+      {
+        field: 'listingId',
+        reason: '교환 전용 판매글은 구매할 수 없습니다.',
+      },
+    ])
+  }
+
+  // SALE 또는 BOTH인데 가격이 없는 비정상 데이터 방지
+  if (listing.price === null) {
+    throw AppError.from(ERROR_CODES.CONFLICT, [
+      {
+        field: 'listingId',
+        reason: '판매 가격이 설정되지 않은 판매글입니다.',
+      },
+    ])
+  }
+
+  // 구매 가능한 사본 확인
+  const recipeCopy = listing.copies[0]
+
+  if (!recipeCopy) {
+    throw AppError.from(ERROR_CODES.CONFLICT, [
+      {
+        field: 'listingId',
+        reason: '구매 가능한 레시피 사본이 없습니다.',
+      },
+    ])
+  }
+
+  try {
+    return await purchaseMarketListingRecord({
+      listingId,
+      recipeCopyId: recipeCopy.id,
+      buyerId: userId,
+      sellerId: listing.sellerId,
+      price: listing.price,
+    })
+  } catch (error) {
+    if (error.code === 'INSUFFICIENT_POINTS') {
+      throw AppError.from(ERROR_CODES.CONFLICT, [
+        {
+          field: 'points',
+          reason: '보유 포인트가 부족합니다.',
+        },
+      ])
+    }
+
+    if (error.code === 'RECIPE_COPY_PURCHASE_FAILED') {
+      throw AppError.from(ERROR_CODES.CONFLICT, [
+        {
+          field: 'listingId',
+          reason: '사본 상태가 변경되어 구매할 수 없습니다.',
+        },
+      ])
+    }
+
+    throw error
+  }
 }
