@@ -150,6 +150,7 @@ model MarketListing {
   status            ListingStatus @default(ON_SALE)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
 
   seller User   @relation(fields: [sellerId], references: [id])
   recipe Recipe @relation(fields: [recipeId], references: [id])
