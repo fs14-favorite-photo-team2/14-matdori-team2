@@ -39,6 +39,7 @@ export function findListingsBySeller(sellerId, query) {
   return findCursorPage(prisma.marketListing, {
     where: {
       sellerId,
+      deletedAt: null,
       ...(listingType ? { listingType } : {}),
       ...(status ? { status } : {}),
       ...recipeFilter(query),
