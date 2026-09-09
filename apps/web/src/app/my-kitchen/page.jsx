@@ -232,7 +232,7 @@ export default function MyKitchenPage() {
 
         <h1 className={`${styles.pageTitle} font-baskin-robbins`}>마이 키친</h1>
 
-        <Link href="/my-kitchen/create" className={styles.mobileCreateButton}>
+        <Link href="/my-kitchen/create" className={styles.createButton}>
           <Button variant="primary">레시피 생성하기</Button>
         </Link>
       </div>
