@@ -36,7 +36,7 @@ export default function CreateRecipePage() {
   const [content, setContent] = useState('')
   const [imageFiles, setImageFiles] = useState([])
   const [ingredients, setIngredients] = useState(() =>
-    Array.from({ length: 4 }, () => createEmptyIngredient()),
+    Array.from({ length: 2 }, () => createEmptyIngredient()),
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
