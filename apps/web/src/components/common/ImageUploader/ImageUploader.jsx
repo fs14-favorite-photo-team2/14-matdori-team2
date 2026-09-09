@@ -30,11 +30,16 @@ export default function ImageUploader({ onChange }) {
     ? Math.round((activeImage.zoom / MIN_ZOOM) * 100)
     : 100
 
+  const imagesRef = useRef(images)
+  useEffect(() => {
+    imagesRef.current = images
+  })
+
   useEffect(() => {
     return () => {
-      images.forEach((img) => URL.revokeObjectURL(img.previewUrl))
+      imagesRef.current.forEach((img) => URL.revokeObjectURL(img.previewUrl))
     }
-  }, [images])
+  }, [])
 
   function validateFile(file) {
     if (!file.type.startsWith('image/')) {
@@ -88,17 +93,6 @@ export default function ImageUploader({ onChange }) {
 
   function handleSelectThumbnail(id) {
     setActiveId(id)
-  }
-
-  function handleSetRepresentative(id) {
-    if (images[0]?.id === id) return
-
-    const target = images.find((img) => img.id === id)
-    if (!target) return
-
-    const updated = [target, ...images.filter((img) => img.id !== id)]
-    setImages(updated)
-    emitChange(updated)
   }
 
   function handleRemove(id) {
@@ -182,7 +176,7 @@ export default function ImageUploader({ onChange }) {
           className={styles.uploadBox}
           onClick={handleSelectClick}
         >
-          <span className={styles.plusIcon}>+</span>
+          <span className={styles.plusIcon}></span>
           <span className={styles.uploadText}>사진 업로드</span>
         </button>
       ) : (
@@ -252,17 +246,7 @@ export default function ImageUploader({ onChange }) {
               {index === 0 ? (
                 <span className={styles.thumbnailBadge}>썸네일</span>
               ) : (
-                <button
-                  type="button"
-                  className={styles.thumbnailSetMain}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleSetRepresentative(img.id)
-                  }}
-                  aria-label="썸네일로 지정"
-                >
-                  썸네일 선택
-                </button>
+                <span />
               )}
 
               <button
