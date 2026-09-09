@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs'
 
 import { ERROR_CODES } from '../constants/error-codes.js'
+import { PRISMA_ERROR_CODES } from '../constants/prisma-error-codes.js'
 import { AppError } from '../errors/app-error.js'
 import {
   connectGoogleAccount,
@@ -21,7 +22,7 @@ export async function signup({ email, nickname, password }) {
   try {
     return await createUser({ email, nickname, passwordHash })
   } catch (error) {
-    if (error.code !== 'P2002') {
+    if (error.code !== PRISMA_ERROR_CODES.UNIQUE_VIOLATION) {
       throw error
     }
 
@@ -88,7 +89,7 @@ export async function authenticateWithGoogle({ googleId, email }) {
     try {
       return await createGoogleUser({ email, googleId, nickname })
     } catch (error) {
-      if (error.code !== 'P2002') {
+      if (error.code !== PRISMA_ERROR_CODES.UNIQUE_VIOLATION) {
         throw error
       }
 
