@@ -164,8 +164,8 @@ npm run dev:api
 | `npm run prisma:migrate`  | 로컬 마이그레이션 생성 및 적용 |
 | `npm run prisma:studio`   | Prisma Studio 실행             |
 
-현재 API에는 인증(회원가입, 로그인, 로그아웃, Google OAuth)과 상태 확인 경로가 구현되어 있습니다.
-루트의 openapi.yaml에는 앞으로 구현할 사용자, 레시피, 거래, 알림, 랜덤 상자 API도 포함되어 있습니다.
+현재 API에는 인증(회원가입, 로그인, 로그아웃, Google OAuth), 사용자와 상태 확인 경로가 구현되어 있습니다.
+루트의 openapi.yaml에는 앞으로 구현할 레시피, 거래, 알림, 랜덤 상자 API도 포함되어 있습니다.
 
 ## 폴더 구조
 
@@ -241,7 +241,7 @@ npm run dev:api
         repositories/       # 데이터베이스 접근
         routes/             # API 경로
         services/           # 비즈니스 로직
-        utils/              # 닉네임 생성 및 세션 유틸리티
+        utils/              # 닉네임, 세션, 커서 페이지네이션 등 유틸리티
         validators/         # 요청 스키마
         generated/          # 생성된 Prisma Client
       .env.example          # 백엔드 환경 변수 예시
