@@ -1,3 +1,8 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import ActionConfirmModal from '@/components/common/ActionConfirmModal/ActionConfirmModal'
 import Image from 'next/image'
 import Button from '@/components/common/Button/Button'
 import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
@@ -25,6 +30,12 @@ export default function MarketplaceListingPage() {
     (option) => option.value === recipe.difficulty,
   )
 
+  const router = useRouter()
+  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
+
+  // 구매 수량 UI가 연결되면 해당 상태값으로 교체
+  const purchaseQuantity = 1
+
   const categoryOption = CATEGORY_OPTIONS.find(
     (option) => option.value === recipe.category,
   )
@@ -47,6 +58,20 @@ export default function MarketplaceListingPage() {
 
   const wantedDifficultyClassName =
     DIFFICULTY_CLASS_NAMES[wantedDifficultyOption?.tone] ?? ''
+
+  function handlePurchaseConfirm() {
+    setIsPurchaseModalOpen(false)
+
+    const params = new URLSearchParams({
+      difficultyLabel: difficultyOption?.label ?? recipe.difficulty,
+      title: recipe.title,
+      quantity: String(purchaseQuantity),
+    })
+
+    router.push(
+      `/marketplace/${listing.id}/purchase/success?${params.toString()}`,
+    )
+  }
 
   if (isSeller) {
     return <SellerListingDetail listing={listing} />
@@ -112,6 +137,7 @@ export default function MarketplaceListingPage() {
               type="button"
               className={styles.purchaseButton}
               disabled={isSoldOut}
+              onClick={() => setIsPurchaseModalOpen(true)}
             >
               레시피 구매하기
             </Button>
@@ -235,6 +261,14 @@ export default function MarketplaceListingPage() {
           </section>
         )}
       </div>
+      <ActionConfirmModal
+        isOpen={isPurchaseModalOpen}
+        onClose={() => setIsPurchaseModalOpen(false)}
+        onConfirm={handlePurchaseConfirm}
+        title="레시피 구매"
+        description={`[${difficultyOption?.label ?? recipe.difficulty} | ${recipe.title}] ${purchaseQuantity}장을 구매하시겠습니까?`}
+        confirmLabel="구매하기"
+      />
     </main>
   )
 }

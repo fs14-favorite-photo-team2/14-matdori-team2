@@ -1,7 +1,7 @@
 // TODO: GET /api/market-listings/:listingId 응답으로 교체
 export const MOCK_CURRENT_USER = {
-  id: 2,
-  nickname: '미쓰손',
+  id: 1,
+  nickname: '유디',
 }
 
 export const MOCK_LISTING_DETAIL = {
