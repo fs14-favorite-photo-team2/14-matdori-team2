@@ -176,7 +176,7 @@ export default function ImageUploader({ onChange }) {
           className={styles.uploadBox}
           onClick={handleSelectClick}
         >
-          <span className={styles.plusIcon}></span>
+          <span className={styles.plusIcon}>+</span>
           <span className={styles.uploadText}>사진 업로드</span>
         </button>
       ) : (
