@@ -7,7 +7,8 @@ import useCurrentUser from '../../useCurrentUser'
 
 export default function GuestOnlyGuard({ children }) {
   const router = useRouter()
-  const { isAuthenticated, isLoading, error, refetch } = useCurrentUser()
+  const { isAuthenticated, isLoading, isRefetching, error, refetch } =
+    useCurrentUser()
 
   useEffect(() => {
     if (!isLoading && !error && isAuthenticated) {
@@ -16,7 +17,7 @@ export default function GuestOnlyGuard({ children }) {
   }, [isAuthenticated, isLoading, error, router])
 
   if (isLoading) {
-    return null
+    return <p role="status">로그인 정보를 확인하고 있습니다.</p>
   }
 
   if (error) {
@@ -24,7 +25,10 @@ export default function GuestOnlyGuard({ children }) {
       <ErrorState
         title="사용자 정보를 불러오지 못했습니다."
         message="잠시 후 다시 시도해 주세요."
-        onRetry={refetch}
+        actionLabel="다시 시도"
+        onAction={refetch}
+        isActionLoading={isRefetching}
+        actionLoadingLabel="다시 불러오는 중..."
       />
     )
   }

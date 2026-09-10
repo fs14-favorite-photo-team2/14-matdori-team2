@@ -7,6 +7,7 @@ export default function useCurrentUser() {
   const {
     data: user,
     isPending,
+    isRefetching,
     error,
     refetch,
   } = useQuery({
@@ -18,6 +19,7 @@ export default function useCurrentUser() {
     user,
     isAuthenticated: Boolean(user),
     isLoading: isPending,
+    isRefetching,
     error,
     refetch,
   }
