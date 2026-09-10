@@ -18,8 +18,18 @@
   display: none;
 }
 
-.mobileCreateButton {
-  display: none;
+.createButton {
+  display: block;
+  text-decoration: none;
+}
+
+.createButton button {
+  width: 440px;
+  height: 60px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pageTitle {
@@ -136,7 +146,7 @@
   }
 
   /* 모바일 하단 고정 레시피 생성 버튼 */
-  .mobileCreateButton {
+  .createButton {
     display: block;
     position: fixed;
     bottom: 16px;
@@ -145,7 +155,7 @@
     z-index: 100;
   }
 
-  .mobileCreateButton button {
+  .createButton button {
     width: 100%;
     height: 54px;
     background-color: var(--color-main);

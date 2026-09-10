@@ -1,4 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg'
+import bcrypt from 'bcryptjs'
 import { config } from 'dotenv'
 
 import { PrismaClient } from '../src/generated/prisma/client.ts'
@@ -52,8 +53,8 @@ const PURCHASE_COUNT = 100
 const TRADE_OFFER_COUNT = 100
 const NOTIFICATION_COUNT = 100
 
-const SEED_PASSWORD_HASH =
-  '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.'
+const SEED_PASSWORD = 'password'
+const SEED_PASSWORD_SALT_ROUNDS = 12
 
 const DIFFICULTIES = ['EASY', 'NORMAL', 'HARD', 'MASTER']
 
@@ -273,6 +274,11 @@ async function clearDatabase() {
 async function seedUsers() {
   console.log('User 100개 생성 중...')
 
+  const seedPasswordHash = await bcrypt.hash(
+    SEED_PASSWORD,
+    SEED_PASSWORD_SALT_ROUNDS,
+  )
+
   const users = []
 
   for (let i = 0; i < USER_COUNT; i += 1) {
@@ -282,7 +288,7 @@ async function seedUsers() {
     const user = await prisma.user.create({
       data: {
         email: `seed-user-${number}@example.com`,
-        passwordHash: isGoogleOnly ? null : SEED_PASSWORD_HASH,
+        passwordHash: isGoogleOnly ? null : seedPasswordHash,
         googleId: isGoogleOnly ? `google-seed-${number}` : null,
         nickname: `맛도리${number}`,
         points: ((i * 17) % 201) * 1000,
@@ -904,7 +910,7 @@ async function printCounts() {
   console.log('============================================')
   console.log('일반 테스트 계정 예시')
   console.log('email    : seed-user-001@example.com')
-  console.log('password : password')
+  console.log(`password : ${SEED_PASSWORD}`)
   console.log('============================================\n')
 }
 
