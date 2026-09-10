@@ -173,8 +173,8 @@
   padding: 2px 0;
   text-align: center;
   background: var(--color-main);
-  color: var(--color-white);
-  font-size: 9px;
+  color: var(--color-black);
+  font-size: var(--font-size-10);
   font-weight: var(--font-weight-bold);
   line-height: 1.4;
 }
