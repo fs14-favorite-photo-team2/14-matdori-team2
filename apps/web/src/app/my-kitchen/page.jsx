@@ -26,11 +26,6 @@ const DIFFICULTY_TONE_VARS = {
   master: 'var(--color-pink)',
 }
 
-const STATE_TO_BADGE = {
-  LISTED: 'selling',
-  OFFERED: 'exchangePending',
-}
-
 // ---- GET /api/users/me/recipe-copies 로 교체 ----
 const RECIPE_NAMES_BY_CATEGORY = {
   KOREAN: ['김치찌개', '된장찌개', '제육볶음', '불고기', '비빔밥'],
@@ -80,8 +75,8 @@ function getFilteredCopies(copies, keyword, targetFilters) {
   })
 }
 
-function excludeListed(copies) {
-  return copies.filter((c) => c.state !== 'LISTED')
+function filterOwnedOnly(copies) {
+  return copies.filter((c) => c.state === 'OWNED')
 }
 
 function groupByRecipe(copies) {
@@ -93,15 +88,11 @@ function groupByRecipe(copies) {
 
     if (existing) {
       existing.quantity += 1
-      if (item.state === 'OFFERED') {
-        existing.hasOffered = true
-      }
     } else {
       groups.set(recipeId, {
         id: recipeId,
         recipe: item.recipe,
         quantity: 1,
-        hasOffered: item.state === 'OFFERED',
       })
     }
   }
@@ -137,25 +128,25 @@ export default function MyKitchenPage() {
     return () => window.removeEventListener('resize', applySize)
   }, [])
 
-  const nonListedCopies = useMemo(() => excludeListed(copies), [copies])
+  const ownedCopies = useMemo(() => filterOwnedOnly(copies), [copies])
 
   const difficultyCounts = useMemo(() => {
     return DIFFICULTY_OPTIONS.map((option) => ({
       label: option.label,
       color: DIFFICULTY_TONE_VARS[option.tone],
-      count: nonListedCopies.filter((c) => c.recipe.difficulty === option.value)
+      count: ownedCopies.filter((c) => c.recipe.difficulty === option.value)
         .length,
     }))
-  }, [nonListedCopies])
+  }, [ownedCopies])
 
   const filteredCopies = useMemo(
-    () => getFilteredCopies(nonListedCopies, keyword, filters),
-    [nonListedCopies, keyword, filters],
+    () => getFilteredCopies(ownedCopies, keyword, filters),
+    [ownedCopies, keyword, filters],
   )
 
   const draftFilteredCopies = useMemo(
-    () => getFilteredCopies(nonListedCopies, keyword, draftFilters),
-    [nonListedCopies, keyword, draftFilters],
+    () => getFilteredCopies(ownedCopies, keyword, draftFilters),
+    [ownedCopies, keyword, draftFilters],
   )
 
   const groupedRecipes = useMemo(
@@ -241,7 +232,7 @@ export default function MyKitchenPage() {
 
         <h1 className={`${styles.pageTitle} font-baskin-robbins`}>마이 키친</h1>
 
-        <Link href="/my-kitchen/create" className={styles.mobileCreateButton}>
+        <Link href="/my-kitchen/create" className={styles.createButton}>
           <Button variant="primary">레시피 생성하기</Button>
         </Link>
       </div>
@@ -249,9 +240,7 @@ export default function MyKitchenPage() {
       <div className={styles.summarySection}>
         <p className={styles.summaryText}>
           {nickname}님이 보유한 레시피{' '}
-          <span className={styles.summaryCount}>
-            ({nonListedCopies.length}장)
-          </span>
+          <span className={styles.summaryCount}>({ownedCopies.length}장)</span>
         </p>
 
         <div className={styles.chips}>
@@ -308,7 +297,6 @@ export default function MyKitchenPage() {
               sellerNickname={item.recipe.creatorNickname}
               price={item.recipe.minPrice}
               remainingQuantity={item.quantity}
-              badgeType={item.hasOffered ? STATE_TO_BADGE.OFFERED : undefined}
             />
           ))}
         </div>

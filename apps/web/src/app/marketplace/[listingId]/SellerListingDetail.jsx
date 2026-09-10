@@ -34,6 +34,7 @@ export default function SellerListingDetail({ listing }) {
   const imageCount = recipe.imageUrls.length
   const currentImageUrl = recipe.imageUrls[currentImageIndex]
   const hasMultipleImages = imageCount > 1
+  const isExchangeAvailable = listing.listingType === 'BOTH'
 
   function handlePreviousImage() {
     setCurrentImageIndex(
@@ -167,22 +168,27 @@ export default function SellerListingDetail({ listing }) {
                   교환 희망 정보
                 </h2>
 
-                <div className={styles.sellerWantedMeta}>
-                  <span
-                    className={`${styles.difficulty} ${wantedDifficultyClassName}`}
-                  >
-                    {wantedDifficultyOption?.label ?? listing.wantedDifficulty}
-                  </span>
+                {isExchangeAvailable && (
+                  <div className={styles.sellerWantedMeta}>
+                    <span
+                      className={`${styles.difficulty} ${wantedDifficultyClassName}`}
+                    >
+                      {wantedDifficultyOption?.label ??
+                        listing.wantedDifficulty}
+                    </span>
 
-                  <span className={styles.metaDivider}>|</span>
+                    <span className={styles.metaDivider}>|</span>
 
-                  <span className={styles.category}>
-                    {wantedCategoryOption?.label ?? listing.wantedCategory}
-                  </span>
-                </div>
+                    <span className={styles.category}>
+                      {wantedCategoryOption?.label ?? listing.wantedCategory}
+                    </span>
+                  </div>
+                )}
 
                 <p className={styles.sellerWantedDescription}>
-                  {listing.wantedDescription}
+                  {isExchangeAvailable
+                    ? listing.wantedDescription
+                    : '교환을 희망하지 않습니다.'}
                 </p>
               </section>
 
