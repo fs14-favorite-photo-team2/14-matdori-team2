@@ -21,9 +21,19 @@
   overflow-y: auto;
 }
 
+.largeDialog {
+  width: calc(100% - 48px);
+  max-width: 960px;
+  height: min(830px, calc(100dvh - 64px));
+  max-height: none;
+  padding: 56px 64px 48px;
+  text-align: left;
+}
+
 .title {
   font-size: var(--font-size-20);
   font-weight: var(--font-weight-bold);
+  margin-top: 20px;
   margin-bottom: 12px;
 }
 
@@ -42,13 +52,33 @@
   .dialog {
     max-width: 420px;
   }
+
+  .largeBackdrop {
+    align-items: flex-end;
+  }
+
+  .largeDialog {
+    width: 100%;
+    max-width: none;
+    height: calc(100dvh - 40px);
+    padding: 64px 24px 32px;
+    border-radius: 0;
+  }
 }
 
 /* 모바일 */
 @media (max-width: 743px) {
   .dialog {
-    max-width: 90%;
+    width: calc(100% - 28px);
+    max-width: 360px;
     padding: 24px 20px 20px;
+  }
+
+  .largeDialog {
+    width: 100%;
+    max-width: none;
+    height: calc(100dvh - 48px);
+    padding: 56px 16px 24px;
   }
 
   .title {

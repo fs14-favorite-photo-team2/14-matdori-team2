@@ -1,3 +1,333 @@
+'use client'
+
+import { useEffect, useMemo, useRef, useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import SearchBar from '@/components/common/SearchBar/SearchBar'
+import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
+import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
+import {
+  DIFFICULTY_OPTIONS,
+  DEFAULT_FILTERS,
+  MY_SALES_FILTER_GROUPS,
+} from '@/constants/RecipeOptions'
+import styles from './page.module.css'
+
+const PAGE_SIZE_DESKTOP = 12
+const PAGE_SIZE_MOBILE = 8
+const DESKTOP_BREAKPOINT = 1023
+
+const DIFFICULTY_TONE_VARS = {
+  easy: 'var(--color-main)',
+  normal: 'var(--color-blue)',
+  hard: 'var(--color-purple)',
+  master: 'var(--color-pink)',
+}
+
+// ---- GET /api/users/me/market-listings 로 교체 ----
+const RECIPE_NAMES_BY_CATEGORY = {
+  KOREAN: ['김치찌개', '된장찌개', '제육볶음', '불고기', '비빔밥'],
+  WESTERN: ['토마토 파스타', '크림 파스타', '스테이크', '리조또'],
+  JAPANESE: ['가츠동', '오코노미야키', '카레라이스'],
+  ASIAN: ['팟타이', '쌀국수', '분짜'],
+  HOME_BAKING: ['휘낭시에', '스콘', '브라우니'],
+}
+const CATEGORY_KEYS = Object.keys(RECIPE_NAMES_BY_CATEGORY)
+const DIFFICULTIES = ['EASY', 'NORMAL', 'HARD', 'MASTER']
+const OFFER_SELLER_NICKNAMES = ['프로한식러', '미쓰손', '팝스타', '요리요정']
+
+function createMockListings(count) {
+  return Array.from({ length: count }, (_, i) => {
+    const category = CATEGORY_KEYS[i % CATEGORY_KEYS.length]
+    const names = RECIPE_NAMES_BY_CATEGORY[category]
+    const difficulty = DIFFICULTIES[i % DIFFICULTIES.length]
+    const isSoldOut = i % 4 === 0
+    const isSentOffer = !isSoldOut && i % 5 === 0
+
+    const relationType = isSentOffer ? 'SENT_OFFER' : 'OWN_LISTING'
+    const listingType = 'SALE'
+    const listingStatus = isSoldOut ? 'SOLD_OUT' : 'ON_SALE'
+    const tradeOfferStatus = isSentOffer ? 'PENDING' : null
+
+    let badgeType
+    if (!isSoldOut) {
+      badgeType = isSentOffer ? 'exchangePending' : 'selling'
+    }
+
+    return {
+      id: `listing-${i}`,
+      relationType,
+      listingType,
+      listingStatus,
+      tradeOfferStatus,
+      badgeType,
+      price: 1 + (i % 20),
+      sellerNickname: isSentOffer
+        ? OFFER_SELLER_NICKNAMES[i % OFFER_SELLER_NICKNAMES.length]
+        : undefined,
+      recipe: {
+        id: `recipe-${i}`,
+        title: names[i % names.length],
+        imageUrl: `https://picsum.photos/seed/listing-${i}/800/600`,
+        difficulty,
+        category,
+      },
+      remainingQuantity: isSoldOut ? 0 : (i % 3) + 1,
+    }
+  })
+}
+// ---------------------------------------------------------
+
+function getDisplayableListings(listings) {
+  return listings.filter((listing) => {
+    if (listing.relationType === 'OWN_LISTING') {
+      return true
+    }
+
+    if (listing.relationType === 'SENT_OFFER') {
+      return (
+        listing.tradeOfferStatus === 'PENDING' &&
+        listing.listingStatus === 'ON_SALE'
+      )
+    }
+
+    return false
+  })
+}
+
+function getFilteredListings(listings, keyword, targetFilters) {
+  return listings.filter((item) => {
+    const matchesKeyword = item.recipe.title.includes(keyword.trim())
+    const matchesDifficulty =
+      targetFilters.difficulty === '' ||
+      item.recipe.difficulty === targetFilters.difficulty
+    const matchesCategory =
+      targetFilters.category === '' ||
+      item.recipe.category === targetFilters.category
+    const matchesListingType =
+      targetFilters.listingType === '' ||
+      item.listingType === targetFilters.listingType
+    const matchesStatus =
+      targetFilters.status === '' || item.listingStatus === targetFilters.status
+    return (
+      matchesKeyword &&
+      matchesDifficulty &&
+      matchesCategory &&
+      matchesListingType &&
+      matchesStatus
+    )
+  })
+}
+
 export default function MySalesPage() {
-  return null
+  const router = useRouter()
+  const nickname = '유디'
+
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_DESKTOP)
+  const [listings] = useState(() => createMockListings(35))
+  const [keyword, setKeyword] = useState('')
+  const [filters, setFilters] = useState(DEFAULT_FILTERS)
+  const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS)
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE_DESKTOP)
+
+  const sentinelRef = useRef(null)
+
+  useEffect(() => {
+    function applySize() {
+      const isMobile = window.innerWidth <= DESKTOP_BREAKPOINT
+      const nextSize = isMobile ? PAGE_SIZE_MOBILE : PAGE_SIZE_DESKTOP
+      setPageSize(nextSize)
+      setVisibleCount(nextSize)
+    }
+
+    applySize()
+    window.addEventListener('resize', applySize)
+    return () => window.removeEventListener('resize', applySize)
+  }, [])
+
+  const displayableListings = useMemo(
+    () => getDisplayableListings(listings),
+    [listings],
+  )
+
+  const difficultyCounts = useMemo(() => {
+    return DIFFICULTY_OPTIONS.map((option) => ({
+      label: option.label,
+      color: DIFFICULTY_TONE_VARS[option.tone],
+      count: displayableListings.filter(
+        (item) => item.recipe.difficulty === option.value,
+      ).length,
+    }))
+  }, [displayableListings])
+
+  const filteredListings = useMemo(
+    () => getFilteredListings(displayableListings, keyword, filters),
+    [displayableListings, keyword, filters],
+  )
+
+  const draftFilteredListings = useMemo(
+    () => getFilteredListings(displayableListings, keyword, draftFilters),
+    [displayableListings, keyword, draftFilters],
+  )
+
+  const visibleListings = filteredListings.slice(0, visibleCount)
+  const hasNext = visibleCount < filteredListings.length
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel || !hasNext) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => prev + pageSize)
+        }
+      },
+      { rootMargin: '200px' },
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasNext, pageSize])
+
+  function handleKeywordChange(nextKeyword) {
+    setKeyword(nextKeyword)
+    setVisibleCount(pageSize)
+  }
+
+  function handleFilterChange(key, value) {
+    setFilters((prev) => ({ ...prev, [key]: value }))
+    setVisibleCount(pageSize)
+  }
+
+  function handleDraftFilterChange(key, value) {
+    setDraftFilters((prev) => ({
+      ...prev,
+      [key]: prev[key] === value ? '' : value,
+    }))
+  }
+
+  function handleOpenMobile() {
+    setDraftFilters(filters)
+    setIsMobileOpen(true)
+  }
+
+  function handleCloseMobile() {
+    setIsMobileOpen(false)
+  }
+
+  function handleReset() {
+    setDraftFilters(DEFAULT_FILTERS)
+  }
+
+  function handleApply(nextFilters) {
+    setFilters(nextFilters)
+    setVisibleCount(pageSize)
+    setIsMobileOpen(false)
+  }
+
+  function handleBack() {
+    router.back()
+  }
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <button
+          type="button"
+          className={styles.backButton}
+          onClick={handleBack}
+          aria-label="뒤로가기"
+        >
+          <Image src="/icons/left.svg" alt="" width={24} height={24} />
+        </button>
+
+        <h1 className={`${styles.pageTitle} font-baskin-robbins`}>
+          나의 판매 레시피
+        </h1>
+      </div>
+
+      <div className={styles.summarySection}>
+        <p className={styles.summaryText}>
+          {nickname}님의 판매 레시피{' '}
+          <span className={styles.summaryCount}>
+            ({displayableListings.length}장)
+          </span>
+        </p>
+
+        <div className={styles.chips}>
+          {difficultyCounts.map((item) => (
+            <span
+              key={item.label}
+              className={styles.chip}
+              style={{ borderColor: item.color, color: item.color }}
+            >
+              {item.label} {item.count}장
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.filterBar}>
+        <div className={styles.searchField}>
+          <SearchBar
+            value={keyword}
+            onChange={handleKeywordChange}
+            onSearch={handleKeywordChange}
+            placeholder="검색"
+          />
+        </div>
+
+        <div className={styles.filterTrigger}>
+          <RecipeFilter
+            filterGroups={MY_SALES_FILTER_GROUPS}
+            filters={filters}
+            draftFilters={draftFilters}
+            isMobileOpen={isMobileOpen}
+            resultCount={draftFilteredListings.length}
+            onFilterChange={handleFilterChange}
+            onDraftFilterChange={handleDraftFilterChange}
+            onOpenMobile={handleOpenMobile}
+            onCloseMobile={handleCloseMobile}
+            onReset={handleReset}
+            onApply={handleApply}
+          />
+        </div>
+      </div>
+
+      {visibleListings.length === 0 ? (
+        <p className={styles.emptyText}>조건에 맞는 레시피가 없어요.</p>
+      ) : (
+        <div className={styles.grid}>
+          {visibleListings.map((listing) => (
+            <Link
+              key={listing.id}
+              href={`/marketplace/${listing.id}`}
+              className={styles.cardLink}
+            >
+              <RecipeCard
+                thumbnailUrl={listing.recipe.imageUrl}
+                title={listing.recipe.title}
+                difficulty={listing.recipe.difficulty}
+                category={listing.recipe.category}
+                sellerNickname={
+                  listing.relationType === 'SENT_OFFER'
+                    ? listing.sellerNickname
+                    : undefined
+                }
+                price={listing.price}
+                remainingQuantity={listing.remainingQuantity}
+                badgeType={listing.badgeType}
+                listingStatus={listing.listingStatus}
+              />
+            </Link>
+          ))}
+        </div>
+      )}
+
+      <div ref={sentinelRef} className={styles.sentinel} />
+    </div>
+  )
 }

@@ -901,6 +901,7 @@ paths:
     get:
       tags: [랜덤 상자]
       summary: 랜덤 상자 뽑기 가능 여부 조회
+      description: 하루에 한 번 뽑을 수 있으며 매일 자정(KST)에 초기화됩니다.
       operationId: getRandomBoxStatus
       responses:
         '200':
@@ -912,7 +913,9 @@ paths:
     post:
       tags: [랜덤 상자]
       summary: 랜덤 포인트 보상 획득
-      description: 마지막 뽑기 이후 60분에 한 번 실행할 수 있습니다.
+      description: >-
+        하루에 한 번 실행할 수 있고 매일 자정(KST)에 다시 열립니다.
+        첫 뽑기는 10~15포인트, 이후 뽑기는 1~5포인트를 지급합니다.
       operationId: claimRandomBox
       responses:
         '200':
@@ -922,10 +925,7 @@ paths:
               schema: { $ref: '#/components/schemas/RandomBoxClaimResponse' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429':
-          description: 다음 뽑기까지의 대기 시간이 지나지 않음
-          headers:
-            Retry-After:
-              schema: { type: integer, description: 다음 뽑기까지 남은 초 }
+          description: 오늘 이미 뽑아서 다음 초기화 시각이 지나지 않음
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -1075,6 +1075,7 @@ components:
         - EMAIL_ALREADY_EXISTS
         - NICKNAME_ALREADY_EXISTS
         - MONTHLY_RECIPE_LIMIT_REACHED
+        - RANDOM_BOX_NOT_READY
         - AUTHENTICATION_REQUIRED
         - INVALID_CREDENTIALS
         - GOOGLE_ACCOUNT_ONLY
@@ -1584,12 +1585,17 @@ components:
       required: [canClaim, lastClaimedAt, nextClaimableAt]
       properties:
         canClaim: { type: boolean }
-        lastClaimedAt: { type: [string, 'null'], format: date-time }
+        lastClaimedAt:
+          {
+            type: [string, 'null'],
+            format: date-time,
+            description: 마지막으로 뽑은 시각. 아직 뽑은 적이 없으면 null입니다.,
+          }
         nextClaimableAt:
           {
             type: [string, 'null'],
             format: date-time,
-            description: 다음 뽑기가 가능해지는 시각. 지금 뽑을 수 있으면 null입니다.,
+            description: 다음 뽑기가 가능해지는 자정(KST). 지금 뽑을 수 있으면 null입니다.,
           }
     RandomBoxResponse:
       allOf:
@@ -1606,9 +1612,20 @@ components:
               type: object
               required: [rewardPoints, currentPoints, nextClaimableAt]
               properties:
-                rewardPoints: { type: integer }
+                rewardPoints:
+                  {
+                    type: integer,
+                    minimum: 1,
+                    maximum: 15,
+                    description: 이번에 획득한 포인트. 첫 뽑기는 10~15이고 이후 뽑기는 1~5입니다.,
+                  }
                 currentPoints: { type: integer, minimum: 0 }
-                nextClaimableAt: { type: string, format: date-time }
+                nextClaimableAt:
+                  {
+                    type: string,
+                    format: date-time,
+                    description: 다음 뽑기가 가능해지는 자정(KST),
+                  }
     CursorMeta:
       type: object
       required: [nextCursor, hasNext]

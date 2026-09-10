@@ -6,13 +6,20 @@ import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import SearchBar from '@/components/common/SearchBar/SearchBar'
 import { DEFAULT_FILTERS } from '@/constants/RecipeOptions'
 import { SORT_OPTIONS } from '@/constants/SortOptions'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
 import { MOCK_MARKET_LISTINGS } from '@/features/marketplace/mockListings'
+import { MOCK_REGISTERED_LISTINGS_KEY } from '@/features/sales/mockSaleableRecipes'
+import LoginRequiredModal from '@/features/auth/components/LoginRequiredModal/LoginRequiredModal'
+import SaleRecipeSelectionModal from '@/features/sales/components/SaleRecipeSelectionModal/SaleRecipeSelectionModal'
+import SaleRegistrationModal from '@/features/sales/components/SaleRegistrationModal/SaleRegistrationModal'
 import styles from './page.module.css'
 
 const DESKTOP_PAGE_SIZE = 12
 const TABLET_MOBILE_PAGE_SIZE = 8
+
+const MOCK_IS_LOGGED_IN = true
 
 function getFilteredListings(listings, keyword, selectedFilters) {
   return listings.filter((listing) => {
@@ -39,6 +46,7 @@ function getFilteredListings(listings, keyword, selectedFilters) {
 }
 
 export default function MarketplacePage() {
+  const router = useRouter()
   const [searchInput, setSearchInput] = useState('')
   const [searchKeyword, setSearchKeyword] = useState('')
   const [filters, setFilters] = useState({ ...DEFAULT_FILTERS })
@@ -47,7 +55,32 @@ export default function MarketplacePage() {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [pageSize, setPageSize] = useState(DESKTOP_PAGE_SIZE)
   const [visibleCount, setVisibleCount] = useState(DESKTOP_PAGE_SIZE)
+  const [isSaleModalOpen, setIsSaleModalOpen] = useState(false)
+  const [selectedRecipe, setSelectedRecipe] = useState(null)
+  const [marketListings, setMarketListings] = useState(MOCK_MARKET_LISTINGS)
   const loadMoreRef = useRef(null)
+
+  useEffect(() => {
+    let frameId
+
+    try {
+      const savedListings = JSON.parse(
+        localStorage.getItem(MOCK_REGISTERED_LISTINGS_KEY) ?? '[]',
+      )
+
+      if (!Array.isArray(savedListings)) return undefined
+
+      frameId = window.requestAnimationFrame(() => {
+        setMarketListings([...savedListings, ...MOCK_MARKET_LISTINGS])
+      })
+    } catch (error) {
+      console.error('목 판매 목록을 불러오지 못했습니다.', error)
+    }
+
+    return () => {
+      if (frameId) window.cancelAnimationFrame(frameId)
+    }
+  }, [])
 
   useEffect(() => {
     const tabletMediaQuery = window.matchMedia(`(max-width: 1023px)`)
@@ -79,6 +112,71 @@ export default function MarketplacePage() {
       clearTimeout(debounceTimer)
     }
   }, [pageSize, searchInput])
+
+  const [isLoginRequiredModalOpen, setIsLoginRequiredModalOpen] =
+    useState(false)
+
+  function handleSellButtonClick() {
+    if (!MOCK_IS_LOGGED_IN) {
+      setIsLoginRequiredModalOpen(true)
+      return
+    }
+
+    setIsSaleModalOpen(true)
+  }
+
+  function handleSelectRecipe(recipe) {
+    setSelectedRecipe(recipe)
+  }
+
+  function handleSaleRegistrationSubmit(saleData) {
+    const recipeToSell = selectedRecipe
+
+    if (!recipeToSell) return
+
+    const now = new Date().toISOString()
+
+    const newListing = {
+      id: Date.now(),
+      recipe: {
+        id: recipeToSell.recipeId,
+        title: recipeToSell.title,
+        thumbnailUrl: recipeToSell.thumbnailUrl,
+        difficulty: recipeToSell.difficulty,
+        category: recipeToSell.category,
+        summary: recipeToSell.summary ?? '',
+        minPrice: saleData.unitPrice,
+      },
+      seller: {
+        id: recipeToSell.creatorId,
+        nickname: recipeToSell.creatorNickname,
+      },
+      listingType: saleData.listingType,
+      price: saleData.unitPrice,
+      initialQuantity: saleData.quantity,
+      remainingQuantity: saleData.quantity,
+      wantedDifficulty: saleData.desiredDifficulty,
+      wantedCategory: saleData.desiredCategory,
+      wantedDescription: saleData.exchangeDescription,
+      status: 'ON_SALE',
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    const savedListings = JSON.parse(
+      localStorage.getItem(MOCK_REGISTERED_LISTINGS_KEY) ?? '[]',
+    )
+
+    localStorage.setItem(
+      MOCK_REGISTERED_LISTINGS_KEY,
+      JSON.stringify([newListing, ...savedListings]),
+    )
+
+    setSelectedRecipe(null)
+    setIsSaleModalOpen(false)
+
+    router.push('/my-sales/register/success')
+  }
 
   const handleFilterChange = (groupKey, value) => {
     setFilters((currentFilters) => ({
@@ -117,13 +215,13 @@ export default function MarketplacePage() {
   }
 
   const filteredListings = getFilteredListings(
-    MOCK_MARKET_LISTINGS,
+    marketListings,
     searchKeyword,
     filters,
   )
 
   const draftFilteredListings = getFilteredListings(
-    MOCK_MARKET_LISTINGS,
+    marketListings,
     searchKeyword,
     draftFilters,
   )
@@ -172,7 +270,13 @@ export default function MarketplacePage() {
           <h1 className={`${styles.title} font-baskin-robbins`}>
             마켓플레이스
           </h1>
-          <Button className={styles.sellButton}>나의 레시피 판매하기</Button>
+          <Button
+            type="button"
+            className={styles.sellButton}
+            onClick={handleSellButtonClick}
+          >
+            나의 레시피 판매하기
+          </Button>
         </header>
 
         <section className={styles.controls}>
@@ -229,6 +333,22 @@ export default function MarketplacePage() {
           <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
         )}
       </div>
+      <LoginRequiredModal
+        isOpen={isLoginRequiredModalOpen}
+        onClose={() => setIsLoginRequiredModalOpen(false)}
+      />
+      <SaleRecipeSelectionModal
+        isOpen={isSaleModalOpen}
+        onClose={() => setIsSaleModalOpen(false)}
+        onSelectRecipe={handleSelectRecipe}
+      />
+      <SaleRegistrationModal
+        key={selectedRecipe?.recipeId ?? 'empty'}
+        isOpen={selectedRecipe !== null}
+        onClose={() => setSelectedRecipe(null)}
+        selectedRecipe={selectedRecipe}
+        onSubmit={handleSaleRegistrationSubmit}
+      />
     </main>
   )
 }

@@ -1,14 +1,14 @@
 /* PC 기본 스타일 */
 .page {
   min-height: 100vh;
-  padding: 64px 40px 120px;
   background-color: var(--color-black);
 }
 
 .container {
   width: 100%;
-  max-width: 1480px;
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 64px 24px 120px;
 }
 
 .pageHeader {
@@ -50,7 +50,7 @@
 .cardGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 64px 72px;
+  gap: 64px 55px;
   margin-top: 48px;
 }
 
@@ -67,7 +67,7 @@
 
 /* 태블릿: 744px ~ 1023px */
 @media (max-width: 1023px) {
-  .page {
+  .container {
     padding: 48px 24px 100px;
   }
 
@@ -97,7 +97,7 @@
 
 /* 모바일: 743px 이하 */
 @media (max-width: 743px) {
-  .page {
+  .container {
     padding: 36px 16px 100px;
   }
 
