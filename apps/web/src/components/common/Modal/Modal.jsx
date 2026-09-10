@@ -5,7 +5,15 @@ import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import styles from './Modal.module.css'
 
-export default function Modal({ isOpen, onClose, title, children }) {
+export default function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  variant = 'default',
+  ariaLabel,
+  dialogRef,
+}) {
   useEffect(() => {
     if (!isOpen) return
 
@@ -24,12 +32,19 @@ export default function Modal({ isOpen, onClose, title, children }) {
 
   if (!isOpen) return null
 
+  const isLarge = variant === 'large'
+
   return createPortal(
-    <div className={styles.backdrop} onClick={onClose}>
+    <div
+      className={`${styles.backdrop} ${isLarge ? styles.largeBackdrop : ''}`}
+      onClick={onClose}
+    >
       <div
-        className={styles.dialog}
+        ref={dialogRef}
+        className={`${styles.dialog} ${isLarge ? styles.largeDialog : ''}`}
         role="dialog"
         aria-modal="true"
+        aria-label={ariaLabel}
         onClick={(event) => event.stopPropagation()}
       >
         <button
