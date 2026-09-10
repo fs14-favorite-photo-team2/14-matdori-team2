@@ -35,6 +35,8 @@ export default function MarketplaceListingPage() {
   const isSoldOut =
     listing.status === 'SOLD_OUT' || listing.remainingQuantity === 0
 
+  const isExchangeAvailable = listing.listingType === 'BOTH'
+
   const wantedDifficultyOption = DIFFICULTY_OPTIONS.find(
     (option) => option.value === listing.wantedDifficulty,
   )
@@ -125,7 +127,7 @@ export default function MarketplaceListingPage() {
             <Button
               type="button"
               className={styles.exchangeButton}
-              disabled={isSoldOut}
+              disabled={isSoldOut || !isExchangeAvailable}
             >
               레시피 교환하기
             </Button>
@@ -133,22 +135,26 @@ export default function MarketplaceListingPage() {
 
           <div className={styles.exchangeContent}>
             <p className={styles.wantedDescription}>
-              {listing.wantedDescription}
+              {isExchangeAvailable
+                ? listing.wantedDescription
+                : '교환을 희망하지 않습니다.'}
             </p>
 
-            <div className={styles.wantedMeta}>
-              <span
-                className={`${styles.difficulty} ${wantedDifficultyClassName}`}
-              >
-                {wantedDifficultyOption?.label ?? listing.wantedDifficulty}
-              </span>
+            {isExchangeAvailable && (
+              <div className={styles.wantedMeta}>
+                <span
+                  className={`${styles.difficulty} ${wantedDifficultyClassName}`}
+                >
+                  {wantedDifficultyOption?.label ?? listing.wantedDifficulty}
+                </span>
 
-              <span className={styles.metaDivider}>|</span>
+                <span className={styles.metaDivider}>|</span>
 
-              <span className={styles.category}>
-                {wantedCategoryOption?.label ?? listing.wantedCategory}
-              </span>
-            </div>
+                <span className={styles.category}>
+                  {wantedCategoryOption?.label ?? listing.wantedCategory}
+                </span>
+              </div>
+            )}
           </div>
         </section>
 
