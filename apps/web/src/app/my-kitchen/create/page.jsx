@@ -13,7 +13,7 @@ const MAX_SUPPLY = 10
 
 let nextIngredientId = 0
 function createIngredientId() {
-  nextIngredientId += 1
+  nextIngredientId = 1
   return `ingredient-${nextIngredientId}`
 }
 
