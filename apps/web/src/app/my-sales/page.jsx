@@ -92,36 +92,32 @@ function getFilteredListings(listings, keyword, targetFilters) {
   })
 }
 
-function getInitialPageSize() {
-  if (typeof window === 'undefined') return PAGE_SIZE_DESKTOP
-  return window.innerWidth <= DESKTOP_BREAKPOINT
-    ? PAGE_SIZE_MOBILE
-    : PAGE_SIZE_DESKTOP
-}
-
 export default function MySalesPage() {
   const router = useRouter()
   const nickname = '유디'
 
-  const [pageSize, setPageSize] = useState(getInitialPageSize)
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_DESKTOP)
   const [listings] = useState(() => createMockListings(35))
   const [keyword, setKeyword] = useState('')
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [visibleCount, setVisibleCount] = useState(getInitialPageSize)
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE_DESKTOP)
   const [prevFilterKey, setPrevFilterKey] = useState('')
 
   const sentinelRef = useRef(null)
 
   useEffect(() => {
-    function handleResize() {
+    function applySize() {
       const isMobile = window.innerWidth <= DESKTOP_BREAKPOINT
-      setPageSize(isMobile ? PAGE_SIZE_MOBILE : PAGE_SIZE_DESKTOP)
+      const nextSize = isMobile ? PAGE_SIZE_MOBILE : PAGE_SIZE_DESKTOP
+      setPageSize(nextSize)
+      setVisibleCount(nextSize)
     }
 
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    applySize()
+    window.addEventListener('resize', applySize)
+    return () => window.removeEventListener('resize', applySize)
   }, [])
 
   const difficultyCounts = useMemo(() => {
