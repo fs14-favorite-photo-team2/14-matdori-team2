@@ -11,15 +11,9 @@ import styles from './page.module.css'
 
 const MAX_SUPPLY = 10
 
-let nextIngredientId = 0
-function createIngredientId() {
-  nextIngredientId = 1
-  return `ingredient-${nextIngredientId}`
-}
-
 function createEmptyIngredient() {
   return {
-    id: createIngredientId(),
+    id: crypto.randomUUID(),
     name: '',
     amount: '',
     isHighlight: false,
