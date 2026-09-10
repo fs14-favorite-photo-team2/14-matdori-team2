@@ -230,11 +230,17 @@ export default function CreateRecipePage() {
         </div>
 
         <div className={styles.field}>
-          <span className={styles.label}>사진 업로드</span>
+          <span className={styles.label}>
+            사진 업로드(첫 번째로 업로드한 사진이 썸네일로 지정됩니다.)
+          </span>
           <ImageUploader onChange={setImageFiles} />
         </div>
 
         <div className={styles.field}>
+          <div className={styles.hintBox}>
+            <span className={styles.hintIcon}>⭐</span>
+            <span>하이라이트 재료를 1개 이상 선택해 주세요.</span>
+          </div>
           {ingredients.map((ingredient) => (
             <div key={ingredient.id} className={styles.ingredientRow}>
               <div className={styles.ingredientRowGrid}>
