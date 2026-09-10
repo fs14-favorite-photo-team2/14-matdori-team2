@@ -61,6 +61,7 @@ function createMockListings(count) {
       listingStatus,
       tradeOfferStatus,
       badgeType,
+      price: 1 + (i % 20),
       sellerNickname: isSentOffer
         ? OFFER_SELLER_NICKNAMES[i % OFFER_SELLER_NICKNAMES.length]
         : undefined,
@@ -70,7 +71,6 @@ function createMockListings(count) {
         imageUrl: `https://picsum.photos/seed/listing-${i}/800/600`,
         difficulty,
         category,
-        minPrice: 1000 + (i % 10) * 500,
       },
       remainingQuantity: isSoldOut ? 0 : (i % 3) + 1,
     }
@@ -307,7 +307,7 @@ export default function MySalesPage() {
               title={listing.recipe.title}
               difficulty={listing.recipe.difficulty}
               category={listing.recipe.category}
-              price={listing.recipe.minPrice}
+              price={listing.price}
               remainingQuantity={listing.remainingQuantity}
               badgeType={listing.badgeType}
               listingStatus={listing.listingStatus}
