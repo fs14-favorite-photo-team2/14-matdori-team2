@@ -42,6 +42,12 @@ export default function SaleRegistrationModal({
     }
   }
 
+  function handleResetExchangeInfo() {
+    setDesiredDifficulty('')
+    setDesiredCategory('')
+    setExchangeDescription('')
+  }
+
   const difficultyOption = DIFFICULTY_OPTIONS.find(
     (option) => option.value === selectedRecipe.difficulty,
   )
@@ -184,9 +190,20 @@ export default function SaleRegistrationModal({
       </section>
 
       <section className={styles.exchangeSection}>
-        <h3 className={`${styles.exchangeTitle} font-baskin-robbins`}>
-          교환 희망 정보 (선택)
-        </h3>
+        <div className={styles.exchangeHeader}>
+          <h3 className={`${styles.exchangeTitle} font-baskin-robbins`}>
+            교환 희망 정보 (선택)
+          </h3>
+
+          <button
+            type="button"
+            className={styles.exchangeResetButton}
+            onClick={handleResetExchangeInfo}
+            disabled={!hasAnyExchangeInfo}
+          >
+            입력 초기화
+          </button>
+        </div>
 
         <div className={styles.exchangeSelectGrid}>
           <label className={styles.exchangeField}>
