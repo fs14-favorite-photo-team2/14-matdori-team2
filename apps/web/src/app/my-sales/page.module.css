@@ -78,6 +78,12 @@
   gap: 24px;
 }
 
+.cardLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
 .emptyText {
   padding: 60px 0;
   text-align: center;

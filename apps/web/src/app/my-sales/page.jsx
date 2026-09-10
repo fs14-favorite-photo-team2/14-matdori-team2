@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import SearchBar from '@/components/common/SearchBar/SearchBar'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
@@ -130,7 +131,6 @@ export default function MySalesPage() {
   const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE_DESKTOP)
-  const [prevFilterKey, setPrevFilterKey] = useState('')
 
   const sentinelRef = useRef(null)
 
@@ -175,12 +175,6 @@ export default function MySalesPage() {
   const visibleListings = filteredListings.slice(0, visibleCount)
   const hasNext = visibleCount < filteredListings.length
 
-  const filterKey = `${keyword}|${filters.difficulty}|${filters.category}|${filters.listingType}|${filters.status}`
-  if (filterKey !== prevFilterKey) {
-    setPrevFilterKey(filterKey)
-    setVisibleCount(pageSize)
-  }
-
   useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel || !hasNext) return
@@ -198,8 +192,14 @@ export default function MySalesPage() {
     return () => observer.disconnect()
   }, [hasNext, pageSize])
 
+  function handleKeywordChange(nextKeyword) {
+    setKeyword(nextKeyword)
+    setVisibleCount(pageSize)
+  }
+
   function handleFilterChange(key, value) {
     setFilters((prev) => ({ ...prev, [key]: value }))
+    setVisibleCount(pageSize)
   }
 
   function handleDraftFilterChange(key, value) {
@@ -224,6 +224,7 @@ export default function MySalesPage() {
 
   function handleApply(nextFilters) {
     setFilters(nextFilters)
+    setVisibleCount(pageSize)
     setIsMobileOpen(false)
   }
 
@@ -273,8 +274,8 @@ export default function MySalesPage() {
         <div className={styles.searchField}>
           <SearchBar
             value={keyword}
-            onChange={setKeyword}
-            onSearch={setKeyword}
+            onChange={handleKeywordChange}
+            onSearch={handleKeywordChange}
             placeholder="검색"
           />
         </div>
@@ -301,17 +302,27 @@ export default function MySalesPage() {
       ) : (
         <div className={styles.grid}>
           {visibleListings.map((listing) => (
-            <RecipeCard
+            <Link
               key={listing.id}
-              thumbnailUrl={listing.recipe.imageUrl}
-              title={listing.recipe.title}
-              difficulty={listing.recipe.difficulty}
-              category={listing.recipe.category}
-              price={listing.price}
-              remainingQuantity={listing.remainingQuantity}
-              badgeType={listing.badgeType}
-              listingStatus={listing.listingStatus}
-            />
+              href={`/marketplace/${listing.id}`}
+              className={styles.cardLink}
+            >
+              <RecipeCard
+                thumbnailUrl={listing.recipe.imageUrl}
+                title={listing.recipe.title}
+                difficulty={listing.recipe.difficulty}
+                category={listing.recipe.category}
+                sellerNickname={
+                  listing.relationType === 'SENT_OFFER'
+                    ? listing.sellerNickname
+                    : undefined
+                }
+                price={listing.price}
+                remainingQuantity={listing.remainingQuantity}
+                badgeType={listing.badgeType}
+                listingStatus={listing.listingStatus}
+              />
+            </Link>
           ))}
         </div>
       )}
