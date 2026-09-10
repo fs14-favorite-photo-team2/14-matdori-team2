@@ -34,6 +34,7 @@ const RECIPE_NAMES_BY_CATEGORY = {
 }
 const CATEGORY_KEYS = Object.keys(RECIPE_NAMES_BY_CATEGORY)
 const DIFFICULTIES = ['EASY', 'NORMAL', 'HARD', 'MASTER']
+const OFFER_SELLER_NICKNAMES = ['프로한식러', '미쓰손', '팝스타', '요리요정']
 
 function createMockListings(count) {
   return Array.from({ length: count }, (_, i) => {
@@ -41,19 +42,28 @@ function createMockListings(count) {
     const names = RECIPE_NAMES_BY_CATEGORY[category]
     const difficulty = DIFFICULTIES[i % DIFFICULTIES.length]
     const isSoldOut = i % 4 === 0
-    const isExchangePending = !isSoldOut && i % 5 === 0
-    const listingType = isExchangePending ? 'EXCHANGE' : 'SALE'
+    const isSentOffer = !isSoldOut && i % 5 === 0
+
+    const relationType = isSentOffer ? 'SENT_OFFER' : 'OWN_LISTING'
+    const listingType = 'SALE'
+    const listingStatus = isSoldOut ? 'SOLD_OUT' : 'ON_SALE'
+    const tradeOfferStatus = isSentOffer ? 'PENDING' : null
 
     let badgeType
     if (!isSoldOut) {
-      badgeType = isExchangePending ? 'exchangePending' : 'selling'
+      badgeType = isSentOffer ? 'exchangePending' : 'selling'
     }
 
     return {
       id: `listing-${i}`,
-      badgeType,
+      relationType,
       listingType,
-      listingStatus: isSoldOut ? 'SOLD_OUT' : 'ON_SALE',
+      listingStatus,
+      tradeOfferStatus,
+      badgeType,
+      sellerNickname: isSentOffer
+        ? OFFER_SELLER_NICKNAMES[i % OFFER_SELLER_NICKNAMES.length]
+        : undefined,
       recipe: {
         id: `recipe-${i}`,
         title: names[i % names.length],
@@ -67,6 +77,23 @@ function createMockListings(count) {
   })
 }
 // ---------------------------------------------------------
+
+function getDisplayableListings(listings) {
+  return listings.filter((listing) => {
+    if (listing.relationType === 'OWN_LISTING') {
+      return true
+    }
+
+    if (listing.relationType === 'SENT_OFFER') {
+      return (
+        listing.tradeOfferStatus === 'PENDING' &&
+        listing.listingStatus === 'ON_SALE'
+      )
+    }
+
+    return false
+  })
+}
 
 function getFilteredListings(listings, keyword, targetFilters) {
   return listings.filter((item) => {
@@ -120,23 +147,29 @@ export default function MySalesPage() {
     return () => window.removeEventListener('resize', applySize)
   }, [])
 
+  const displayableListings = useMemo(
+    () => getDisplayableListings(listings),
+    [listings],
+  )
+
   const difficultyCounts = useMemo(() => {
     return DIFFICULTY_OPTIONS.map((option) => ({
       label: option.label,
       color: DIFFICULTY_TONE_VARS[option.tone],
-      count: listings.filter((item) => item.recipe.difficulty === option.value)
-        .length,
+      count: displayableListings.filter(
+        (item) => item.recipe.difficulty === option.value,
+      ).length,
     }))
-  }, [listings])
+  }, [displayableListings])
 
   const filteredListings = useMemo(
-    () => getFilteredListings(listings, keyword, filters),
-    [listings, keyword, filters],
+    () => getFilteredListings(displayableListings, keyword, filters),
+    [displayableListings, keyword, filters],
   )
 
   const draftFilteredListings = useMemo(
-    () => getFilteredListings(listings, keyword, draftFilters),
-    [listings, keyword, draftFilters],
+    () => getFilteredListings(displayableListings, keyword, draftFilters),
+    [displayableListings, keyword, draftFilters],
   )
 
   const visibleListings = filteredListings.slice(0, visibleCount)
@@ -218,7 +251,9 @@ export default function MySalesPage() {
       <div className={styles.summarySection}>
         <p className={styles.summaryText}>
           {nickname}님의 판매 레시피{' '}
-          <span className={styles.summaryCount}>({listings.length}장)</span>
+          <span className={styles.summaryCount}>
+            ({displayableListings.length}장)
+          </span>
         </p>
 
         <div className={styles.chips}>
