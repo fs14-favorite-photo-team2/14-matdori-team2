@@ -6,6 +6,7 @@ import styles from './page.module.css'
 import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
 import Button from '@/components/common/Button/Button'
 import MobileHeader from '@/components/layout/Header/MobileHeader/MobileHeader'
+import SaleEditModal from '@/features/sales/components/SaleEditModal/SaleEditModal'
 
 const DIFFICULTY_CLASS_NAMES = {
   easy: styles.difficultyEasy,
@@ -30,6 +31,7 @@ export default function SellerListingDetail({ listing }) {
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isRecipeDetailOpen, setIsRecipeDetailOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const imageCount = recipe.imageUrls.length
   const currentImageUrl = recipe.imageUrls[currentImageIndex]
@@ -44,6 +46,10 @@ export default function SellerListingDetail({ listing }) {
 
   function handleNextImage() {
     setCurrentImageIndex((currentIndex) => (currentIndex + 1) % imageCount)
+  }
+
+  function handleEditSubmit(editData) {
+    setIsEditModalOpen(false)
   }
 
   const wantedDifficultyOption = DIFFICULTY_OPTIONS.find(
@@ -241,7 +247,11 @@ export default function SellerListingDetail({ listing }) {
             </div>
 
             <div className={styles.sellerActions}>
-              <Button type="button" className={styles.sellerActionButton}>
+              <Button
+                type="button"
+                className={styles.sellerActionButton}
+                onClick={() => setIsEditModalOpen(true)}
+              >
                 수정하기
               </Button>
 
@@ -344,6 +354,13 @@ export default function SellerListingDetail({ listing }) {
           </div>
         </section>
       </div>
+
+      <SaleEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSubmit={handleEditSubmit}
+        listing={listing}
+      />
     </main>
   )
 }
