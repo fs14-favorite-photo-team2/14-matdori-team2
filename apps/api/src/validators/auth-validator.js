@@ -1,10 +1,12 @@
 import { coerce, define, object, refine, string } from 'superstruct'
 
+import { nickname, request } from './common-validator.js'
+
 const PASSWORD_MIN_LENGTH = 8
 const PASSWORD_MAX_LENGTH = 24
 
+const EMAIL_MAX_LENGTH = 254
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const NICKNAME_PATTERN = /^[A-Za-z0-9가-힣_-]+$/
 
 const email = coerce(
   define('email', (value) => {
@@ -12,8 +14,8 @@ const email = coerce(
       return '이메일을 입력해 주세요.'
     }
 
-    if (value.length > 254) {
-      return '이메일은 254자를 넘을 수 없습니다.'
+    if (value.length > EMAIL_MAX_LENGTH) {
+      return `이메일은 ${EMAIL_MAX_LENGTH}자를 넘을 수 없습니다.`
     }
 
     return EMAIL_PATTERN.test(value) || '올바른 이메일 형식이 아닙니다.'
@@ -21,21 +23,6 @@ const email = coerce(
   string(),
   (value) => value.trim().toLowerCase(),
 )
-
-const nickname = define('nickname', (value) => {
-  if (typeof value !== 'string') {
-    return '닉네임을 입력해 주세요.'
-  }
-
-  if (value.length < 2 || value.length > 20) {
-    return '닉네임은 2자 이상 20자 이하여야 합니다.'
-  }
-
-  return (
-    NICKNAME_PATTERN.test(value) ||
-    '닉네임은 한글, 영문, 숫자와 _, -만 사용할 수 있습니다.'
-  )
-})
 
 const password = define('password', (value) => {
   if (typeof value !== 'string') {
@@ -61,14 +48,8 @@ const signupBody = refine(
     value === passwordConfirmation || '비밀번호가 일치하지 않습니다.',
 )
 
-export const signupRequest = object({
-  body: signupBody,
-  params: object({}),
-  query: object({}),
-})
+export const signupRequest = request({ body: signupBody })
 
-export const loginRequest = object({
-  body: object({ email, password }),
-  params: object({}),
-  query: object({}),
-})
+export const loginRequest = request({ body: object({ email, password }) })
+
+export const logoutRequest = request()

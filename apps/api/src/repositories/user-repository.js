@@ -1,5 +1,12 @@
 import { prisma } from '../db/prisma.js'
 
+const authUserSelect = {
+  id: true,
+  email: true,
+  nickname: true,
+  points: true,
+}
+
 export function findUsersByEmailOrNickname(email, nickname) {
   return prisma.user.findMany({
     where: { OR: [{ email }, { nickname }] },
@@ -10,20 +17,8 @@ export function findUsersByEmailOrNickname(email, nickname) {
 export function createUser({ email, nickname, passwordHash }) {
   return prisma.user.create({
     data: { email, nickname, passwordHash },
-    select: {
-      id: true,
-      email: true,
-      nickname: true,
-      points: true,
-    },
+    select: authUserSelect,
   })
-}
-
-const authUserSelect = {
-  id: true,
-  email: true,
-  nickname: true,
-  points: true,
 }
 
 export function findUserByGoogleId(googleId) {
@@ -51,6 +46,26 @@ export function connectGoogleAccount(userId, googleId) {
 export function createGoogleUser({ email, googleId, nickname }) {
   return prisma.user.create({
     data: { email, googleId, nickname },
+    select: authUserSelect,
+  })
+}
+
+export const publicUserSelect = {
+  id: true,
+  nickname: true,
+}
+
+export function findUserById(id) {
+  return prisma.user.findUnique({
+    where: { id },
+    select: { ...authUserSelect, lastRandomBoxClaimedAt: true },
+  })
+}
+
+export function updateNickname(id, nickname) {
+  return prisma.user.update({
+    where: { id },
+    data: { nickname },
     select: authUserSelect,
   })
 }

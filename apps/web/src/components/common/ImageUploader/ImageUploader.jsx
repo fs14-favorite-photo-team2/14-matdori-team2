@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import styles from './ImageUploader.module.css'
 
 const MAX_IMAGES = 10
-const OUTPUT_SIZE = 400
+const OUTPUT_WIDTH = 360
+const OUTPUT_HEIGHT = 270
 const MIN_ZOOM = 1
 const MAX_ZOOM = 3
 const ZOOM_STEP = 0.01
@@ -29,11 +30,16 @@ export default function ImageUploader({ onChange }) {
     ? Math.round((activeImage.zoom / MIN_ZOOM) * 100)
     : 100
 
+  const imagesRef = useRef(images)
+  useEffect(() => {
+    imagesRef.current = images
+  })
+
   useEffect(() => {
     return () => {
-      images.forEach((img) => URL.revokeObjectURL(img.previewUrl))
+      imagesRef.current.forEach((img) => URL.revokeObjectURL(img.previewUrl))
     }
-  }, [images])
+  }, [])
 
   function validateFile(file) {
     if (!file.type.startsWith('image/')) {
@@ -116,22 +122,22 @@ export default function ImageUploader({ onChange }) {
     if (!img || !canvas) return
 
     const ctx = canvas.getContext('2d')
-    canvas.width = OUTPUT_SIZE
-    canvas.height = OUTPUT_SIZE
+    canvas.width = OUTPUT_WIDTH
+    canvas.height = OUTPUT_HEIGHT
 
     const { naturalWidth, naturalHeight } = img
     const coverScale = Math.max(
-      OUTPUT_SIZE / naturalWidth,
-      OUTPUT_SIZE / naturalHeight,
+      OUTPUT_WIDTH / naturalWidth,
+      OUTPUT_HEIGHT / naturalHeight,
     )
     const scale = coverScale * activeImage.zoom
 
     const drawWidth = naturalWidth * scale
     const drawHeight = naturalHeight * scale
-    const offsetX = (OUTPUT_SIZE - drawWidth) / 2
-    const offsetY = (OUTPUT_SIZE - drawHeight) / 2
+    const offsetX = (OUTPUT_WIDTH - drawWidth) / 2
+    const offsetY = (OUTPUT_HEIGHT - drawHeight) / 2
 
-    ctx.clearRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE)
+    ctx.clearRect(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT)
     ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight)
 
     canvas.toBlob(
@@ -142,13 +148,11 @@ export default function ImageUploader({ onChange }) {
           activeImage.rawFile?.name || 'cropped.jpg',
           { type: 'image/jpeg' },
         )
-        setImages((prev) => {
-          const updated = prev.map((img) =>
-            img.id === activeImage.id ? { ...img, croppedFile } : img,
-          )
-          emitChange(updated)
-          return updated
-        })
+        const updated = images.map((img) =>
+          img.id === activeImage.id ? { ...img, croppedFile } : img,
+        )
+        setImages(updated)
+        emitChange(updated)
       },
       'image/jpeg',
       0.9,
@@ -227,7 +231,7 @@ export default function ImageUploader({ onChange }) {
 
       {images.length > 0 && (
         <div className={styles.thumbnailRow}>
-          {images.map((img) => (
+          {images.map((img, index) => (
             <div
               key={img.id}
               className={`${styles.thumbnail} ${img.id === activeId ? styles.thumbnailActive : ''}`}
@@ -238,6 +242,13 @@ export default function ImageUploader({ onChange }) {
                 alt=""
                 className={styles.thumbnailImage}
               />
+
+              {index === 0 ? (
+                <span className={styles.thumbnailBadge}>썸네일</span>
+              ) : (
+                <span />
+              )}
+
               <button
                 type="button"
                 className={styles.thumbnailRemove}

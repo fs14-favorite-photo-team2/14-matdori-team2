@@ -24,6 +24,7 @@ export default function RecipeCard({
   remainingQuantity = 0,
   badgeType,
   listingStatus,
+  quantityLabel = '잔여',
 }) {
   const badgeLabel = BADGE_LABELS[badgeType]
   const isSoldOut = listingStatus === 'SOLD_OUT'
@@ -88,7 +89,9 @@ export default function RecipeCard({
           </div>
 
           {sellerNickname && (
-            <span className={styles.sellerNickname}>{sellerNickname}</span>
+            <span className={styles.sellerNickname} title={sellerNickname}>
+              {sellerNickname}
+            </span>
           )}
         </div>
 
@@ -103,7 +106,7 @@ export default function RecipeCard({
           )}
 
           <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>잔여</span>
+            <span className={styles.detailLabel}>{quantityLabel}</span>
             <span className={styles.detailValue}>{displayedRemaining}</span>
           </div>
         </div>

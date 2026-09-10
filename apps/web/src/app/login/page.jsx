@@ -1,49 +1,67 @@
 'use client'
 
 import Button from '@/components/common/Button/Button'
+import Modal from '@/components/common/Modal/Modal'
+import { login } from '@/features/auth/api'
+import styles from '@/features/auth/AuthPage.module.css'
 import AuthInput from '@/features/auth/components/AuthInput/AuthInput'
-import Image from 'next/image'
-import Link from 'next/link'
+import AuthPageLayout from '@/features/auth/components/AuthPageLayout/AuthPageLayout'
+import {
+  EMAIL_VALIDATION_RULES,
+  PASSWORD_VALIDATION_RULES,
+} from '@/features/auth/validation'
+import { useMutation } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import styles from './page.module.css'
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const PASSWORD_MIN_LENGTH = 8
 
 export default function LoginPage() {
+  const router = useRouter()
+
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+
   const {
     register,
     handleSubmit,
     formState: { errors, isValid, touchedFields, isSubmitted },
   } = useForm({ mode: 'onChange' })
 
-  function onSubmit() {}
+  const loginMutation = useMutation({
+    mutationFn: login,
+    onSuccess: () => {
+      router.replace('/marketplace')
+    },
+    onError: (error) => {
+      const serverError = error.response?.data?.error
+
+      if (serverError?.code === 'INVALID_CREDENTIALS') {
+        setErrorMessage(serverError.message)
+      } else {
+        setErrorMessage(
+          '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+        )
+      }
+
+      setIsErrorModalOpen(true)
+    },
+  })
+
+  function onSubmit(data) {
+    loginMutation.mutate(data)
+  }
 
   return (
-    <main className={styles.page}>
-      <div className={styles.container}>
-        <Link href="/">
-          <Image
-            src={'/logos/matdori-logo.svg'}
-            alt="맛도리 마켓"
-            width={320}
-            height={71}
-            className={styles.logo}
-            priority
-          />
-        </Link>
-
+    <>
+      <AuthPageLayout
+        guideText="맛도리 마켓이 처음이신가요?"
+        guideHref="/signup"
+        guideLinkText="회원가입하기"
+      >
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className={styles.inputs}>
             <AuthInput
-              {...register('email', {
-                setValueAs: (value) => value.trim(),
-                required: '이메일을 입력해 주세요.',
-                pattern: {
-                  value: EMAIL_PATTERN,
-                  message: '올바른 이메일 형식이 아닙니다.',
-                },
-              })}
+              {...register('email', EMAIL_VALIDATION_RULES)}
               label="이메일"
               type="email"
               placeholder="이메일을 입력해 주세요"
@@ -54,13 +72,7 @@ export default function LoginPage() {
             />
 
             <AuthInput
-              {...register('password', {
-                required: '비밀번호를 입력해 주세요.',
-                minLength: {
-                  value: PASSWORD_MIN_LENGTH,
-                  message: '비밀번호를 8자 이상 입력해 주세요.',
-                },
-              })}
+              {...register('password', PASSWORD_VALIDATION_RULES)}
               label="비밀번호"
               type="password"
               placeholder="비밀번호를 입력해 주세요"
@@ -75,25 +87,21 @@ export default function LoginPage() {
 
           <Button
             type="submit"
-            className={styles.loginButton}
-            disabled={!isValid}
+            className={styles.submitButton}
+            disabled={!isValid || loginMutation.isPending}
           >
-            로그인
+            {loginMutation.isPending ? '로그인 중...' : '로그인'}
           </Button>
         </form>
+      </AuthPageLayout>
 
-        <Button type="button" className={styles.googleButton}>
-          <Image src="/logos/google-logo.svg" alt="" width={22} height={22} />
-          Google로 시작하기
-        </Button>
-
-        <p className={styles.signupGuide}>
-          맛도리 마켓이 처음이신가요?
-          <Link href="/signup" className={styles.signupLink}>
-            회원가입하기
-          </Link>
-        </p>
-      </div>
-    </main>
+      <Modal
+        isOpen={isErrorModalOpen}
+        onClose={() => setIsErrorModalOpen(false)}
+        title={'로그인 실패'}
+      >
+        <p>{errorMessage}</p>
+      </Modal>
+    </>
   )
 }
