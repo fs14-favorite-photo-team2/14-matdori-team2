@@ -1,11 +1,14 @@
 import { PrismaPg } from '@prisma/adapter-pg'
+import bcrypt from 'bcryptjs'
 import { config } from 'dotenv'
 
 import { PrismaClient } from '../src/generated/prisma/client.ts'
 
 config({ path: ['.env.local', '.env'] })
 
-const adapter = new PrismaPg(process.env.DATABASE_URL)
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
+})
 const prisma = new PrismaClient({ adapter })
 
 // ============================================
@@ -45,12 +48,13 @@ const USER_COUNT = 100
 const RECIPE_COUNT = 100
 const COPY_PER_RECIPE = 3
 const LISTING_COUNT = 100
+const MAX_IMAGE_COUNT = 10
 const PURCHASE_COUNT = 100
 const TRADE_OFFER_COUNT = 100
 const NOTIFICATION_COUNT = 100
 
-const SEED_PASSWORD_HASH =
-  '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.'
+const SEED_PASSWORD = 'password'
+const SEED_PASSWORD_SALT_ROUNDS = 12
 
 const DIFFICULTIES = ['EASY', 'NORMAL', 'HARD', 'MASTER']
 
@@ -270,6 +274,11 @@ async function clearDatabase() {
 async function seedUsers() {
   console.log('User 100개 생성 중...')
 
+  const seedPasswordHash = await bcrypt.hash(
+    SEED_PASSWORD,
+    SEED_PASSWORD_SALT_ROUNDS,
+  )
+
   const users = []
 
   for (let i = 0; i < USER_COUNT; i += 1) {
@@ -279,7 +288,7 @@ async function seedUsers() {
     const user = await prisma.user.create({
       data: {
         email: `seed-user-${number}@example.com`,
-        passwordHash: isGoogleOnly ? null : SEED_PASSWORD_HASH,
+        passwordHash: isGoogleOnly ? null : seedPasswordHash,
         googleId: isGoogleOnly ? `google-seed-${number}` : null,
         nickname: `맛도리${number}`,
         points: ((i * 17) % 201) * 1000,
@@ -310,11 +319,21 @@ async function seedRecipes(users) {
     const creator = users[(i * 11 + 7) % users.length]
     const number = String(i + 1).padStart(3, '0')
 
+    // 레시피마다 1장부터 10장까지 반복해서 생성
+    const imageCount = (i % MAX_IMAGE_COUNT) + 1
+
     const recipe = await prisma.recipe.create({
       data: {
         creatorId: creator.id,
         title,
-        imageUrl: `https://picsum.photos/seed/recipe-${number}/800/600`,
+        imageUrls: Array.from(
+          { length: imageCount },
+          (_, imageIndex) =>
+            `https://picsum.photos/seed/recipe-${number}-${imageIndex + 1}/800/600`,
+        ),
+        ingredients: [
+          { name: '예시 재료', amount: '적당량', isHighlight: false },
+        ],
         minPrice: 1000 + (i % 10) * 500,
         difficulty,
         category,
@@ -891,7 +910,7 @@ async function printCounts() {
   console.log('============================================')
   console.log('일반 테스트 계정 예시')
   console.log('email    : seed-user-001@example.com')
-  console.log('password : password')
+  console.log(`password : ${SEED_PASSWORD}`)
   console.log('============================================\n')
 }
 
