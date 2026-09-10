@@ -55,11 +55,19 @@ export default function SaleRegistrationModal({
   const isUnitPriceValid =
     unitPrice !== '' && numericUnitPrice >= 1 && numericUnitPrice <= 20
 
-  const isFormValid =
-    isUnitPriceValid &&
+  const hasAnyExchangeInfo =
+    desiredDifficulty !== '' ||
+    desiredCategory !== '' ||
+    exchangeDescription.trim() !== ''
+
+  const hasCompleteExchangeInfo =
     desiredDifficulty !== '' &&
     desiredCategory !== '' &&
     exchangeDescription.trim() !== ''
+
+  const isExchangeInfoValid = !hasAnyExchangeInfo || hasCompleteExchangeInfo
+
+  const isFormValid = isUnitPriceValid && isExchangeInfoValid
 
   function handleSubmit() {
     if (!isFormValid) return
@@ -68,9 +76,12 @@ export default function SaleRegistrationModal({
       recipeId: selectedRecipe.recipeId,
       quantity: saleQuantity,
       unitPrice: numericUnitPrice,
-      desiredDifficulty,
-      desiredCategory,
-      exchangeDescription: exchangeDescription.trim(),
+      listingType: hasCompleteExchangeInfo ? 'BOTH' : 'SALE',
+      desiredDifficulty: hasCompleteExchangeInfo ? desiredDifficulty : null,
+      desiredCategory: hasCompleteExchangeInfo ? desiredCategory : null,
+      exchangeDescription: hasCompleteExchangeInfo
+        ? exchangeDescription.trim()
+        : null,
     })
   }
 
@@ -174,7 +185,7 @@ export default function SaleRegistrationModal({
 
       <section className={styles.exchangeSection}>
         <h3 className={`${styles.exchangeTitle} font-baskin-robbins`}>
-          교환 희망 정보
+          교환 희망 정보 (선택)
         </h3>
 
         <div className={styles.exchangeSelectGrid}>

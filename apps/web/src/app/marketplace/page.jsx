@@ -151,7 +151,7 @@ export default function MarketplacePage() {
         id: recipeToSell.creatorId,
         nickname: recipeToSell.creatorNickname,
       },
-      listingType: 'SALE',
+      listingType: saleData.listingType,
       price: saleData.unitPrice,
       initialQuantity: saleData.quantity,
       remainingQuantity: saleData.quantity,
