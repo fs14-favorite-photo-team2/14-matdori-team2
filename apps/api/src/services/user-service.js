@@ -23,12 +23,10 @@ import {
   findUserById,
   updateNickname,
 } from '../repositories/user-repository.js'
+import { getKstMonthStart } from '../utils/kst.js'
 import { toCursorPage } from '../utils/pagination.js'
 import { getRandomBoxStatus } from '../utils/random-box.js'
-import {
-  getKstMonthStart,
-  getRecipeCreationQuota,
-} from '../utils/recipe-quota.js'
+import { getRecipeCreationQuota } from '../utils/recipe-quota.js'
 
 export async function getCurrentUser(userId) {
   const now = new Date()
