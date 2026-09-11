@@ -6,6 +6,7 @@ import styles from './page.module.css'
 import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
 import Button from '@/components/common/Button/Button'
 import MobileHeader from '@/components/layout/Header/MobileHeader/MobileHeader'
+import ActionConfirmModal from '@/components/common/ActionConfirmModal/ActionConfirmModal'
 
 const DIFFICULTY_CLASS_NAMES = {
   easy: styles.difficultyEasy,
@@ -30,6 +31,11 @@ export default function SellerListingDetail({ listing }) {
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isRecipeDetailOpen, setIsRecipeDetailOpen] = useState(false)
+  const [tradeOffers, setTradeOffers] = useState(myTradeOffers)
+  const [rejectTargetOffer, setRejectTargetOffer] = useState(null)
+  const [approveTargetOffer, setApproveTargetOffer] = useState(null)
+  const [isUnlistModalOpen, setIsUnlistModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
   const imageCount = recipe.imageUrls.length
   const currentImageUrl = recipe.imageUrls[currentImageIndex]
@@ -56,6 +62,50 @@ export default function SellerListingDetail({ listing }) {
 
   const wantedDifficultyClassName =
     DIFFICULTY_CLASS_NAMES[wantedDifficultyOption?.tone] ?? ''
+
+  const rejectTargetRecipe = rejectTargetOffer?.offeredCopy.recipe
+
+  const rejectTargetDifficultyOption = DIFFICULTY_OPTIONS.find(
+    (option) => option.value === rejectTargetRecipe?.difficulty,
+  )
+
+  const approveTargetRecipe = approveTargetOffer?.offeredCopy.recipe
+
+  const approveTargetDifficultyOption = DIFFICULTY_OPTIONS.find(
+    (option) => option.value === approveTargetRecipe?.difficulty,
+  )
+
+  function handleRejectTradeOffer() {
+    if (!rejectTargetOffer) return
+
+    // TODO: 교환 제시 거절 API 연결 후 목록 재조회
+    setTradeOffers((currentOffers) =>
+      currentOffers.filter((offer) => offer.id !== rejectTargetOffer.id),
+    )
+
+    setRejectTargetOffer(null)
+  }
+
+  function handleApproveTradeOffer() {
+    if (!approveTargetOffer) return
+
+    // TODO: 교환 제시 승인 API 연결 후 양쪽 레시피와 목록 재조회
+    setTradeOffers((currentOffers) =>
+      currentOffers.filter((offer) => offer.id !== approveTargetOffer.id),
+    )
+
+    setApproveTargetOffer(null)
+  }
+
+  function handleUnlistConfirm() {
+    // TODO: 판매 내리기 API 연결 후 마켓플레이스와 마이 키친 재조회
+    setIsUnlistModalOpen(false)
+  }
+
+  function handleDeleteConfirm() {
+    // TODO: 레시피 삭제 API 연결 후 deletedAt이 적용된 데이터를 목록에서 제거
+    setIsDeleteModalOpen(false)
+  }
 
   return (
     <main className={styles.page}>
@@ -249,6 +299,7 @@ export default function SellerListingDetail({ listing }) {
                 type="button"
                 variant="secondary"
                 className={styles.sellerActionButton}
+                onClick={() => setIsUnlistModalOpen(true)}
               >
                 판매 내리기
               </Button>
@@ -257,6 +308,7 @@ export default function SellerListingDetail({ listing }) {
                 type="button"
                 variant="secondary"
                 className={`${styles.sellerActionButton} ${styles.deleteRecipeButton}`}
+                onClick={() => setIsDeleteModalOpen(true)}
               >
                 레시피 삭제하기
               </Button>
@@ -270,7 +322,7 @@ export default function SellerListingDetail({ listing }) {
           </h2>
 
           <div className={styles.myTradeList}>
-            {myTradeOffers.map((tradeOffer) => {
+            {tradeOffers.map((tradeOffer) => {
               const offeredRecipe = tradeOffer.offeredCopy.recipe
               const offeredThumbnailUrl = offeredRecipe.imageUrls[0]
               const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
@@ -330,11 +382,16 @@ export default function SellerListingDetail({ listing }) {
                       type="button"
                       variant="secondary"
                       className={styles.rejectTradeButton}
+                      onClick={() => setRejectTargetOffer(tradeOffer)}
                     >
                       거절하기
                     </Button>
 
-                    <Button type="button" className={styles.approveTradeButton}>
+                    <Button
+                      type="button"
+                      className={styles.approveTradeButton}
+                      onClick={() => setApproveTargetOffer(tradeOffer)}
+                    >
                       승인하기
                     </Button>
                   </div>
@@ -344,6 +401,51 @@ export default function SellerListingDetail({ listing }) {
           </div>
         </section>
       </div>
+      <ActionConfirmModal
+        isOpen={rejectTargetOffer !== null}
+        onClose={() => setRejectTargetOffer(null)}
+        onConfirm={handleRejectTradeOffer}
+        title="교환 제시 거절"
+        description={
+          rejectTargetRecipe
+            ? `[${rejectTargetDifficultyOption.label ?? rejectTargetRecipe.difficulty} | ${rejectTargetRecipe.title}] 카드와의 교환을 거절하시겠습니까?`
+            : ''
+        }
+
+        confirmLabel="거절하기"
+      />
+
+      <ActionConfirmModal
+        isOpen={approveTargetOffer !== null}
+        onClose={() => setApproveTargetOffer(null)}
+        onConfirm={handleApproveTradeOffer}
+        title="교환 제시 승인"
+        description={
+          approveTargetRecipe
+            ? `[${approveTargetDifficultyOption?.label ?? approveTargetRecipe.difficulty} | ${approveTargetRecipe.title}] 카드와의 교환을 승인하시겠습니까?`
+            : ''
+        }
+
+        confirmLabel="승인하기"
+      />
+
+      <ActionConfirmModal
+        isOpen={isUnlistModalOpen}
+        onClose={() => setIsUnlistModalOpen(false)}
+        onConfirm={handleUnlistConfirm}
+        title="레시피 판매 내리기"
+        description="정말로 판매를 중단하시겠습니까?"
+        confirmLabel="판매 내리기"
+      />
+
+      <ActionConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="레시피 삭제하기"
+        description="정말로 레시피를 삭제하시겠습니까?"
+        confirmLabel="삭제하기"
+      />
     </main>
   )
 }
