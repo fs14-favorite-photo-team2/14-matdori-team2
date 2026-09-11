@@ -6,6 +6,7 @@ import styles from './page.module.css'
 import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
 import Button from '@/components/common/Button/Button'
 import MobileHeader from '@/components/layout/Header/MobileHeader/MobileHeader'
+import ActionConfirmModal from '@/components/common/ActionConfirmModal/ActionConfirmModal'
 
 const DIFFICULTY_CLASS_NAMES = {
   easy: styles.difficultyEasy,
@@ -30,6 +31,8 @@ export default function SellerListingDetail({ listing }) {
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isRecipeDetailOpen, setIsRecipeDetailOpen] = useState(false)
+  const [tradeOffers, setTradeOffers] = useState(myTradeOffers)
+  const [rejectTargetOffer, setRejectTargetOffer] = useState(null)
 
   const imageCount = recipe.imageUrls.length
   const currentImageUrl = recipe.imageUrls[currentImageIndex]
@@ -56,6 +59,23 @@ export default function SellerListingDetail({ listing }) {
 
   const wantedDifficultyClassName =
     DIFFICULTY_CLASS_NAMES[wantedDifficultyOption?.tone] ?? ''
+
+  const rejectTargetRecipe = rejectTargetOffer?.offeredCopy.recipe
+
+  const rejectTargetDifficultyOption = DIFFICULTY_OPTIONS.find(
+    (option) => option.value === rejectTargetRecipe?.difficulty,
+  )
+
+  function handleRejectTradeOffer() {
+    if (!rejectTargetOffer) return
+
+    // TODO: 교환 제시 거절 API 연결 후 목록 재조회
+    setTradeOffers((currentOffers) =>
+      currentOffers.filter((offer) => offer.id !== rejectTargetOffer.id),
+    )
+
+    setRejectTargetOffer(null)
+  }
 
   return (
     <main className={styles.page}>
@@ -270,7 +290,7 @@ export default function SellerListingDetail({ listing }) {
           </h2>
 
           <div className={styles.myTradeList}>
-            {myTradeOffers.map((tradeOffer) => {
+            {tradeOffers.map((tradeOffer) => {
               const offeredRecipe = tradeOffer.offeredCopy.recipe
               const offeredThumbnailUrl = offeredRecipe.imageUrls[0]
               const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
@@ -330,6 +350,7 @@ export default function SellerListingDetail({ listing }) {
                       type="button"
                       variant="secondary"
                       className={styles.rejectTradeButton}
+                      onClick={() => setRejectTargetOffer(tradeOffer)}
                     >
                       거절하기
                     </Button>
@@ -344,6 +365,19 @@ export default function SellerListingDetail({ listing }) {
           </div>
         </section>
       </div>
+      <ActionConfirmModal
+        isOpen={rejectTargetOffer !== null}
+        onClose={() => setRejectTargetOffer(null)}
+        onConfirm={handleRejectTradeOffer}
+        title="교환 제시 거절"
+        description={
+          rejectTargetRecipe
+            ? `[${rejectTargetDifficultyOption.label ?? rejectTargetRecipe.difficulty} | ${rejectTargetRecipe.title}] 카드와의 교환을 거절하시겠습니까?`
+            : ''
+        }
+
+        confirmLabel="거절하기"
+      />
     </main>
   )
 }
