@@ -35,6 +35,7 @@ export default function SellerListingDetail({ listing }) {
   const [rejectTargetOffer, setRejectTargetOffer] = useState(null)
   const [approveTargetOffer, setApproveTargetOffer] = useState(null)
   const [isUnlistModalOpen, setIsUnlistModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
   const imageCount = recipe.imageUrls.length
   const currentImageUrl = recipe.imageUrls[currentImageIndex]
@@ -99,6 +100,11 @@ export default function SellerListingDetail({ listing }) {
   function handleUnlistConfirm() {
     // TODO: 판매 내리기 API 연결 후 마켓플레이스와 마이 키친 재조회
     setIsUnlistModalOpen(false)
+  }
+
+  function handleDeleteConfirm() {
+    // TODO: 레시피 삭제 API 연결 후 deletedAt이 적용된 데이터를 목록에서 제거
+    setIsDeleteModalOpen(false)
   }
 
   return (
@@ -302,6 +308,7 @@ export default function SellerListingDetail({ listing }) {
                 type="button"
                 variant="secondary"
                 className={`${styles.sellerActionButton} ${styles.deleteRecipeButton}`}
+                onClick={() => setIsDeleteModalOpen(true)}
               >
                 레시피 삭제하기
               </Button>
@@ -429,6 +436,15 @@ export default function SellerListingDetail({ listing }) {
         title="레시피 판매 내리기"
         description="정말로 판매를 중단하시겠습니까?"
         confirmLabel="판매 내리기"
+      />
+
+      <ActionConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="레시피 삭제하기"
+        description="정말로 레시피를 삭제하시겠습니까?"
+        confirmLabel="삭제하기"
       />
     </main>
   )
