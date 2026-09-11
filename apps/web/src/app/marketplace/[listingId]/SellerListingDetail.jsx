@@ -33,6 +33,7 @@ export default function SellerListingDetail({ listing }) {
   const [isRecipeDetailOpen, setIsRecipeDetailOpen] = useState(false)
   const [tradeOffers, setTradeOffers] = useState(myTradeOffers)
   const [rejectTargetOffer, setRejectTargetOffer] = useState(null)
+  const [approveTargetOffer, setApproveTargetOffer] = useState(null)
 
   const imageCount = recipe.imageUrls.length
   const currentImageUrl = recipe.imageUrls[currentImageIndex]
@@ -66,6 +67,12 @@ export default function SellerListingDetail({ listing }) {
     (option) => option.value === rejectTargetRecipe?.difficulty,
   )
 
+  const approveTargetRecipe = approveTargetOffer?.offeredCopy.recipe
+
+  const approveTargetDifficultyOption = DIFFICULTY_OPTIONS.find(
+    (option) => option.value === approveTargetRecipe?.difficulty,
+  )
+
   function handleRejectTradeOffer() {
     if (!rejectTargetOffer) return
 
@@ -75,6 +82,17 @@ export default function SellerListingDetail({ listing }) {
     )
 
     setRejectTargetOffer(null)
+  }
+
+  function handleApproveTradeOffer() {
+    if (!approveTargetOffer) return
+
+    // TODO: 교환 제시 승인 API 연결 후 양쪽 레시피와 목록 재조회
+    setTradeOffers((currentOffers) =>
+      currentOffers.filter((offer) => offer.id !== approveTargetOffer.id),
+    )
+
+    setApproveTargetOffer(null)
   }
 
   return (
@@ -355,7 +373,11 @@ export default function SellerListingDetail({ listing }) {
                       거절하기
                     </Button>
 
-                    <Button type="button" className={styles.approveTradeButton}>
+                    <Button
+                      type="button"
+                      className={styles.approveTradeButton}
+                      onClick={() => setApproveTargetOffer(tradeOffer)}
+                    >
                       승인하기
                     </Button>
                   </div>
@@ -377,6 +399,20 @@ export default function SellerListingDetail({ listing }) {
         }
 
         confirmLabel="거절하기"
+      />
+
+      <ActionConfirmModal
+        isOpen={approveTargetOffer !== null}
+        onClose={() => setApproveTargetOffer(null)}
+        onConfirm={handleApproveTradeOffer}
+        title="교환 제시 승인"
+        description={
+          approveTargetRecipe
+            ? `[${approveTargetDifficultyOption?.label ?? approveTargetRecipe.difficulty} | ${approveTargetRecipe.title}] 카드와의 교환을 승인하시겠습니까?`
+            : ''
+        }
+
+        confirmLabel="승인하기"
       />
     </main>
   )
