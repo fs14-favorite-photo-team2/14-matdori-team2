@@ -36,10 +36,7 @@ export default function SaleRegistrationModal({
 
   function handlePriceChange(event) {
     const numberOnlyValue = event.target.value.replace(/\D/g, '')
-
-    if (numberOnlyValue === '' || Number(numberOnlyValue) <= 20) {
-      setUnitPrice(numberOnlyValue)
-    }
+    setUnitPrice(numberOnlyValue)
   }
 
   function handleResetExchangeInfo() {
@@ -60,6 +57,8 @@ export default function SaleRegistrationModal({
 
   const isUnitPriceValid =
     unitPrice !== '' && numericUnitPrice >= 1 && numericUnitPrice <= 20
+
+  const shouldShowPriceError = unitPrice !== '' && !isUnitPriceValid
 
   const hasAnyExchangeInfo =
     desiredDifficulty !== '' ||
@@ -168,21 +167,36 @@ export default function SaleRegistrationModal({
               </div>
             </div>
 
-            <label className={styles.settingRow}>
+            <label className={`${styles.settingRow} ${styles.priceSettingRow}`}>
               <span className={styles.settingLabel}>장당 가격</span>
 
-              <div className={styles.priceInputWrapper}>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={2}
-                  value={unitPrice}
-                  onChange={handlePriceChange}
-                  placeholder="1 ~ 20 숫자만 입력"
-                  aria-label="장당 가격"
-                />
+              <div className={styles.priceField}>
+                <div
+                  className={`${styles.priceInputWrapper} ${
+                    shouldShowPriceError ? styles.priceInputError : ''
+                  }`}
+                >
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={unitPrice}
+                    onChange={handlePriceChange}
+                    placeholder="1 ~ 20 숫자만 입력"
+                    aria-label="장당 가격"
+                    aria-invalid={shouldShowPriceError}
+                    aria-describedby={
+                      shouldShowPriceError ? 'unit-price-error' : undefined
+                    }
+                  />
 
-                <span>P</span>
+                  <span>P</span>
+                </div>
+
+                {shouldShowPriceError && (
+                  <p id="unit-price-error" className={styles.priceErrorText}>
+                    장당 가격은 1P ~ 20P 로 입력해 주세요.
+                  </p>
+                )}
               </div>
             </label>
           </div>
