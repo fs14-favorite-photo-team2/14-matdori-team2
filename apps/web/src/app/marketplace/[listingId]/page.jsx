@@ -32,6 +32,8 @@ export default function MarketplaceListingPage() {
 
   const router = useRouter()
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
+  const [tradeOffers, setTradeOffers] = useState(myTradeOffers)
+  const [cancelTargetOffer, setCancelTargetOffer] = useState(null)
 
   // 구매 수량 UI가 연결되면 해당 상태값으로 교체
   const purchaseQuantity = 1
@@ -75,6 +77,23 @@ export default function MarketplaceListingPage() {
 
   if (isSeller) {
     return <SellerListingDetail listing={listing} />
+  }
+
+  const cancelTargetRecipe = cancelTargetOffer?.offeredCopy.recipe
+
+  const cancelTargetDifficultyOption = DIFFICULTY_OPTIONS.find(
+    (option) => option.value === cancelTargetRecipe?.difficulty,
+  )
+
+  function handleCancelTradeOffer() {
+    if (!cancelTargetOffer) return
+
+    // TODO: 교환 제시 취소 API 연결 후 목록 재조회
+    setTradeOffers((currentOffers) =>
+      currentOffers.filter((offer) => offer.id !== cancelTargetOffer.id),
+    )
+
+    setCancelTargetOffer(null)
   }
 
   return (
@@ -184,14 +203,14 @@ export default function MarketplaceListingPage() {
           </div>
         </section>
 
-        {myTradeOffers.length > 0 && (
+        {tradeOffers.length > 0 && (
           <section className={styles.myTradeSection}>
             <h2 className={`${styles.tradeSectionTitle} font-baskin-robbins`}>
               내가 제시한 교환 목록
             </h2>
 
             <div className={styles.myTradeList}>
-              {myTradeOffers.map((tradeOffer) => {
+              {tradeOffers.map((tradeOffer) => {
                 const offeredRecipe = tradeOffer.offeredCopy.recipe
                 const offeredThumbnailUrl = offeredRecipe.imageUrls[0]
                 const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
@@ -251,6 +270,7 @@ export default function MarketplaceListingPage() {
                       type="button"
                       variant="secondary"
                       className={styles.cancelTradeButton}
+                      onClick={() => setCancelTargetOffer(tradeOffer)}
                     >
                       취소하기
                     </Button>
@@ -268,6 +288,19 @@ export default function MarketplaceListingPage() {
         title="레시피 구매"
         description={`[${difficultyOption?.label ?? recipe.difficulty} | ${recipe.title}] ${purchaseQuantity}장을 구매하시겠습니까?`}
         confirmLabel="구매하기"
+      />
+
+      <ActionConfirmModal
+        isOpen={cancelTargetOffer !== null}
+        onClose={() => setCancelTargetOffer(null)}
+        onConfirm={handleCancelTradeOffer}
+        title="교환 제시 취소"
+        description={
+          cancelTargetRecipe
+            ? `[${cancelTargetDifficultyOption?.label ?? cancelTargetRecipe.difficulty} | ${cancelTargetRecipe.title}] 교환 제시를 취소하시겠습니까?`
+            : ''
+        }
+        confirmLabel="취소하기"
       />
     </main>
   )
