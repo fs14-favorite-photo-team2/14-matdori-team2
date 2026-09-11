@@ -10,6 +10,9 @@ import {
   MOCK_CURRENT_USER,
   MOCK_LISTING_DETAIL,
 } from '@/features/marketplace/mockListingDetail'
+import RecipeSelectionModal from '@/components/common/RecipeSelectionModal/RecipeSelectionModal'
+import ExchangeOfferModal from '@/features/exchanges/components/ExchangeOfferModal/ExchangeOfferModal'
+import { MOCK_EXCHANGEABLE_RECIPES } from '@/features/marketplace/mockOwnedRecipes'
 import SellerListingDetail from './SellerListingDetail'
 import MobileHeader from '@/components/layout/Header/MobileHeader/MobileHeader'
 import styles from './page.module.css'
@@ -34,6 +37,8 @@ export default function MarketplaceListingPage() {
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
   const [tradeOffers, setTradeOffers] = useState(myTradeOffers)
   const [cancelTargetOffer, setCancelTargetOffer] = useState(null)
+  const [isExchangeSelectionOpen, setIsExchangeSelectionOpen] = useState(false)
+  const [selectedExchangeRecipe, setSelectedExchangeRecipe] = useState(null)
 
   // 구매 수량 UI가 연결되면 해당 상태값으로 교체
   const purchaseQuantity = 1
@@ -94,6 +99,39 @@ export default function MarketplaceListingPage() {
     )
 
     setCancelTargetOffer(null)
+  }
+
+  function handleCloseExchangeSelection() {
+    setIsExchangeSelectionOpen(false)
+    setSelectedExchangeRecipe(null)
+  }
+
+  function handleSelectExchangeRecipe(selectedRecipe) {
+    setSelectedExchangeRecipe(selectedRecipe)
+  }
+
+  function handleCloseExchangeOffer() {
+    setSelectedExchangeRecipe(null)
+  }
+
+  function handleExchangeSubmit({ recipe: offeredRecipe }) {
+    // TODO: 교환 제시 API 요청이 성공한 뒤 성공 페이지로 이동
+    const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
+      (option) => option.value === offeredRecipe.difficulty,
+    )
+
+    const params = new URLSearchParams({
+      difficultyLabel:
+        offeredDifficultyOption?.label ?? offeredRecipe.difficulty,
+      title: offeredRecipe.title,
+    })
+
+    setSelectedExchangeRecipe(null)
+    setIsExchangeSelectionOpen(false)
+
+    router.push(
+      `/marketplace/${listing.id}/exchange/success?${params.toString()}`,
+    )
   }
 
   return (
@@ -173,6 +211,7 @@ export default function MarketplaceListingPage() {
               type="button"
               className={styles.exchangeButton}
               disabled={isSoldOut || !isExchangeAvailable}
+              onClick={() => setIsExchangeSelectionOpen(true)}
             >
               레시피 교환하기
             </Button>
@@ -301,6 +340,23 @@ export default function MarketplaceListingPage() {
             : ''
         }
         confirmLabel="취소하기"
+      />
+
+      <RecipeSelectionModal
+        isOpen={isExchangeSelectionOpen}
+        onClose={handleCloseExchangeSelection}
+        onSelectRecipe={handleSelectExchangeRecipe}
+        recipes={MOCK_EXCHANGEABLE_RECIPES}
+        title="레시피 교환하기"
+        emptyMessage="교환 가능한 레시피가 없습니다."
+      />
+
+      <ExchangeOfferModal
+        key={selectedExchangeRecipe?.recipeId ?? 'empty'}
+        isOpen={selectedExchangeRecipe !== null}
+        onClose={handleCloseExchangeOffer}
+        selectedRecipe={selectedExchangeRecipe}
+        onSubmit={handleExchangeSubmit}
       />
     </main>
   )
