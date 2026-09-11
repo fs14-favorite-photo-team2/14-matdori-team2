@@ -107,7 +107,10 @@ function getFilteredListings(listings, keyword, targetFilters) {
       item.recipe.category === targetFilters.category
     const matchesListingType =
       targetFilters.listingType === '' ||
-      item.listingType === targetFilters.listingType
+      (targetFilters.listingType === 'SALE' &&
+        item.relationType === 'OWN_LISTING') ||
+      (targetFilters.listingType === 'EXCHANGE' &&
+        item.relationType === 'SENT_OFFER')
     const matchesStatus =
       targetFilters.status === '' || item.listingStatus === targetFilters.status
     return (
