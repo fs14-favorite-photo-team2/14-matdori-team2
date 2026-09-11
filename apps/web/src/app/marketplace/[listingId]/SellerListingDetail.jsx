@@ -34,6 +34,7 @@ export default function SellerListingDetail({ listing }) {
   const [tradeOffers, setTradeOffers] = useState(myTradeOffers)
   const [rejectTargetOffer, setRejectTargetOffer] = useState(null)
   const [approveTargetOffer, setApproveTargetOffer] = useState(null)
+  const [isUnlistModalOpen, setIsUnlistModalOpen] = useState(false)
 
   const imageCount = recipe.imageUrls.length
   const currentImageUrl = recipe.imageUrls[currentImageIndex]
@@ -93,6 +94,11 @@ export default function SellerListingDetail({ listing }) {
     )
 
     setApproveTargetOffer(null)
+  }
+
+  function handleUnlistConfirm() {
+    // TODO: 판매 내리기 API 연결 후 마켓플레이스와 마이 키친 재조회
+    setIsUnlistModalOpen(false)
   }
 
   return (
@@ -287,6 +293,7 @@ export default function SellerListingDetail({ listing }) {
                 type="button"
                 variant="secondary"
                 className={styles.sellerActionButton}
+                onClick={() => setIsUnlistModalOpen(true)}
               >
                 판매 내리기
               </Button>
@@ -413,6 +420,15 @@ export default function SellerListingDetail({ listing }) {
         }
 
         confirmLabel="승인하기"
+      />
+
+      <ActionConfirmModal
+        isOpen={isUnlistModalOpen}
+        onClose={() => setIsUnlistModalOpen(false)}
+        onConfirm={handleUnlistConfirm}
+        title="레시피 판매 내리기"
+        description="정말로 판매를 중단하시겠습니까?"
+        confirmLabel="판매 내리기"
       />
     </main>
   )
