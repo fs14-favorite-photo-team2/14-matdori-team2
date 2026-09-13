@@ -1,0 +1,157 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  background-color: var(--color-black);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
+  height: 80px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.logoLink {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.actions a {
+  color: var(--color-white);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-regular);
+  text-decoration: none;
+}
+
+.points {
+  color: var(--color-gray-200);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-bold);
+}
+
+.iconButton,
+.profileButton,
+.logoutButton {
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.profileArea {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.profileMenuWrapper {
+  position: absolute;
+  top: calc(100% + 28px);
+  right: 0;
+  z-index: 110;
+}
+
+.profileButton {
+  color: var(--color-white);
+  font-family: var(--font-baskin-robbins);
+  font-size: var(--font-size-18);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: -0.03em;
+}
+
+.divider {
+  width: 1px;
+  height: 16px;
+  background-color: var(--color-gray-400);
+}
+
+.logoutButton {
+  color: var(--color-gray-400);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-regular);
+}
+
+.mobileInner {
+  display: none;
+}
+
+.toastWrapper {
+  position: fixed;
+  top: 88px;
+  left: 50%;
+  z-index: 300;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 1023px) {
+  .logoLink img {
+    width: 112px;
+    height: auto;
+  }
+}
+
+@media (max-width: 743px) {
+  .inner {
+    display: none;
+  }
+
+  .mobileInner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 60px;
+    padding: 0 20px;
+  }
+
+  .mobileLogoLink {
+    position: absolute;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    transform: translateX(-50%);
+  }
+
+  .mobileLogoLink img {
+    width: 84px;
+    height: auto;
+  }
+
+  .mobileRight {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+  }
+
+  .mobileLogin {
+    color: var(--color-white);
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-regular);
+    text-decoration: none;
+  }
+
+  .toastWrapper {
+    top: 68px;
+  }
+}
