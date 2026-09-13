@@ -23,6 +23,7 @@ const KEYWORD_MAX_LENGTH = 100
 const NICKNAME_MIN_LENGTH = 2
 const NICKNAME_MAX_LENGTH = 20
 const NICKNAME_PATTERN = /^[A-Za-z0-9가-힣_-]+$/
+const TRADE_OFFER_MESSAGE_MAX_LENGTH = 500
 const DATE_TIME_PATTERN =
   /^(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/
 
@@ -121,6 +122,23 @@ export const keyword = optional(
       return (
         (value.length >= 1 && value.length <= KEYWORD_MAX_LENGTH) ||
         `검색어는 1자 이상 ${KEYWORD_MAX_LENGTH}자 이하여야 합니다.`
+      )
+    }),
+    string(),
+    (value) => value.trim(),
+  ),
+)
+
+export const tradeOfferMessage = optional(
+  coerce(
+    define('message', (value) => {
+      if (typeof value !== 'string') {
+        return '교환 제시글은 문자열이어야 합니다.'
+      }
+
+      return (
+        value.length <= TRADE_OFFER_MESSAGE_MAX_LENGTH ||
+        `교환 제시글은 ${TRADE_OFFER_MESSAGE_MAX_LENGTH}자 이하여야 합니다.`
       )
     }),
     string(),

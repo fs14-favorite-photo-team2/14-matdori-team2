@@ -1,4 +1,5 @@
 import { prisma } from '../db/prisma.js'
+import { cancelPendingTradeOffers } from './trade-offer-repository.js'
 
 // 공통으로 불러올 필드 부분
 const marketListingSelect = {
@@ -243,9 +244,11 @@ export function updateMarketListingById(listingId, data) {
 // 판매글 내리기 + 판매글에 달린 사본 복구
 export function withdrawMarketListingRecord(listingId) {
   return prisma.$transaction(async (transaction) => {
-    await transaction.marketListing.update({
+    const listing = await transaction.marketListing.update({
       where: {
         id: listingId,
+        status: 'ON_SALE',
+        deletedAt: null,
       },
       data: {
         status: 'WITHDRAWN',
@@ -262,6 +265,8 @@ export function withdrawMarketListingRecord(listingId) {
         state: 'OWNED',
       },
     })
+
+    await cancelPendingTradeOffers(transaction, listing)
   })
 }
 
