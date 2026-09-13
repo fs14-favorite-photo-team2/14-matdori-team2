@@ -1,3 +1,4 @@
+import Header from '@/components/layout/Header/Header'
 import { Noto_Sans_KR } from 'next/font/google'
 import localFont from 'next/font/local'
 import './globals.css'
@@ -25,7 +26,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ko">
       <body className={`${notoSansKR.variable} ${baskinRobbins.variable}`}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <Header />
+          {children}
+        </Providers>
       </body>
     </html>
   )
