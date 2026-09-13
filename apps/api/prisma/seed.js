@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs'
 
+import { pool } from '../src/db/pool.js'
 import { prisma } from '../src/db/prisma.js'
 
 // ============================================
@@ -944,4 +945,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect()
+    await pool.end()
   })

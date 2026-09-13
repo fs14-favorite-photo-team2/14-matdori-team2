@@ -1,27 +1,15 @@
 import connectPgSimple from 'connect-pg-simple'
 import session from 'express-session'
 
+import { env } from '../config/env.js'
 import { pool } from '../db/pool.js'
 
-const SESSION_TTL_SECONDS = Number(process.env.SESSION_TTL_SECONDS ?? 604800)
-const isProduction = process.env.NODE_ENV === 'production'
-export const sessionCookieName = process.env.SESSION_COOKIE_NAME ?? 'session'
+export const sessionCookieName = env.session.cookieName
 export const sessionCookieOptions = {
   httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? 'none' : 'lax',
+  secure: env.isProduction,
+  sameSite: env.isProduction ? 'none' : 'lax',
   path: '/',
-}
-
-if (!Number.isFinite(SESSION_TTL_SECONDS) || SESSION_TTL_SECONDS <= 0) {
-  throw new Error('SESSION_TTL_SECONDS는 양수여야 합니다.')
-}
-
-if (
-  !process.env.SESSION_SECRET ||
-  Buffer.byteLength(process.env.SESSION_SECRET, 'utf8') < 32
-) {
-  throw new Error('SESSION_SECRET은 32바이트 이상이어야 합니다.')
 }
 
 const PgSession = connectPgSimple(session)
@@ -30,17 +18,17 @@ const sessionMiddleware = session({
   store: new PgSession({
     pool,
     tableName: 'session',
-    ttl: SESSION_TTL_SECONDS,
+    ttl: env.session.ttlSeconds,
     createTableIfMissing: false,
   }),
   name: sessionCookieName,
-  secret: process.env.SESSION_SECRET,
+  secret: env.session.secret,
   resave: false,
   saveUninitialized: false,
   rolling: true,
   cookie: {
     ...sessionCookieOptions,
-    maxAge: SESSION_TTL_SECONDS * 1000,
+    maxAge: env.session.ttlSeconds * 1000,
   },
 })
 
