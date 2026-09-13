@@ -1,6 +1,8 @@
 import connectPgSimple from 'connect-pg-simple'
 import session from 'express-session'
 
+import { pool } from '../db/pool.js'
+
 const SESSION_TTL_SECONDS = Number(process.env.SESSION_TTL_SECONDS ?? 604800)
 const isProduction = process.env.NODE_ENV === 'production'
 export const sessionCookieName = process.env.SESSION_COOKIE_NAME ?? 'session'
@@ -26,7 +28,7 @@ const PgSession = connectPgSimple(session)
 
 const sessionMiddleware = session({
   store: new PgSession({
-    conString: process.env.DATABASE_URL,
+    pool,
     tableName: 'session',
     ttl: SESSION_TTL_SECONDS,
     createTableIfMissing: false,

@@ -1,6 +1,4 @@
-import { config } from 'dotenv'
-
-config({ path: ['.env.local', '.env'] })
+import './config/env.js'
 
 const { default: app } = await import('./app.js')
 
