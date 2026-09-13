@@ -829,6 +829,7 @@ paths:
             application/json:
               schema:
                 { $ref: '#/components/schemas/NotificationCursorResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
   /notifications/unread-count:
     get:
@@ -857,11 +858,7 @@ paths:
       summary: 개별 알림 읽음 처리
       operationId: readNotification
       parameters:
-        - name: notificationId
-          in: path
-          required: true
-          description: 알림 ID
-          schema: { type: integer, minimum: 1, example: 501 }
+        - $ref: '#/components/parameters/NotificationId'
       responses:
         '200':
           description: 수정된 알림
@@ -873,6 +870,7 @@ paths:
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/Notification' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
   /notifications/read-all:
@@ -982,6 +980,12 @@ components:
       required: true
       description: 교환 제안 ID
       schema: { type: integer, minimum: 1, example: 205 }
+    NotificationId:
+      name: notificationId
+      in: path
+      required: true
+      description: 알림 ID
+      schema: { type: integer, minimum: 1, example: 501 }
     Keyword:
       name: keyword
       in: query
