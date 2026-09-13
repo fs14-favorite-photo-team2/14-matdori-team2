@@ -1,4 +1,5 @@
 import { prisma } from '../db/prisma.js'
+import { publicUserSelect } from './user-repository.js'
 
 export const recipeSummarySelect = {
   id: true,
@@ -14,8 +15,11 @@ export const recipeSummarySelect = {
 export function toRecipeSummary({ imageUrls, ingredients, ...recipe }) {
   return {
     ...recipe,
-    imageUrl: imageUrls[0],
-    ingredients: ingredients.filter((ingredient) => ingredient.isHighlight),
+    imageUrl: imageUrls[0] ?? null,
+    imageUrls,
+    ingredients: Array.isArray(ingredients)
+      ? ingredients.filter((ingredient) => ingredient.isHighlight)
+      : [],
   }
 }
 
@@ -32,5 +36,62 @@ export function recipeFilter({ keyword, difficulty, category }) {
 export function countRecipesCreatedSince({ creatorId, since }) {
   return prisma.recipe.count({
     where: { creatorId, createdAt: { gte: since } },
+  })
+}
+
+export const recipeDetailSelect = {
+  ...recipeSummarySelect,
+  creator: {
+    select: publicUserSelect,
+  },
+  content: true,
+  totalSupply: true,
+  createdAt: true,
+  updatedAt: true,
+}
+
+// 전체 재료 반환
+export function toRecipeDetail({ imageUrls, ingredients, ...recipe }) {
+  return {
+    ...recipe,
+    imageUrl: imageUrls[0] ?? null,
+    imageUrls,
+    ingredients: Array.isArray(ingredients) ? ingredients : [],
+  }
+}
+
+export function createRecipeRecord({
+  creatorId,
+  title,
+  imageUrls,
+  ingredients,
+  minPrice,
+  difficulty,
+  category,
+  summary,
+  content,
+  totalSupply,
+}) {
+  return prisma.recipe.create({
+    data: {
+      creatorId,
+      title,
+      imageUrls,
+      ingredients,
+      minPrice,
+      difficulty,
+      category,
+      summary,
+      content,
+      totalSupply,
+
+      // 발행 수량만큼 생성자 소유의 레시피 사본을 생성
+      copies: {
+        create: Array.from({ length: totalSupply }, () => ({
+          ownerId: creatorId,
+        })),
+      },
+    },
+    select: recipeDetailSelect,
   })
 }
