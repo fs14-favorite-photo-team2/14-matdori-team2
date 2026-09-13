@@ -323,6 +323,7 @@ export async function purchaseMarketListing(userId, listingId) {
   try {
     return await purchaseMarketListingRecord({
       listingId,
+      recipeId: listing.recipeId,
       recipeCopyId: recipeCopy.id,
       buyerId: userId,
       sellerId: listing.sellerId,
@@ -343,6 +344,15 @@ export async function purchaseMarketListing(userId, listingId) {
         {
           field: 'listingId',
           reason: '사본 상태가 변경되어 구매할 수 없습니다.',
+        },
+      ])
+    }
+
+    if (error.code === 'RECIPE_ALREADY_OWNED') {
+      throw AppError.from(ERROR_CODES.CONFLICT, [
+        {
+          field: 'listingId',
+          reason: '이미 보유한 레시피는 추가로 구매할 수 없습니다.',
         },
       ])
     }

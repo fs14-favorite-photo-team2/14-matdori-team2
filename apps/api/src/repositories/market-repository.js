@@ -285,6 +285,7 @@ export function findMarketListingForPurchase(listingId) {
     },
     select: {
       id: true,
+      recipeId: true,
       sellerId: true,
       listingType: true,
       price: true,
@@ -320,12 +321,29 @@ export function findUserPoints(userId) {
 // 포인트 결제, 사본 이전, 구매 기록 생성을 하나의 트랜잭션으로 처리
 export function purchaseMarketListingRecord({
   listingId,
+  recipeId,
   recipeCopyId,
   buyerId,
   sellerId,
   price,
 }) {
   return prisma.$transaction(async (transaction) => {
+    const ownedCopy = await transaction.recipeCopy.findFirst({
+      where: {
+        ownerId: buyerId,
+        recipeId,
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (ownedCopy) {
+      const error = new Error('이미 보유한 레시피입니다.')
+      error.code = 'RECIPE_ALREADY_OWNED'
+      throw error
+    }
+
     // 구매자 포인트 차감
     const buyerUpdate = await transaction.user.updateMany({
       where: {
