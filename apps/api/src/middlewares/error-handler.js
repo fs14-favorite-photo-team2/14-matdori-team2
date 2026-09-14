@@ -18,7 +18,7 @@ export function errorHandler(error, _request, response, _next) {
     )
   }
 
-  console.error(error)
+  response.err = error
 
   const { status, message } = ERROR_CATALOG[ERROR_CODES.INTERNAL_SERVER_ERROR]
 

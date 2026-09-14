@@ -1108,10 +1108,14 @@ components:
         error:
           type: object
           additionalProperties: false
-          required: [code, message]
+          required: [code, message, requestId]
           properties:
             code: { $ref: '#/components/schemas/ErrorCode' }
             message: { type: string }
+            requestId:
+              type: string
+              format: uuid
+              description: Request-ID 응답 헤더와 같은 값으로, 서버 로그에서 요청을 찾을 때 사용합니다.
             details:
               type: array
               items:

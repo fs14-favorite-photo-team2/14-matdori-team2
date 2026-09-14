@@ -67,6 +67,7 @@ Copy-Item apps/web/.env.example apps/web/.env.local
 | ------------------------------- | ------------------------------------------------ | ------------------------------------------ |
 | `PORT`                          | `3001`                                           | Express 서버 포트                          |
 | `NODE_ENV`                      | `development`                                    | 실행 환경 (`production` 등)                |
+| `LOG_LEVEL`                     | `info`                                           | 최소 로그 레벨                             |
 | `CLIENT_ORIGIN`                 | `http://localhost:3000`                          | CORS 허용 origin. 여러 개는 쉼표로 구분    |
 | `SESSION_COOKIE_NAME`           | `session`                                        | HttpOnly 로그인 세션 쿠키 이름             |
 | `SESSION_SECRET`                | `replace-with-at-least-32-random...`             | 세션 ID 서명용 비밀값(최소 32바이트 필수)  |
@@ -151,6 +152,22 @@ npm run dev:api
 | API Docs     | `http://localhost:3001/docs`   |
 
 `/health`는 서버 프로세스의 생존 여부를 확인하고, `/ready`는 데이터베이스 연결을 포함한 요청 처리 준비 여부를 확인합니다. API 문서는 개발 환경에서만 제공되며, `NODE_ENV=production`에서는 `/docs` 경로가 등록되지 않습니다. API 명세는 프로젝트 루트의 `openapi.yaml`에서 관리합니다.
+
+### API 로그
+
+API 로그는 Pino를 사용합니다. 개발 환경에서는 `pino-pretty`로 읽기 쉽게 출력하고,
+`NODE_ENV=production`에서는 표준 출력으로 JSON 로그를 남깁니다.
+`LOG_LEVEL`로 최소 로그 레벨을 설정할 수 있으며 기본값은 `info`입니다.
+`fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent` 외의 값이면 서버가 시작되지 않습니다.
+
+요청 로그는 `pino-http`로 남기며 요청 ID, HTTP 메서드, 쿼리 문자열을 제외한 경로,
+응답 상태 코드, 처리 시간(`responseTime`)과 로그인한 사용자 ID를 기록합니다.
+요청 헤더와 쿼리 문자열은 쿠키나 OAuth 인가 코드가 남지 않도록 기록하지 않습니다.
+응답의 `Request-ID` 헤더 값으로 `req.id`를 검색하면 해당 요청의 로그를 찾을 수 있습니다.
+
+5xx 응답은 처리되지 않은 오류와 함께 `error`, 나머지 요청은 `info` 레벨로 기록합니다.
+`/health`, `/ready` 요청은 5xx 응답일 때만 기록합니다.
+응답이 끝나기 전에 연결이 끊기면 `request aborted` 메시지로 기록합니다.
 
 ## 주요 명령어
 

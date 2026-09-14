@@ -7,6 +7,7 @@ import {
 } from './controllers/health-controller.js'
 import corsMiddleware from './middlewares/cors.js'
 import { errorHandler } from './middlewares/error-handler.js'
+import httpLoggerMiddleware from './middlewares/http-logger.js'
 import { notFoundHandler } from './middlewares/not-found.js'
 import sessionMiddleware from './middlewares/session.js'
 import apiDocsRouter from './routes/api-docs.js'
@@ -16,6 +17,7 @@ const app = express()
 
 app.set('trust proxy', 1)
 
+app.use(httpLoggerMiddleware)
 app.use(corsMiddleware)
 app.use(express.json())
 app.use(sessionMiddleware)

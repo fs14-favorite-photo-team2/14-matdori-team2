@@ -70,9 +70,9 @@ export function googleOAuthFailureController(_request, response) {
   return redirectToLoginWithError(response, GENERIC_OAUTH_ERROR_CODE)
 }
 
-export function googleOAuthErrorController(error, _request, response, _next) {
+export function googleOAuthErrorController(error, request, response, _next) {
   if (!(error instanceof AppError)) {
-    console.error(error)
+    request.log.error({ err: error }, 'Google OAuth error')
   }
 
   return redirectToLoginWithError(
