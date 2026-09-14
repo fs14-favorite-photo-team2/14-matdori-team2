@@ -123,6 +123,33 @@ export default function MarketplacePage() {
     setIsSaleModalOpen(true)
   }
 
+  async function handleListingClick(event, listingId) {
+    if (isAuthenticated && !authError && !isAuthLoading && !isAuthRefetching) {
+      return
+    }
+
+    event.preventDefault()
+
+    if (isAuthLoading || isAuthRefetching) {
+      return
+    }
+
+    if (authError) {
+      const result = await refetchCurrentUser()
+
+      if (result.error) {
+        return
+      }
+
+      if (result.data) {
+        router.push(`/marketplace/${listingId}`)
+        return
+      }
+    }
+
+    setIsLoginRequiredModalOpen(true)
+  }
+
   function handleSelectRecipe(recipe) {
     setSelectedRecipe(recipe)
   }
@@ -283,6 +310,7 @@ export default function MarketplacePage() {
                   key={listing.id}
                   href={`/marketplace/${listing.id}`}
                   className={styles.cardLink}
+                  onClick={(event) => handleListingClick(event, listing.id)}
                 >
                   <RecipeCard
                     thumbnailUrl={listing.recipe.imageUrl}
