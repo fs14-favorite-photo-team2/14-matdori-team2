@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Button from '@/components/common/Button/Button'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import SearchBar from '@/components/common/SearchBar/SearchBar'
@@ -9,78 +9,72 @@ import { SORT_OPTIONS } from '@/constants/SortOptions'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
-import { MOCK_MARKET_LISTINGS } from '@/features/marketplace/mockListings'
 import { MOCK_REGISTERED_LISTINGS_KEY } from '@/features/sales/mockSaleableRecipes'
 import LoginRequiredModal from '@/features/auth/components/LoginRequiredModal/LoginRequiredModal'
 import SaleRecipeSelectionModal from '@/features/sales/components/SaleRecipeSelectionModal/SaleRecipeSelectionModal'
 import SaleRegistrationModal from '@/features/sales/components/SaleRegistrationModal/SaleRegistrationModal'
+import useMarketListings from '@/features/marketplace/useMarketListings'
+import useInfiniteScroll from '@/hooks/useInfiniteScroll'
+import useDebouncedValue from '@/hooks/useDebouncedValue'
+import ErrorState from '@/components/common/ErrorState/ErrorState'
+import getApiErrorMessage from '@/utils/getApiErrorMessage'
+import useCurrentUser from '@/features/auth/useCurrentUser'
 import styles from './page.module.css'
 
 const DESKTOP_PAGE_SIZE = 12
 const TABLET_MOBILE_PAGE_SIZE = 8
 
-const MOCK_IS_LOGGED_IN = true
-
-function getFilteredListings(listings, keyword, selectedFilters) {
-  return listings.filter((listing) => {
-    const recipeTitle = listing.recipe.title.toLowerCase()
-    const normalizedKeyword = keyword.toLowerCase()
-
-    const matchesKeyword = recipeTitle.includes(normalizedKeyword)
-
-    const matchesDifficulty =
-      !selectedFilters.difficulty ||
-      listing.recipe.difficulty === selectedFilters.difficulty
-
-    const matchesCategory =
-      !selectedFilters.category ||
-      listing.recipe.category === selectedFilters.category
-
-    const matchesStatus =
-      !selectedFilters.status || listing.status === selectedFilters.status
-
-    return (
-      matchesKeyword && matchesDifficulty && matchesCategory && matchesStatus
-    )
-  })
-}
-
 export default function MarketplacePage() {
   const router = useRouter()
   const [searchInput, setSearchInput] = useState('')
-  const [searchKeyword, setSearchKeyword] = useState('')
+  const debouncedKeyword = useDebouncedValue(searchInput.trim(), 400)
   const [filters, setFilters] = useState({ ...DEFAULT_FILTERS })
   const [draftFilters, setDraftFilters] = useState({ ...DEFAULT_FILTERS })
   const [sort, setSort] = useState('newest')
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [pageSize, setPageSize] = useState(DESKTOP_PAGE_SIZE)
-  const [visibleCount, setVisibleCount] = useState(DESKTOP_PAGE_SIZE)
+  const [pageSize, setPageSize] = useState(null)
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false)
   const [selectedRecipe, setSelectedRecipe] = useState(null)
-  const [marketListings, setMarketListings] = useState(MOCK_MARKET_LISTINGS)
-  const loadMoreRef = useRef(null)
 
-  useEffect(() => {
-    let frameId
+  const {
+    data: marketListingsData,
+    error,
+    isConfigured,
+    isPending,
+    isError,
+    isRefetching,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    fetchNextPage,
+    hasNextPage,
+    refetch,
+  } = useMarketListings({
+    limit: pageSize,
+    keyword: debouncedKeyword,
+    filters,
+    sort,
+    enabled: pageSize !== null,
+  })
 
-    try {
-      const savedListings = JSON.parse(
-        localStorage.getItem(MOCK_REGISTERED_LISTINGS_KEY) ?? '[]',
-      )
+  const {
+    isAuthenticated,
+    isLoading: isAuthLoading,
+    isRefetching: isAuthRefetching,
+    error: authError,
+    refetch: refetchCurrentUser,
+  } = useCurrentUser({
+    enabled: isConfigured,
+  })
 
-      if (!Array.isArray(savedListings)) return undefined
+  const marketListings =
+    marketListingsData?.pages.flatMap((page) => page.data) ?? []
 
-      frameId = window.requestAnimationFrame(() => {
-        setMarketListings([...savedListings, ...MOCK_MARKET_LISTINGS])
-      })
-    } catch (error) {
-      console.error('목 판매 목록을 불러오지 못했습니다.', error)
-    }
-
-    return () => {
-      if (frameId) window.cancelAnimationFrame(frameId)
-    }
-  }, [])
+  const loadMoreRef = useInfiniteScroll({
+    enabled: isConfigured && !isFetchNextPageError,
+    hasMore: Boolean(hasNextPage),
+    isLoading: isFetchingNextPage,
+    onLoadMore: fetchNextPage,
+  })
 
   useEffect(() => {
     const tabletMediaQuery = window.matchMedia(`(max-width: 1023px)`)
@@ -91,7 +85,6 @@ export default function MarketplacePage() {
         : DESKTOP_PAGE_SIZE
 
       setPageSize(nextPageSize)
-      setVisibleCount(nextPageSize)
     }
 
     handleScreenChange()
@@ -102,22 +95,27 @@ export default function MarketplacePage() {
     }
   }, [])
 
-  useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      setSearchKeyword(searchInput.trim())
-      setVisibleCount(pageSize)
-    }, 400)
-
-    return () => {
-      clearTimeout(debounceTimer)
-    }
-  }, [pageSize, searchInput])
-
   const [isLoginRequiredModalOpen, setIsLoginRequiredModalOpen] =
     useState(false)
 
-  function handleSellButtonClick() {
-    if (!MOCK_IS_LOGGED_IN) {
+  async function handleSellButtonClick() {
+    if (isAuthLoading || isAuthRefetching) {
+      return
+    }
+
+    let isLoggedIn = isAuthenticated
+
+    if (authError) {
+      const result = await refetchCurrentUser()
+
+      if (result.error) {
+        return
+      }
+
+      isLoggedIn = Boolean(result.data)
+    }
+
+    if (!isLoggedIn) {
       setIsLoginRequiredModalOpen(true)
       return
     }
@@ -183,7 +181,6 @@ export default function MarketplacePage() {
       ...currentFilters,
       [groupKey]: value,
     }))
-    setVisibleCount(pageSize)
   }
 
   const handleDraftFilterChange = (groupKey, value) => {
@@ -201,68 +198,33 @@ export default function MarketplacePage() {
   const handleApply = (nextFilters) => {
     setFilters({ ...nextFilters })
     setIsMobileOpen(false)
-    setVisibleCount(pageSize)
-  }
-
-  const handleSearch = (keyword) => {
-    setSearchKeyword(keyword)
-    setVisibleCount(pageSize)
   }
 
   const handleSortChange = (value) => {
     setSort(value)
-    setVisibleCount(pageSize)
   }
 
-  const filteredListings = getFilteredListings(
-    marketListings,
-    searchKeyword,
-    filters,
-  )
+  if (!isConfigured) {
+    return (
+      <ErrorState
+        title="API 연결 정보가 없습니다."
+        message="NEXT_PUBLIC_API_URL 환경변수를 확인해 주세요."
+      />
+    )
+  }
 
-  const draftFilteredListings = getFilteredListings(
-    marketListings,
-    searchKeyword,
-    draftFilters,
-  )
-
-  const sortedListings = [...filteredListings].sort((a, b) => {
-    if (sort === 'price_asc') {
-      return a.price - b.price
-    }
-
-    if (sort === 'price_desc') {
-      return b.price - a.price
-    }
-
-    return new Date(b.createdAt) - new Date(a.createdAt)
-  })
-
-  const visibleListings = sortedListings.slice(0, visibleCount)
-  const hasMoreListings = visibleCount < sortedListings.length
-
-  useEffect(() => {
-    const loadMoreElement = loadMoreRef.current
-
-    if (!loadMoreElement || !hasMoreListings) {
-      return undefined
-    }
-
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setVisibleCount((currentCount) =>
-          Math.min(currentCount + pageSize, sortedListings.length),
-        )
-      }
-    })
-
-    observer.observe(loadMoreElement)
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [hasMoreListings, pageSize, sortedListings.length])
-
+  if (isError && marketListings.length === 0) {
+    return (
+      <ErrorState
+        title="마켓플레이스를 불러오지 못했습니다."
+        message={getApiErrorMessage(error, '잠시 후 다시 시도해 주세요.')}
+        actionLabel="다시 시도"
+        onAction={refetch}
+        isActionLoading={isRefetching}
+        actionLoadingLabel="불러오는 중..."
+      />
+    )
+  }
   return (
     <main className={styles.page}>
       <div className={styles.container}>
@@ -274,8 +236,11 @@ export default function MarketplacePage() {
             type="button"
             className={styles.sellButton}
             onClick={handleSellButtonClick}
+            disabled={isAuthLoading || isAuthRefetching}
           >
-            나의 레시피 판매하기
+            {isAuthLoading || isAuthRefetching
+              ? '로그인 확인 중...'
+              : '나의 레시피 판매하기'}
           </Button>
         </header>
 
@@ -284,7 +249,6 @@ export default function MarketplacePage() {
             <SearchBar
               value={searchInput}
               onChange={setSearchInput}
-              onSearch={handleSearch}
               placeholder="검색"
             />
           </div>
@@ -296,7 +260,6 @@ export default function MarketplacePage() {
               sortOptions={SORT_OPTIONS}
               sort={sort}
               isMobileOpen={isMobileOpen}
-              resultCount={draftFilteredListings.length}
               onFilterChange={handleFilterChange}
               onDraftFilterChange={handleDraftFilterChange}
               onSortChange={handleSortChange}
@@ -308,29 +271,60 @@ export default function MarketplacePage() {
           </div>
         </section>
 
-        <section className={styles.cardGrid}>
-          {visibleListings.map((listing) => (
-            <Link
-              key={listing.id}
-              href={`/marketplace/${listing.id}`}
-              className={styles.cardLink}
-            >
-              <RecipeCard
-                thumbnailUrl={listing.recipe.thumbnailUrl}
-                title={listing.recipe.title}
-                difficulty={listing.recipe.difficulty}
-                category={listing.recipe.category}
-                sellerNickname={listing.seller.nickname}
-                price={listing.price}
-                remainingQuantity={listing.remainingQuantity}
-                listingStatus={listing.status}
-              />
-            </Link>
-          ))}
-        </section>
+        {isPending ? (
+          <p className={styles.listState}>레시피를 불러오는 중...</p>
+        ) : marketListings.length === 0 ? (
+          <p className={styles.listState}>조건에 맞는 레시피가 없습니다.</p>
+        ) : (
+          <>
+            <section className={styles.cardGrid}>
+              {marketListings.map((listing) => (
+                <Link
+                  key={listing.id}
+                  href={`/marketplace/${listing.id}`}
+                  className={styles.cardLink}
+                >
+                  <RecipeCard
+                    thumbnailUrl={listing.recipe.imageUrl}
+                    title={listing.recipe.title}
+                    difficulty={listing.recipe.difficulty}
+                    category={listing.recipe.category}
+                    sellerNickname={listing.seller.nickname}
+                    price={listing.price}
+                    remainingQuantity={listing.remainingQuantity}
+                    listingStatus={listing.status}
+                  />
+                </Link>
+              ))}
+            </section>
 
-        {hasMoreListings && (
-          <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
+            {hasNextPage && (
+              <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
+            )}
+
+            {isFetchingNextPage && (
+              <p className={styles.nextPageState}>레시피를 더 불러오는 중...</p>
+            )}
+
+            {isFetchNextPageError && (
+              <div className={styles.nextPageError}>
+                <p>
+                  {getApiErrorMessage(
+                    error,
+                    '레시피를 더 불러오지 못했습니다.',
+                  )}
+                </p>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => fetchNextPage()}
+                >
+                  다시 시도
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
       <LoginRequiredModal

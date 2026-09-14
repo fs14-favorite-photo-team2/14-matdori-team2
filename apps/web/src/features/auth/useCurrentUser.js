@@ -3,7 +3,7 @@ import { getCurrentUser } from './api'
 
 export const CURRENT_USER_QUERY_KEY = ['currentUser']
 
-export default function useCurrentUser() {
+export default function useCurrentUser({ enabled = true } = {}) {
   const {
     data: user,
     isPending,
@@ -13,12 +13,13 @@ export default function useCurrentUser() {
   } = useQuery({
     queryKey: CURRENT_USER_QUERY_KEY,
     queryFn: getCurrentUser,
+    enabled,
   })
 
   return {
     user,
     isAuthenticated: Boolean(user),
-    isLoading: isPending,
+    isLoading: enabled && isPending,
     isRefetching,
     error,
     refetch,
