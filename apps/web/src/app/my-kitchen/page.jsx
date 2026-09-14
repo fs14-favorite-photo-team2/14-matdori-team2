@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 import Button from '@/components/common/Button/Button'
 import SearchBar from '@/components/common/SearchBar/SearchBar'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
@@ -101,7 +100,6 @@ function groupByRecipe(copies) {
 }
 
 export default function MyKitchenPage() {
-  const router = useRouter()
   const nickname = '유디'
 
   const [pageSize, setPageSize] = useState(PAGE_SIZE_DESKTOP)
@@ -214,22 +212,9 @@ export default function MyKitchenPage() {
     setIsMobileOpen(false)
   }
 
-  function handleBack() {
-    router.back()
-  }
-
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <button
-          type="button"
-          className={styles.backButton}
-          onClick={handleBack}
-          aria-label="뒤로가기"
-        >
-          <Image src="/icons/left.svg" alt="" width={24} height={24} />
-        </button>
-
         <h1 className={`${styles.pageTitle} font-baskin-robbins`}>마이 키친</h1>
 
         <Link href="/my-kitchen/create" className={styles.createButton}>
