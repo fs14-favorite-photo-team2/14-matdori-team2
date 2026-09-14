@@ -14,6 +14,8 @@ const NOTIFICATION_MESSAGES = Object.freeze({
     `${actor}님이 '${recipe}' 레시피 교환 제안을 수락했습니다.`,
   [NotificationType.TRADE_OFFER_REFUSE]: (actor, recipe) =>
     `${actor}님이 '${recipe}' 레시피 교환 제안을 거절했습니다.`,
+  [NotificationType.TRADE_OFFER_CANCELED]: (_actor, recipe) =>
+    `'${recipe}' 레시피가 판매 종료되어 교환 제안이 취소되었습니다.`,
 })
 
 export function getNotificationMessage(type, actor, recipe) {
