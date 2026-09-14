@@ -3,9 +3,11 @@ import fs from 'node:fs'
 import swaggerUi from 'swagger-ui-express'
 import YAML from 'yaml'
 
+import { env } from '../config/env.js'
+
 const apiDocsRouter = Router()
 
-if (process.env.NODE_ENV !== 'production') {
+if (!env.isProduction) {
   try {
     const openapiDocument = YAML.parse(
       fs.readFileSync(

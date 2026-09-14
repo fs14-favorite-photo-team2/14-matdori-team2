@@ -33,6 +33,19 @@ export function toListingSummary({ _count, recipe, ...listing }) {
   }
 }
 
+export function findListingById(id) {
+  return prisma.marketListing.findUnique({
+    where: { id, deletedAt: null },
+    select: {
+      id: true,
+      sellerId: true,
+      recipeId: true,
+      listingType: true,
+      status: true,
+    },
+  })
+}
+
 export function findListingsBySeller(sellerId, query) {
   const { listingType, status, sort, cursor, limit } = query
 
