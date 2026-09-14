@@ -408,7 +408,7 @@ export default function SellerListingDetail({ listing }) {
         title="교환 제시 거절"
         description={
           rejectTargetRecipe
-            ? `[${rejectTargetDifficultyOption.label ?? rejectTargetRecipe.difficulty} | ${rejectTargetRecipe.title}] 카드와의 교환을 거절하시겠습니까?`
+            ? `[${rejectTargetDifficultyOption?.label ?? rejectTargetRecipe.difficulty} | ${rejectTargetRecipe.title}] 카드와의 교환을 거절하시겠습니까?`
             : ''
         }
 
