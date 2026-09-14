@@ -13,6 +13,7 @@ import {
   Difficulty,
   ListingStatus,
   ListingType,
+  NotificationType,
   TradeOfferStatus,
 } from '../generated/prisma/enums.ts'
 import { DEFAULT_CURSOR_LIMIT, MAX_CURSOR_LIMIT } from '../utils/pagination.js'
@@ -29,6 +30,18 @@ const empty = object({})
 
 function option(name, values, message) {
   return define(name, (value) => values.includes(value) || message)
+}
+
+function toBoolean(value) {
+  if (value === 'true') {
+    return true
+  }
+
+  if (value === 'false') {
+    return false
+  }
+
+  return value
 }
 
 function toDateTime(value) {
@@ -69,18 +82,20 @@ export const nickname = define('nickname', (value) => {
   )
 })
 
-export const cursor = optional(
-  coerce(
+export function id(name, message) {
+  return coerce(
     define(
-      'cursor',
+      name,
       (value) =>
         (Number.isInteger(value) && value > 0 && value <= MAX_INT_ID) ||
-        '커서 값이 올바르지 않습니다.',
+        message,
     ),
     string(),
     (value) => Number(value),
-  ),
-)
+  )
+}
+
+export const cursor = optional(id('cursor', '커서 값이 올바르지 않습니다.'))
 
 export const limit = defaulted(
   coerce(
@@ -110,6 +125,18 @@ export const keyword = optional(
     }),
     string(),
     (value) => value.trim(),
+  ),
+)
+
+export const isRead = optional(
+  coerce(
+    define(
+      'isRead',
+      (value) =>
+        typeof value === 'boolean' || '읽음 여부는 true 또는 false여야 합니다.',
+    ),
+    string(),
+    toBoolean,
   ),
 )
 
@@ -171,6 +198,14 @@ export const tradeOfferStatus = optional(
     'status',
     Object.values(TradeOfferStatus),
     '교환 제안 상태 값이 올바르지 않습니다.',
+  ),
+)
+
+export const notificationType = optional(
+  option(
+    'type',
+    Object.values(NotificationType),
+    '알림 종류 값이 올바르지 않습니다.',
   ),
 )
 
