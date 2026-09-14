@@ -1,5 +1,6 @@
 import express from 'express'
 
+import { fileURLToPath } from 'node:url'
 import passport from './config/passport.js'
 import {
   getHealthController,
@@ -12,6 +13,8 @@ import sessionMiddleware from './middlewares/session.js'
 import apiDocsRouter from './routes/api-docs.js'
 import apiRouter from './routes/index.js'
 
+const uploadsDirectory = fileURLToPath(new URL('../uploads/', import.meta.url))
+
 const app = express()
 
 app.set('trust proxy', 1)
@@ -20,6 +23,8 @@ app.use(corsMiddleware)
 app.use(express.json())
 app.use(sessionMiddleware)
 app.use(passport.initialize())
+
+app.use('/uploads', express.static(uploadsDirectory))
 
 app.get('/health', getHealthController)
 app.get('/ready', getReadyController)
