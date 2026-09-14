@@ -4,36 +4,19 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import { ERROR_CODES } from '../constants/error-codes.js'
 import { AppError } from '../errors/app-error.js'
 import { authenticateWithGoogle } from '../services/auth-service.js'
+import { env } from './env.js'
 
-const requiredEnvironmentVariables = [
-  'GOOGLE_CLIENT_ID',
-  'GOOGLE_CLIENT_SECRET',
-  'GOOGLE_CALLBACK_URL',
-]
-
-const missingEnvironmentVariables = requiredEnvironmentVariables.filter(
-  (name) => !process.env[name],
-)
-
-export const isGoogleOAuthConfigured = missingEnvironmentVariables.length === 0
-
-if (!isGoogleOAuthConfigured && process.env.NODE_ENV === 'production') {
-  throw new Error(
-    `${missingEnvironmentVariables.join(', ')} 환경 변수가 필요합니다.`,
-  )
-}
-
-if (!isGoogleOAuthConfigured) {
+if (!env.googleOAuth.isConfigured) {
   console.warn(
-    `Google 로그인을 비활성화합니다. 다음 환경 변수가 없습니다: ${missingEnvironmentVariables.join(', ')}`,
+    `Google 로그인을 비활성화합니다. 다음 환경 변수가 없습니다: ${env.googleOAuth.missingVariables.join(', ')}`,
   )
 } else {
   passport.use(
     new GoogleStrategy(
       {
-        clientID: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: process.env.GOOGLE_CALLBACK_URL,
+        clientID: env.googleOAuth.clientId,
+        clientSecret: env.googleOAuth.clientSecret,
+        callbackURL: env.googleOAuth.callbackUrl,
         state: true,
       },
       async (_accessToken, _refreshToken, profile, done) => {

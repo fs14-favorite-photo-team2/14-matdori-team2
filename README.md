@@ -67,16 +67,20 @@ Copy-Item apps/web/.env.example apps/web/.env.local
 | ------------------------------- | ------------------------------------------------ | ------------------------------------------ |
 | `PORT`                          | `3001`                                           | Express 서버 포트                          |
 | `NODE_ENV`                      | `development`                                    | 실행 환경 (`production` 등)                |
-| `CLIENT_ORIGIN`                 | `http://localhost:3000`                          | CORS 허용 주소. 여러 주소는 쉼표로 구분    |
+| `CLIENT_ORIGIN`                 | `http://localhost:3000`                          | CORS 허용 origin. 여러 개는 쉼표로 구분    |
 | `SESSION_COOKIE_NAME`           | `session`                                        | HttpOnly 로그인 세션 쿠키 이름             |
 | `SESSION_SECRET`                | `replace-with-at-least-32-random...`             | 세션 ID 서명용 비밀값(최소 32바이트 필수)  |
 | `SESSION_TTL_SECONDS`           | `604800`                                         | 활동 시 연장되는 세션 비활성 제한 시간(초) |
-| `DATABASE_URL`                  | `postgresql://.../matdori_market`                | PostgreSQL 연결 문자열                     |
+| `DATABASE_URL`                  | `postgresql://.../matdori_market`                | PostgreSQL 연결 문자열(필수)               |
 | `GOOGLE_CLIENT_ID`              | Google OAuth 클라이언트 ID                       | Google Cloud Console에서 발급한 공개 ID    |
 | `GOOGLE_CLIENT_SECRET`          | Google OAuth 클라이언트 보안 비밀                | Google Cloud Console에서 발급한 비밀값     |
 | `GOOGLE_CALLBACK_URL`           | `http://localhost:3001/api/auth/google/callback` | Google에 등록한 승인된 리디렉션 URI        |
 | `GOOGLE_OAUTH_SUCCESS_REDIRECT` | `http://localhost:3000`                          | 선택 사항. 생략 시 첫 CLIENT_ORIGIN 사용   |
 | `NEXT_PUBLIC_API_URL`           | `http://localhost:3001/api`                      | 프론트엔드에서 사용할 API 주소             |
+
+`DATABASE_URL`이 없으면 서버가 시작되지 않습니다. `CLIENT_ORIGIN`에는
+`http://localhost:3000`처럼 경로나 끝 `/` 없이 origin만 적습니다. 끝에 `/`가 붙으면
+CORS 요청이 차단됩니다.
 
 세션 쿠키는 로컬 개발에서 `HttpOnly`, `SameSite=Lax`를 사용하고, 프로덕션에서는
 `Secure`, `HttpOnly`, `SameSite=None`을 사용합니다. `SESSION_SECRET`에는 예시
@@ -231,10 +235,10 @@ npm run dev:api
       src/
         app.js              # Express 앱과 미들웨어 설정
         server.js           # API 서버 실행 진입점
-        config/             # Passport 및 클라이언트 origin 설정
+        config/             # 환경 변수 로딩·검증과 Passport 설정
         constants/          # 오류 코드와 메시지
         controllers/        # HTTP 응답과 세션 처리
-        db/                 # Prisma 연결
+        db/                 # PostgreSQL 연결 풀과 Prisma Client
         errors/             # 애플리케이션 오류
         http/               # 공통 응답 형식
         middlewares/        # 인증 및 요청 검증 미들웨어
