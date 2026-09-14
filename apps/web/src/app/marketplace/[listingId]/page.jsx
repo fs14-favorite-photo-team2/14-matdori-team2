@@ -1,3 +1,8 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import ActionConfirmModal from '@/components/common/ActionConfirmModal/ActionConfirmModal'
 import Image from 'next/image'
 import Button from '@/components/common/Button/Button'
 import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
@@ -5,6 +10,9 @@ import {
   MOCK_CURRENT_USER,
   MOCK_LISTING_DETAIL,
 } from '@/features/marketplace/mockListingDetail'
+import RecipeSelectionModal from '@/components/common/RecipeSelectionModal/RecipeSelectionModal'
+import ExchangeOfferModal from '@/features/exchanges/components/ExchangeOfferModal/ExchangeOfferModal'
+import { MOCK_EXCHANGEABLE_RECIPES } from '@/features/marketplace/mockOwnedRecipes'
 import SellerListingDetail from './SellerListingDetail'
 import MobileHeader from '@/components/layout/Header/MobileHeader/MobileHeader'
 import styles from './page.module.css'
@@ -25,6 +33,16 @@ export default function MarketplaceListingPage() {
     (option) => option.value === recipe.difficulty,
   )
 
+  const router = useRouter()
+  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
+  const [tradeOffers, setTradeOffers] = useState(myTradeOffers)
+  const [cancelTargetOffer, setCancelTargetOffer] = useState(null)
+  const [isExchangeSelectionOpen, setIsExchangeSelectionOpen] = useState(false)
+  const [selectedExchangeRecipe, setSelectedExchangeRecipe] = useState(null)
+
+  // 구매 수량 UI가 연결되면 해당 상태값으로 교체
+  const purchaseQuantity = 1
+
   const categoryOption = CATEGORY_OPTIONS.find(
     (option) => option.value === recipe.category,
   )
@@ -34,6 +52,8 @@ export default function MarketplaceListingPage() {
 
   const isSoldOut =
     listing.status === 'SOLD_OUT' || listing.remainingQuantity === 0
+
+  const isExchangeAvailable = listing.listingType === 'BOTH'
 
   const wantedDifficultyOption = DIFFICULTY_OPTIONS.find(
     (option) => option.value === listing.wantedDifficulty,
@@ -46,8 +66,72 @@ export default function MarketplaceListingPage() {
   const wantedDifficultyClassName =
     DIFFICULTY_CLASS_NAMES[wantedDifficultyOption?.tone] ?? ''
 
+  function handlePurchaseConfirm() {
+    setIsPurchaseModalOpen(false)
+
+    const params = new URLSearchParams({
+      difficultyLabel: difficultyOption?.label ?? recipe.difficulty,
+      title: recipe.title,
+      quantity: String(purchaseQuantity),
+    })
+
+    router.push(
+      `/marketplace/${listing.id}/purchase/success?${params.toString()}`,
+    )
+  }
+
   if (isSeller) {
     return <SellerListingDetail listing={listing} />
+  }
+
+  const cancelTargetRecipe = cancelTargetOffer?.offeredCopy.recipe
+
+  const cancelTargetDifficultyOption = DIFFICULTY_OPTIONS.find(
+    (option) => option.value === cancelTargetRecipe?.difficulty,
+  )
+
+  function handleCancelTradeOffer() {
+    if (!cancelTargetOffer) return
+
+    // TODO: 교환 제시 취소 API 연결 후 목록 재조회
+    setTradeOffers((currentOffers) =>
+      currentOffers.filter((offer) => offer.id !== cancelTargetOffer.id),
+    )
+
+    setCancelTargetOffer(null)
+  }
+
+  function handleCloseExchangeSelection() {
+    setIsExchangeSelectionOpen(false)
+    setSelectedExchangeRecipe(null)
+  }
+
+  function handleSelectExchangeRecipe(selectedRecipe) {
+    setSelectedExchangeRecipe(selectedRecipe)
+  }
+
+  function handleCloseExchangeOffer() {
+    setSelectedExchangeRecipe(null)
+  }
+
+  function handleExchangeSubmit({ recipe: offeredRecipe }) {
+    // TODO: 교환 제시 API 요청이 성공한 뒤 성공 페이지로 이동
+    const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
+      (option) => option.value === offeredRecipe.difficulty,
+    )
+
+    const params = new URLSearchParams({
+      difficultyLabel:
+        offeredDifficultyOption?.label ?? offeredRecipe.difficulty,
+      title: offeredRecipe.title,
+    })
+
+    setSelectedExchangeRecipe(null)
+    setIsExchangeSelectionOpen(false)
+
+    router.push(
+      `/marketplace/${listing.id}/exchange/success?${params.toString()}`,
+    )
   }
 
   return (
@@ -110,6 +194,7 @@ export default function MarketplaceListingPage() {
               type="button"
               className={styles.purchaseButton}
               disabled={isSoldOut}
+              onClick={() => setIsPurchaseModalOpen(true)}
             >
               레시피 구매하기
             </Button>
@@ -125,7 +210,8 @@ export default function MarketplaceListingPage() {
             <Button
               type="button"
               className={styles.exchangeButton}
-              disabled={isSoldOut}
+              disabled={isSoldOut || !isExchangeAvailable}
+              onClick={() => setIsExchangeSelectionOpen(true)}
             >
               레시피 교환하기
             </Button>
@@ -133,33 +219,37 @@ export default function MarketplaceListingPage() {
 
           <div className={styles.exchangeContent}>
             <p className={styles.wantedDescription}>
-              {listing.wantedDescription}
+              {isExchangeAvailable
+                ? listing.wantedDescription
+                : '교환을 희망하지 않습니다.'}
             </p>
 
-            <div className={styles.wantedMeta}>
-              <span
-                className={`${styles.difficulty} ${wantedDifficultyClassName}`}
-              >
-                {wantedDifficultyOption?.label ?? listing.wantedDifficulty}
-              </span>
+            {isExchangeAvailable && (
+              <div className={styles.wantedMeta}>
+                <span
+                  className={`${styles.difficulty} ${wantedDifficultyClassName}`}
+                >
+                  {wantedDifficultyOption?.label ?? listing.wantedDifficulty}
+                </span>
 
-              <span className={styles.metaDivider}>|</span>
+                <span className={styles.metaDivider}>|</span>
 
-              <span className={styles.category}>
-                {wantedCategoryOption?.label ?? listing.wantedCategory}
-              </span>
-            </div>
+                <span className={styles.category}>
+                  {wantedCategoryOption?.label ?? listing.wantedCategory}
+                </span>
+              </div>
+            )}
           </div>
         </section>
 
-        {myTradeOffers.length > 0 && (
+        {tradeOffers.length > 0 && (
           <section className={styles.myTradeSection}>
             <h2 className={`${styles.tradeSectionTitle} font-baskin-robbins`}>
               내가 제시한 교환 목록
             </h2>
 
             <div className={styles.myTradeList}>
-              {myTradeOffers.map((tradeOffer) => {
+              {tradeOffers.map((tradeOffer) => {
                 const offeredRecipe = tradeOffer.offeredCopy.recipe
                 const offeredThumbnailUrl = offeredRecipe.imageUrls[0]
                 const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
@@ -219,6 +309,7 @@ export default function MarketplaceListingPage() {
                       type="button"
                       variant="secondary"
                       className={styles.cancelTradeButton}
+                      onClick={() => setCancelTargetOffer(tradeOffer)}
                     >
                       취소하기
                     </Button>
@@ -229,6 +320,44 @@ export default function MarketplaceListingPage() {
           </section>
         )}
       </div>
+      <ActionConfirmModal
+        isOpen={isPurchaseModalOpen}
+        onClose={() => setIsPurchaseModalOpen(false)}
+        onConfirm={handlePurchaseConfirm}
+        title="레시피 구매"
+        description={`[${difficultyOption?.label ?? recipe.difficulty} | ${recipe.title}] ${purchaseQuantity}장을 구매하시겠습니까?`}
+        confirmLabel="구매하기"
+      />
+
+      <ActionConfirmModal
+        isOpen={cancelTargetOffer !== null}
+        onClose={() => setCancelTargetOffer(null)}
+        onConfirm={handleCancelTradeOffer}
+        title="교환 제시 취소"
+        description={
+          cancelTargetRecipe
+            ? `[${cancelTargetDifficultyOption?.label ?? cancelTargetRecipe.difficulty} | ${cancelTargetRecipe.title}] 교환 제시를 취소하시겠습니까?`
+            : ''
+        }
+        confirmLabel="취소하기"
+      />
+
+      <RecipeSelectionModal
+        isOpen={isExchangeSelectionOpen && selectedExchangeRecipe === null}
+        onClose={handleCloseExchangeSelection}
+        onSelectRecipe={handleSelectExchangeRecipe}
+        recipes={MOCK_EXCHANGEABLE_RECIPES}
+        title="레시피 교환하기"
+        emptyMessage="교환 가능한 레시피가 없습니다."
+      />
+
+      <ExchangeOfferModal
+        key={selectedExchangeRecipe?.recipeId ?? 'empty'}
+        isOpen={selectedExchangeRecipe !== null}
+        onClose={handleCloseExchangeOffer}
+        selectedRecipe={selectedExchangeRecipe}
+        onSubmit={handleExchangeSubmit}
+      />
     </main>
   )
 }

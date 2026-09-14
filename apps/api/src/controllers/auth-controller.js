@@ -1,4 +1,4 @@
-import { getClientOrigins } from '../config/client-origins.js'
+import { env } from '../config/env.js'
 import { AppError } from '../errors/app-error.js'
 import { sendSuccess } from '../http/response.js'
 import {
@@ -53,7 +53,7 @@ export async function logoutController(request, response, next) {
 
 export async function googleOAuthCallbackController(request, response, next) {
   const redirectUrl =
-    request.session.oauthRedirectUrl ?? getDefaultRedirectUrl()
+    request.session.oauthRedirectUrl ?? env.googleOAuth.successRedirect
 
   try {
     await regenerateSession(request.session)
@@ -82,12 +82,8 @@ export function googleOAuthErrorController(error, _request, response, _next) {
 }
 
 function redirectToLoginWithError(response, code) {
-  const loginUrl = new URL('/login', getClientOrigins()[0])
+  const loginUrl = new URL('/login', env.clientOrigins[0])
   loginUrl.searchParams.set('oauthError', code)
 
   return response.redirect(loginUrl.toString())
-}
-
-function getDefaultRedirectUrl() {
-  return process.env.GOOGLE_OAUTH_SUCCESS_REDIRECT ?? getClientOrigins()[0]
 }
