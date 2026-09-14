@@ -50,7 +50,7 @@
 .cardGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 64px 55px;
+  gap: 64px 40px;
   margin-top: 48px;
 }
 
