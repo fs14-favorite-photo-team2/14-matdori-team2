@@ -1,7 +1,10 @@
 // TODO: GET /api/market-listings/:listingId 응답으로 교체
+// 상세 페이지의 구매자·판매자 화면 전환용 현재 사용자 목데이터
+// 구매자 화면: id를 MOCK_LISTING_DETAIL.sellerId와 다르게 설정한다. (현재 값: 1)
+// 판매자 화면: id를 MOCK_LISTING_DETAIL.sellerId와 같게 설정한다. (판매자 id: 2)
 export const MOCK_CURRENT_USER = {
-  id: 2,
-  nickname: '미쓰손',
+  id: 1,
+  nickname: '유디',
 }
 
 export const MOCK_LISTING_DETAIL = {
@@ -10,8 +13,12 @@ export const MOCK_LISTING_DETAIL = {
   listingType: 'BOTH',
   status: 'ON_SALE',
   price: 4,
+  // 이 판매글을 처음 등록했을 때 판매하기로 한 전체 수량
   initialQuantity: 5,
+  // 위 수량 중 아직 판매되지 않고 현재 판매글에 남아 있는 수량
   remainingQuantity: 2,
+  // 같은 recipeId의 카드 중 다른 판매나 교환 제시에 묶이지 않아 추가로 판매할 수 있는 보유 수량
+  availableOwnedQuantity: 3,
   wantedDifficulty: 'NORMAL',
   wantedCategory: 'JAPANESE',
   wantedDescription:

@@ -1,4 +1,5 @@
 import { ERROR_CODES } from '../constants/error-codes.js'
+import { PRISMA_ERROR_CODES } from '../constants/prisma-error-codes.js'
 import { AppError } from '../errors/app-error.js'
 import {
   findMarketListingById,
@@ -239,7 +240,15 @@ export async function withdrawMarketListing(userId, listingId) {
     throw AppError.from(ERROR_CODES.CONFLICT)
   }
 
-  await withdrawMarketListingRecord(listingId)
+  try {
+    await withdrawMarketListingRecord(listingId)
+  } catch (error) {
+    if (error.code === PRISMA_ERROR_CODES.RECORD_NOT_FOUND) {
+      throw AppError.from(ERROR_CODES.CONFLICT)
+    }
+
+    throw error
+  }
 }
 
 export async function deleteMarketListing(userId, listingId) {

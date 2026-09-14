@@ -49,6 +49,22 @@
   gap: 8px;
 }
 
+.hintBox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-white);
+  font-size: var(--font-size-12);
+  margin-bottom: 12px;
+}
+
+.hintIcon {
+  flex-shrink: 0;
+}
+
 .label {
   font-size: var(--font-size-14);
   font-weight: var(--font-weight-bold);
@@ -135,8 +151,7 @@
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 50%;
-  background: var(--color-gray-500);
+  background: var(--color-gray-400);
   color: var(--color-white);
   font-size: var(--font-size-18);
   cursor: pointer;
@@ -203,7 +218,14 @@
       'qtyInput';
   }
 
+  .ingredientRow {
+    padding: 16px;
+    border: 1px solid var(--color-gray-200);
+    border-radius: 8px;
+  }
+
   .removeIngredientButton {
-    top: -4px;
+    top: 12px;
+    right: 12px;
   }
 }
