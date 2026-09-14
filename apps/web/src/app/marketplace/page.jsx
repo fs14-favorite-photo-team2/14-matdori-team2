@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import useCurrentUser from '@/features/auth/useCurrentUser'
 import Button from '@/components/common/Button/Button'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import SearchBar from '@/components/common/SearchBar/SearchBar'
@@ -21,11 +22,6 @@ import styles from './page.module.css'
 
 const DESKTOP_PAGE_SIZE = 12
 const TABLET_MOBILE_PAGE_SIZE = 8
-
-// 로그인 상태 테스트용 목 값
-// true: 로그인 사용자로 판매 등록 모달을 연다.
-// false: 비로그인 사용자로 로그인 필요 모달을 연다.
-const MOCK_IS_LOGGED_IN = true
 
 function getFilteredListings(listings, keyword, selectedFilters) {
   return listings.filter((listing) => {
@@ -64,6 +60,7 @@ export default function MarketplacePage() {
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false)
   const [selectedRecipe, setSelectedRecipe] = useState(null)
   const [marketListings, setMarketListings] = useState(MOCK_MARKET_LISTINGS)
+  const { isAuthenticated, isLoading } = useCurrentUser()
   const loadMoreRef = useRef(null)
 
   useEffect(() => {
@@ -123,12 +120,26 @@ export default function MarketplacePage() {
     useState(false)
 
   function handleSellButtonClick() {
-    if (!MOCK_IS_LOGGED_IN) {
+    if (isLoading) return
+
+    if (!isAuthenticated) {
       setIsLoginRequiredModalOpen(true)
       return
     }
 
     setIsSaleModalOpen(true)
+  }
+
+  function handleListingClick(event) {
+    if (isLoading) {
+      event.preventDefault()
+      return
+    }
+
+    if (!isAuthenticated) {
+      event.preventDefault()
+      setIsLoginRequiredModalOpen(true)
+    }
   }
 
   function handleSelectRecipe(recipe) {
@@ -320,6 +331,7 @@ export default function MarketplacePage() {
               key={listing.id}
               href={`/marketplace/${listing.id}`}
               className={styles.cardLink}
+              onClick={handleListingClick}
             >
               <RecipeCard
                 thumbnailUrl={listing.recipe.thumbnailUrl}
