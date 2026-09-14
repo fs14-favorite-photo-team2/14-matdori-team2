@@ -1,7 +1,10 @@
 // TODO: GET /api/market-listings/:listingId 응답으로 교체
+// 상세 페이지의 구매자·판매자 화면 전환용 현재 사용자 목데이터
+// 구매자 화면: id를 MOCK_LISTING_DETAIL.sellerId와 다르게 설정한다. (현재 값: 1)
+// 판매자 화면: id를 MOCK_LISTING_DETAIL.sellerId와 같게 설정한다. (판매자 id: 2)
 export const MOCK_CURRENT_USER = {
-  id: 2,
-  nickname: '미쓰손',
+  id: 1,
+  nickname: '유디',
 }
 
 export const MOCK_LISTING_DETAIL = {

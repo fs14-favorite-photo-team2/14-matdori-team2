@@ -10,15 +10,21 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
 import { MOCK_MARKET_LISTINGS } from '@/features/marketplace/mockListings'
-import { MOCK_REGISTERED_LISTINGS_KEY } from '@/features/sales/mockSaleableRecipes'
+import {
+  MOCK_REGISTERED_LISTINGS_KEY,
+  MOCK_SALEABLE_RECIPES,
+} from '@/features/marketplace/mockOwnedRecipes'
 import LoginRequiredModal from '@/features/auth/components/LoginRequiredModal/LoginRequiredModal'
-import SaleRecipeSelectionModal from '@/features/sales/components/SaleRecipeSelectionModal/SaleRecipeSelectionModal'
+import RecipeSelectionModal from '@/components/common/RecipeSelectionModal/RecipeSelectionModal'
 import SaleRegistrationModal from '@/features/sales/components/SaleRegistrationModal/SaleRegistrationModal'
 import styles from './page.module.css'
 
 const DESKTOP_PAGE_SIZE = 12
 const TABLET_MOBILE_PAGE_SIZE = 8
 
+// 로그인 상태 테스트용 목 값
+// true: 로그인 사용자로 판매 등록 모달을 연다.
+// false: 비로그인 사용자로 로그인 필요 모달을 연다.
 const MOCK_IS_LOGGED_IN = true
 
 function getFilteredListings(listings, keyword, selectedFilters) {
@@ -337,10 +343,13 @@ export default function MarketplacePage() {
         isOpen={isLoginRequiredModalOpen}
         onClose={() => setIsLoginRequiredModalOpen(false)}
       />
-      <SaleRecipeSelectionModal
+      <RecipeSelectionModal
         isOpen={isSaleModalOpen}
         onClose={() => setIsSaleModalOpen(false)}
         onSelectRecipe={handleSelectRecipe}
+        recipes={MOCK_SALEABLE_RECIPES}
+        title="나의 레시피 판매하기"
+        emptyMessage="판매 가능한 레시피가 없습니다."
       />
       <SaleRegistrationModal
         key={selectedRecipe?.recipeId ?? 'empty'}
