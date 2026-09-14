@@ -14,6 +14,7 @@ import { MOCK_REGISTERED_LISTINGS_KEY } from '@/features/sales/mockSaleableRecip
 import LoginRequiredModal from '@/features/auth/components/LoginRequiredModal/LoginRequiredModal'
 import SaleRecipeSelectionModal from '@/features/sales/components/SaleRecipeSelectionModal/SaleRecipeSelectionModal'
 import SaleRegistrationModal from '@/features/sales/components/SaleRegistrationModal/SaleRegistrationModal'
+import RandomPointModal from '@/features/random-point/RandomPointModal'
 import styles from './page.module.css'
 
 const DESKTOP_PAGE_SIZE = 12
@@ -58,6 +59,8 @@ export default function MarketplacePage() {
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false)
   const [selectedRecipe, setSelectedRecipe] = useState(null)
   const [marketListings, setMarketListings] = useState(MOCK_MARKET_LISTINGS)
+  const [isRandomPointModalOpen, setIsRandomPointModalOpen] =
+    useState(MOCK_IS_LOGGED_IN)
   const loadMoreRef = useRef(null)
 
   useEffect(() => {
@@ -348,6 +351,11 @@ export default function MarketplacePage() {
         onClose={() => setSelectedRecipe(null)}
         selectedRecipe={selectedRecipe}
         onSubmit={handleSaleRegistrationSubmit}
+      />
+      <RandomPointModal
+        isOpen={isRandomPointModalOpen}
+        onClose={() => setIsRandomPointModalOpen(false)}
+        onClaimed={(currentPoints) => {}}
       />
     </main>
   )
