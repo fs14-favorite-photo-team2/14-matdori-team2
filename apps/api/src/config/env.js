@@ -33,6 +33,7 @@ export const env = Object.freeze({
   isProduction: process.env.NODE_ENV === 'production',
   logLevel: process.env.LOG_LEVEL || 'info',
   port: Number(process.env.PORT ?? 3001),
+  trustProxy: Number(process.env.TRUST_PROXY || 1),
   databaseUrl: process.env.DATABASE_URL,
   clientOrigins: Object.freeze(clientOrigins),
   session: Object.freeze({
@@ -58,6 +59,10 @@ export function validateServerEnv() {
 
   if (!LOG_LEVELS.includes(env.logLevel)) {
     throw new Error(`LOG_LEVEL은 ${LOG_LEVELS.join(', ')} 중 하나여야 합니다.`)
+  }
+
+  if (!Number.isInteger(env.trustProxy) || env.trustProxy < 0) {
+    throw new Error('TRUST_PROXY는 0 이상의 정수여야 합니다.')
   }
 
   if (!env.databaseUrl) {

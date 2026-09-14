@@ -17,6 +17,8 @@ const GENERIC_OAUTH_ERROR_CODE = 'OAUTH_FAILED'
 export async function signupController(request, response, next) {
   try {
     const user = await signup(request.validated.body)
+
+    await regenerateSession(request.session)
     request.session.userId = user.id
     await saveSession(request.session)
 
