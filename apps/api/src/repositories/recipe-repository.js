@@ -96,7 +96,7 @@ export function createRecipeRecord({
   })
 }
 
-// recipe 상세 조회
+// 레시피 상세 조회
 export function findRecipeDetailById(recipeId, userId) {
   return prisma.recipe.findUnique({
     where: {
@@ -114,5 +114,16 @@ export function findRecipeDetailById(recipeId, userId) {
         },
       },
     },
+  })
+}
+
+// 레시피 수정
+export function updateRecipeRecord(recipeId, data) {
+  return prisma.recipe.update({
+    where: {
+      id: recipeId,
+    },
+    data,
+    select: recipeDetailSelect,
   })
 }

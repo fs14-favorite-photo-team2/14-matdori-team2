@@ -8,6 +8,7 @@ import {
   max,
   min,
   object,
+  optional,
   size,
   string,
 } from 'superstruct'
@@ -76,6 +77,23 @@ const recipeId = coerce(min(integer(), 1), string(), (value) => Number(value))
 
 export const getRecipeRequest = object({
   body: object({}),
+  params: object({
+    recipeId,
+  }),
+  query: object({}),
+})
+
+// 수정 요청 시 사용
+export const updateRecipeRequest = object({
+  body: object({
+    title: optional(nonBlankString('제목', 100)),
+    content: optional(nonBlankString('레시피 내용', 20000)),
+    summary: optional(nonBlankString('한 줄 설명', 1000)),
+    minPrice: optional(max(min(integer(), 0), 100000000)),
+    difficulty: optional(enums(DIFFICULTIES)),
+    category: optional(enums(CATEGORIES)),
+    ingredients: optional(ingredients),
+  }),
   params: object({
     recipeId,
   }),

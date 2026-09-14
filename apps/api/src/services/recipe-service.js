@@ -4,8 +4,10 @@ import {
   createRecipeRecord,
   toRecipeDetail,
   findRecipeDetailById,
+  updateRecipeRecord,
 } from '../repositories/recipe-repository.js'
 import {
+  getRecipeImageFilePaths,
   removeRecipeImageFiles,
   saveRecipeImages,
 } from '../utils/save-recipe-images.js'
@@ -52,4 +54,58 @@ export async function getRecipe(userId, recipeId) {
   }
 
   return toRecipeDetail(recipeDetail)
+}
+
+// 수정
+export async function updateRecipe(userId, recipeId, input, files = []) {
+  const recipe = await findRecipeDetailById(recipeId, userId)
+
+  if (!recipe) {
+    throw AppError.from(ERROR_CODES.RESOURCE_NOT_FOUND)
+  }
+
+  if (recipe.creator.id !== userId) {
+    throw AppError.from(ERROR_CODES.FORBIDDEN)
+  }
+
+  const hasNewImages = files.length > 0
+  const hasBodyChanges = Object.keys(input).length > 0
+
+  if (!hasNewImages && !hasBodyChanges) {
+    throw AppError.from(ERROR_CODES.VALIDATION_ERROR, [
+      {
+        field: null,
+        reason: '수정할 내용을 최소 1개 입력해 주세요.',
+      },
+    ])
+  }
+
+  let savedImages = null
+
+  if (hasNewImages) {
+    savedImages = await saveRecipeImages(files)
+  }
+
+  let updatedRecipe
+
+  try {
+    updatedRecipe = await updateRecipeRecord(recipeId, {
+      ...input,
+      ...(savedImages ? { imageUrls: savedImages.imageUrls } : {}),
+    })
+  } catch {
+    if (savedImages) {
+      await removeRecipeImageFiles(savedImages.filePaths)
+    }
+
+    throw AppError.from(ERROR_CODES.INTERNAL_SERVER_ERROR)
+  }
+
+  if (savedImages) {
+    const previousImageFilePaths = getRecipeImageFilePaths(recipe.imageUrls)
+
+    await removeRecipeImageFiles(previousImageFilePaths)
+  }
+
+  return toRecipeDetail(updatedRecipe)
 }

@@ -1,12 +1,14 @@
 import { randomUUID } from 'node:crypto'
 import { mkdir, unlink } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
+import { basename, join } from 'node:path'
 
 import sharp from 'sharp'
 
 import { ERROR_CODES } from '../constants/error-codes.js'
 import { AppError } from '../errors/app-error.js'
 
+const RECIPE_IMAGE_URL_PREFIX = '/uploads/recipes/'
 const RECIPE_IMAGE_DIRECTORY = fileURLToPath(
   new URL('../../uploads/recipes/', import.meta.url),
 )
@@ -45,7 +47,7 @@ export async function saveRecipeImages(files) {
         .toFile(filePath)
 
       const imageUrl = new URL(
-        `/uploads/recipes/${filename}`,
+        `${RECIPE_IMAGE_URL_PREFIX}${filename}`,
         API_ORIGIN,
       ).toString()
 
@@ -74,4 +76,29 @@ export async function saveRecipeImages(files) {
 
 export async function removeRecipeImageFiles(filePaths) {
   await Promise.allSettled(filePaths.map((filePath) => unlink(filePath)))
+}
+
+export function getRecipeImageFilePaths(imageUrls) {
+  return imageUrls.flatMap((imageUrl) => {
+    try {
+      const { pathname } = new URL(imageUrl)
+
+      if (!pathname.startsWith(RECIPE_IMAGE_URL_PREFIX)) {
+        return []
+      }
+
+      const filename = basename(pathname)
+
+      if (
+        pathname !== `${RECIPE_IMAGE_URL_PREFIX}${filename}` ||
+        !filename.endsWith('.webp')
+      ) {
+        return []
+      }
+
+      return [join(RECIPE_IMAGE_DIRECTORY, filename)]
+    } catch {
+      return []
+    }
+  })
 }

@@ -39,46 +39,62 @@ const upload = multer({
   },
 })
 
-export function uploadRecipeImages(request, response, next) {
-  upload.array('images', MAX_IMAGE_COUNT)(request, response, (error) => {
-    if (!error) {
-      if (!request.files || request.files.length === 0) {
+function createRecipeImageUpload({ required }) {
+  return (request, response, next) => {
+    upload.array('images', MAX_IMAGE_COUNT)(request, response, (error) => {
+      if (!error) {
+        const files = request.files ?? []
+
+        if (required && files.length === 0 && request.body?.images === '') {
+          return next(
+            AppError.from(ERROR_CODES.VALIDATION_ERROR, [
+              {
+                field: 'images',
+                reason: '이미지를 최소 1장 업로드해 주세요.',
+              },
+            ]),
+          )
+        }
+
+        return next()
+      }
+
+      if (error instanceof AppError) {
+        return next(error)
+      }
+
+      if (error instanceof multer.MulterError) {
+        const reasons = {
+          LIMIT_FILE_SIZE: '이미지 파일 크기는 한 장당 10MB 이하여야 합니다.',
+          LIMIT_FILE_COUNT: '이미지는 최대 10장까지 업로드할 수 있습니다.',
+          LIMIT_UNEXPECTED_FILE:
+            'images 필드로 이미지를 최대 10장까지 업로드해 주세요.',
+        }
+
         return next(
           AppError.from(ERROR_CODES.VALIDATION_ERROR, [
             {
               field: 'images',
-              reason: '이미지를 최소 1장 업로드해 주세요.',
+              reason:
+                reasons[error.code] ??
+                '이미지 업로드 요청이 올바르지 않습니다.',
             },
           ]),
         )
       }
 
-      return next()
-    }
-
-    if (error instanceof AppError) {
       return next(error)
-    }
-
-    if (error instanceof multer.MulterError) {
-      const reasons = {
-        LIMIT_FILE_SIZE: '이미지 파일 크기는 한 장당 10MB 이하여야 합니다.',
-        LIMIT_FILE_COUNT: '이미지는 최대 10장까지 업로드할 수 있습니다.',
-        LIMIT_UNEXPECTED_FILE:
-          'images 필드로 이미지를 최대 10장까지 업로드해 주세요.',
-      }
-
-      return next(
-        AppError.from(ERROR_CODES.VALIDATION_ERROR, [
-          {
-            field: 'images',
-            reason:
-              reasons[error.code] ?? '이미지 업로드 요청이 올바르지 않습니다.',
-          },
-        ]),
-      )
-    }
-
-    return next(error)
-  })
+    })
+  }
 }
+
+// 수정/생성 분기점 생성
+// 생성 API: 이미지 필수
+export const uploadRecipeImages = createRecipeImageUpload({
+  required: true,
+})
+
+// 수정 API: 이미지 생략 가능
+export const uploadOptionalRecipeImages = createRecipeImageUpload({
+  required: false,
+})
