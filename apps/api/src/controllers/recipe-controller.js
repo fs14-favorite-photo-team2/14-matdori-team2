@@ -1,5 +1,5 @@
 import { sendSuccess } from '../http/response.js'
-import { createRecipe } from '../services/recipe-service.js'
+import { createRecipe, getRecipe } from '../services/recipe-service.js'
 
 export async function createRecipeController(request, response, next) {
   try {
@@ -12,6 +12,19 @@ export async function createRecipeController(request, response, next) {
     return sendSuccess(response, recipe, {
       status: 201,
     })
+  } catch (error) {
+    return next(error)
+  }
+}
+
+export async function getRecipeController(request, response, next) {
+  try {
+    const recipe = await getRecipe(
+      request.userId,
+      request.validated.params.recipeId,
+    )
+
+    return sendSuccess(response, recipe)
   } catch (error) {
     return next(error)
   }

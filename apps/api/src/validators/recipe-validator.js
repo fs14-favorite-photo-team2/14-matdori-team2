@@ -1,6 +1,7 @@
 import {
   array,
   boolean,
+  coerce,
   define,
   enums,
   integer,
@@ -8,6 +9,7 @@ import {
   min,
   object,
   size,
+  string,
 } from 'superstruct'
 
 import { Category, Difficulty } from '../generated/prisma/enums.ts'
@@ -67,5 +69,15 @@ export const createRecipeRequest = object({
     ingredients, // 배열 전체에 대한 규칙과 각 항목의 구조를 모두 검사
   }),
   params: object({}),
+  query: object({}),
+})
+
+const recipeId = coerce(min(integer(), 1), string(), (value) => Number(value))
+
+export const getRecipeRequest = object({
+  body: object({}),
+  params: object({
+    recipeId,
+  }),
   query: object({}),
 })

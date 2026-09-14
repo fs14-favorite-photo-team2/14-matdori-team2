@@ -3,6 +3,7 @@ import { AppError } from '../errors/app-error.js'
 import {
   createRecipeRecord,
   toRecipeDetail,
+  findRecipeDetailById,
 } from '../repositories/recipe-repository.js'
 import {
   removeRecipeImageFiles,
@@ -31,4 +32,24 @@ export async function createRecipe(userId, input, files) {
   }
 
   return toRecipeDetail(recipe)
+}
+
+// id 상세조회
+export async function getRecipe(userId, recipeId) {
+  const recipe = await findRecipeDetailById(recipeId, userId)
+
+  if (!recipe) {
+    throw AppError.from(ERROR_CODES.RESOURCE_NOT_FOUND)
+  }
+
+  const { _count, ...recipeDetail } = recipe
+
+  const isCreator = recipe.creator.id === userId
+  const ownsCopy = _count.copies > 0
+
+  if (!isCreator && !ownsCopy) {
+    throw AppError.from(ERROR_CODES.FORBIDDEN)
+  }
+
+  return toRecipeDetail(recipeDetail)
 }

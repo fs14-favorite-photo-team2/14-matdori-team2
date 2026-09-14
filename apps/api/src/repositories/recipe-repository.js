@@ -95,3 +95,24 @@ export function createRecipeRecord({
     select: recipeDetailSelect,
   })
 }
+
+// recipe 상세 조회
+export function findRecipeDetailById(recipeId, userId) {
+  return prisma.recipe.findUnique({
+    where: {
+      id: recipeId,
+    },
+    select: {
+      ...recipeDetailSelect,
+      _count: {
+        select: {
+          copies: {
+            where: {
+              ownerId: userId,
+            },
+          },
+        },
+      },
+    },
+  })
+}

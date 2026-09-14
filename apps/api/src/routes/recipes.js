@@ -1,11 +1,17 @@
 import { Router } from 'express'
 
-import { createRecipeController } from '../controllers/recipe-controller.js'
+import {
+  createRecipeController,
+  getRecipeController,
+} from '../controllers/recipe-controller.js'
 import { normalizeRecipeForm } from '../middlewares/normalize-recipe-form.js'
 import { requireAuthentication } from '../middlewares/require-authentication.js'
 import { uploadRecipeImages } from '../middlewares/upload-recipe-images.js'
 import { validateRequest } from '../middlewares/validate-request.js'
-import { createRecipeRequest } from '../validators/recipe-validator.js'
+import {
+  createRecipeRequest,
+  getRecipeRequest,
+} from '../validators/recipe-validator.js'
 
 const recipesRouter = Router()
 
@@ -17,6 +23,14 @@ recipesRouter.post(
   normalizeRecipeForm,
   validateRequest(createRecipeRequest),
   createRecipeController,
+)
+
+// 조회
+recipesRouter.get(
+  '/:recipeId',
+  requireAuthentication,
+  validateRequest(getRecipeRequest),
+  getRecipeController,
 )
 
 export default recipesRouter
