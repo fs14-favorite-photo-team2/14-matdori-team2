@@ -29,12 +29,6 @@ export const queryKeys = {
   tradeOffers: {
     all: ['trade-offers'],
     sent: (params = {}) => [...queryKeys.tradeOffers.all, 'sent', params], // 보낸 교환 제안 목록
-    received: (params = {}) => [
-      // 들어온 교환 제안 목록
-      ...queryKeys.tradeOffers.all,
-      'received',
-      params,
-    ],
     byListing: (listingId, params = {}) => [
       ...queryKeys.tradeOffers.all,
       'listing',
