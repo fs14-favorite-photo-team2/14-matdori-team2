@@ -7,6 +7,7 @@ import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
 import Button from '@/components/common/Button/Button'
 import MobileHeader from '@/components/layout/Header/MobileHeader/MobileHeader'
 import ActionConfirmModal from '@/components/common/ActionConfirmModal/ActionConfirmModal'
+import SaleEditModal from '@/features/sales/components/SaleEditModal/SaleEditModal'
 
 const DIFFICULTY_CLASS_NAMES = {
   easy: styles.difficultyEasy,
@@ -36,6 +37,7 @@ export default function SellerListingDetail({ listing }) {
   const [approveTargetOffer, setApproveTargetOffer] = useState(null)
   const [isUnlistModalOpen, setIsUnlistModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const imageCount = recipe.imageUrls.length
   const currentImageUrl = recipe.imageUrls[currentImageIndex]
@@ -50,6 +52,10 @@ export default function SellerListingDetail({ listing }) {
 
   function handleNextImage() {
     setCurrentImageIndex((currentIndex) => (currentIndex + 1) % imageCount)
+  }
+
+  function handleEditSubmit(editData) {
+    setIsEditModalOpen(false)
   }
 
   const wantedDifficultyOption = DIFFICULTY_OPTIONS.find(
@@ -291,7 +297,11 @@ export default function SellerListingDetail({ listing }) {
             </div>
 
             <div className={styles.sellerActions}>
-              <Button type="button" className={styles.sellerActionButton}>
+              <Button
+                type="button"
+                className={styles.sellerActionButton}
+                onClick={() => setIsEditModalOpen(true)}
+              >
                 수정하기
               </Button>
 
@@ -445,6 +455,12 @@ export default function SellerListingDetail({ listing }) {
         title="레시피 삭제하기"
         description="정말로 레시피를 삭제하시겠습니까?"
         confirmLabel="삭제하기"
+
+      <SaleEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSubmit={handleEditSubmit}
+        listing={listing}
       />
     </main>
   )
