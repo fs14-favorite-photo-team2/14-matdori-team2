@@ -13,15 +13,29 @@ export default function SaleRegistrationModal({
   onClose,
   onSubmit,
   selectedRecipe,
+  mode = 'create',
+  initialValues,
 }) {
-  const [saleQuantity, setSaleQuantity] = useState(1)
-  const [unitPrice, setUnitPrice] = useState('')
-  const [desiredDifficulty, setDesiredDifficulty] = useState('')
-  const [desiredCategory, setDesiredCategory] = useState('')
-  const [exchangeDescription, setExchangeDescription] = useState('')
+  const isEditMode = mode === 'edit'
+
+  // 사용자가 이번 판매글에 등록하거나 수정해서 판매할 수량
+  const [saleQuantity, setSaleQuantity] = useState(initialValues?.quantity ?? 1)
+  const [unitPrice, setUnitPrice] = useState(
+    String(initialValues?.unitPrice ?? ''),
+  )
+  const [desiredDifficulty, setDesiredDifficulty] = useState(
+    initialValues?.desiredDifficulty ?? '',
+  )
+  const [desiredCategory, setDesiredCategory] = useState(
+    initialValues?.desiredCategory ?? '',
+  )
+  const [exchangeDescription, setExchangeDescription] = useState(
+    initialValues?.exchangeDescription ?? '',
+  )
 
   if (!selectedRecipe) return null
 
+  // 현재 레시피 카드 중 판매나 교환 제시에 묶이지 않아 이번에 판매할 수 있는 최대 수량
   const maxSaleQuantity = selectedRecipe.availableQuantity
 
   function handleDecreaseQuantity() {
@@ -36,10 +50,7 @@ export default function SaleRegistrationModal({
 
   function handlePriceChange(event) {
     const numberOnlyValue = event.target.value.replace(/\D/g, '')
-
-    if (numberOnlyValue === '' || Number(numberOnlyValue) <= 20) {
-      setUnitPrice(numberOnlyValue)
-    }
+    setUnitPrice(numberOnlyValue)
   }
 
   function handleResetExchangeInfo() {
@@ -60,6 +71,8 @@ export default function SaleRegistrationModal({
 
   const isUnitPriceValid =
     unitPrice !== '' && numericUnitPrice >= 1 && numericUnitPrice <= 20
+
+  const shouldShowPriceError = unitPrice !== '' && !isUnitPriceValid
 
   const hasAnyExchangeInfo =
     desiredDifficulty !== '' ||
@@ -96,11 +109,11 @@ export default function SaleRegistrationModal({
       isOpen={isOpen}
       onClose={onClose}
       variant="large"
-      ariaLabel="레시피 판매 정보 입력"
+      ariaLabel={isEditMode ? '레시피 판매 정보 수정' : '레시피 판매 정보 입력'}
     >
       <header className={styles.header}>
         <p className={`${styles.pageLabel} font-baskin-robbins`}>
-          나의 레시피 판매하기
+          {isEditMode ? '수정하기' : '나의 레시피 판매하기'}
         </p>
         <h2 className={`${styles.title} font-baskin-robbins`}>
           {selectedRecipe.title}
@@ -168,21 +181,36 @@ export default function SaleRegistrationModal({
               </div>
             </div>
 
-            <label className={styles.settingRow}>
+            <label className={`${styles.settingRow} ${styles.priceSettingRow}`}>
               <span className={styles.settingLabel}>장당 가격</span>
 
-              <div className={styles.priceInputWrapper}>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={2}
-                  value={unitPrice}
-                  onChange={handlePriceChange}
-                  placeholder="1 ~ 20 숫자만 입력"
-                  aria-label="장당 가격"
-                />
+              <div className={styles.priceField}>
+                <div
+                  className={`${styles.priceInputWrapper} ${
+                    shouldShowPriceError ? styles.priceInputError : ''
+                  }`}
+                >
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={unitPrice}
+                    onChange={handlePriceChange}
+                    placeholder="1 ~ 20 숫자만 입력"
+                    aria-label="장당 가격"
+                    aria-invalid={shouldShowPriceError}
+                    aria-describedby={
+                      shouldShowPriceError ? 'unit-price-error' : undefined
+                    }
+                  />
 
-                <span>P</span>
+                  <span>P</span>
+                </div>
+
+                {shouldShowPriceError && (
+                  <p id="unit-price-error" className={styles.priceErrorText}>
+                    장당 가격은 1P ~ 20P 로 입력해 주세요.
+                  </p>
+                )}
               </div>
             </label>
           </div>
@@ -252,7 +280,7 @@ export default function SaleRegistrationModal({
           onClick={handleSubmit}
           disabled={!isFormValid}
         >
-          판매하기
+          {isEditMode ? '수정하기' : '판매하기'}
         </Button>
       </footer>
     </Modal>
