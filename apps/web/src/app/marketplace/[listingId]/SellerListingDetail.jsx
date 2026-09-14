@@ -455,6 +455,7 @@ export default function SellerListingDetail({ listing }) {
         title="레시피 삭제하기"
         description="정말로 레시피를 삭제하시겠습니까?"
         confirmLabel="삭제하기"
+      />
 
       <SaleEditModal
         isOpen={isEditModalOpen}
