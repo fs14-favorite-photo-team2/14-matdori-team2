@@ -1,15 +1,7 @@
-import { PrismaPg } from '@prisma/adapter-pg'
 import bcrypt from 'bcryptjs'
-import { config } from 'dotenv'
 
-import { PrismaClient } from '../src/generated/prisma/client.ts'
-
-config({ path: ['.env.local', '.env'] })
-
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
-})
-const prisma = new PrismaClient({ adapter })
+import { pool } from '../src/db/pool.js'
+import { prisma } from '../src/db/prisma.js'
 
 // ============================================
 // Seed configuration
@@ -953,4 +945,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect()
+    await pool.end()
   })
