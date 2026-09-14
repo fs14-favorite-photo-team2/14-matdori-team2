@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Button from '@/components/common/Button/Button'
 import FormSelect from '@/components/common/FormSelect/FormSelect'
 import ImageUploader from '@/components/common/ImageUploader/ImageUploader'
+import api from '@/lib/api'
 import { DIFFICULTY_OPTIONS, CATEGORY_OPTIONS } from '@/constants/RecipeOptions'
 import styles from './page.module.css'
 
@@ -98,33 +99,27 @@ export default function CreateRecipePage() {
     setIsSubmitting(true)
     setSubmitError('')
 
-    const payload = {
-      title,
-      imageUrls: [],
-      difficulty,
-      category,
-      summary,
-      content,
-      totalSupply: Number(totalSupply),
-      ingredients: ingredients.map(({ name, amount, isHighlight }) => ({
-        name,
-        amount,
-        isHighlight,
-      })),
-    }
+    const formData = new FormData()
+    formData.append('title', title)
+    formData.append('content', content)
+    formData.append('summary', summary)
+    formData.append('totalSupply', String(totalSupply))
+    formData.append('difficulty', difficulty)
+    formData.append('category', category)
+    formData.append(
+      'ingredients',
+      JSON.stringify(
+        ingredients.map(({ name, amount, isHighlight }) => ({
+          name,
+          amount,
+          isHighlight,
+        })),
+      ),
+    )
+    imageFiles.forEach((file) => formData.append('images', file))
 
     try {
-      const response = await fetch('/api/recipes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      const result = await response.json()
-
-      if (!result.success) {
-        setSubmitError(result.error?.message ?? '레시피 생성에 실패했어요.')
-        return
-      }
+      const { data: result } = await api.post('/recipes', formData)
 
       const difficultyLabel =
         DIFFICULTY_OPTIONS.find((option) => option.value === difficulty)
@@ -137,7 +132,10 @@ export default function CreateRecipePage() {
       router.push(`/my-kitchen/create/success?${params.toString()}`)
     } catch (error) {
       console.error('레시피 생성 실패', error)
-      setSubmitError('네트워크 오류가 발생했어요. 다시 시도해 주세요.')
+      const message =
+        error?.response?.data?.error?.message ??
+        '네트워크 오류가 발생했어요. 다시 시도해 주세요.'
+      setSubmitError(message)
     } finally {
       setIsSubmitting(false)
     }
