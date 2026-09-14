@@ -91,10 +91,6 @@ export default function CreateRecipePage() {
     )
   }
 
-  function handleBack() {
-    router.back()
-  }
-
   async function handleSubmit(event) {
     event.preventDefault()
     if (!isFormValid) return
@@ -150,15 +146,6 @@ export default function CreateRecipePage() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <button
-          type="button"
-          className={styles.backButton}
-          onClick={handleBack}
-          aria-label="뒤로가기"
-        >
-          <Image src="/icons/left.svg" alt="" width={24} height={24} />
-        </button>
-
         <h1 className={`${styles.pageTitle} font-baskin-robbins`}>
           레시피 생성
         </h1>
