@@ -13,8 +13,8 @@
 .modal {
   position: relative;
 
-  width: 455px;
-  height: 678px;
+  width: 1034px;
+  min-height: 646px;
   max-width: calc(100% - 48px);
   padding: 56px 24px 24px;
 
@@ -33,7 +33,7 @@
 }
 
 .modalCompact {
-  height: 420px;
+  min-height: 420px;
 }
 
 .closeButton {
@@ -53,7 +53,7 @@
   background: transparent;
 
   color: var(--color-white, #ffffff);
-  font-size: 24px;
+  font-size: var(--font-size-24);
   font-weight: 300;
   line-height: 1;
 
@@ -64,7 +64,7 @@
   margin: 0 0 40px;
 
   font-family: var(--font-baskin-robbins), sans-serif;
-  font-size: 46px;
+  font-size: var(--font-size-46);
   font-weight: 400;
   line-height: 1;
 
@@ -79,7 +79,7 @@
 .description {
   margin: 0 auto 40px;
 
-  font-size: 20px;
+  font-size: var(--font-size-20);
   font-weight: 400;
   line-height: 1.4;
 
@@ -92,7 +92,7 @@
   align-items: center;
   justify-content: center;
 
-  gap: 48px;
+  gap: 60px;
 
   margin-bottom: 24px;
 }
@@ -100,8 +100,8 @@
 .boxButton {
   position: relative;
 
-  width: 144px;
-  height: 120px;
+  width: 246px;
+  height: 198px;
 
   padding: 0;
 
@@ -135,7 +135,8 @@
 
 .confirmButton {
   width: 100%;
-  max-width: 400px;
+  max-width: 520px;
+  height: 60px;
 
   margin: 8px auto 0;
 }
@@ -143,7 +144,7 @@
 .errorText {
   margin: 0 0 12px;
 
-  font-size: 12px;
+  font-size: var(--font-size-12);
   font-weight: 400;
   line-height: 1.4;
 
@@ -152,9 +153,9 @@
 
 /* 결과 화면 */
 .resultPoint {
-  margin: 80px 0 16px;
+  margin: 20px 0 16px;
 
-  font-size: 32px;
+  font-size: var(--font-size-32);
   font-weight: 700;
   line-height: 1.2;
 
@@ -164,11 +165,15 @@
 .countdownText {
   margin: 0 0 32px;
 
-  font-size: 12px;
+  font-size: var(--font-size-16);
   font-weight: 400;
   line-height: 1.6;
 
   color: var(--color-gray-300, #a4a4a4);
+}
+
+.countdownValue {
+  color: var(--color-main, #efff04);
 }
 
 .resultImageWrap {
@@ -184,8 +189,8 @@
 /* 태블릿: max-width 1023px 이하 */
 @media (max-width: 1023px) {
   .modal {
-    width: 455px;
-    height: 658px;
+    width: 600px;
+    min-height: 550px;
   }
 
   .boxRow {
@@ -197,8 +202,22 @@
     height: 116px;
   }
 
+  .confirmButton {
+    max-width: 440px;
+    height: 55px;
+  }
+
   .modalCompact {
     height: 400px;
+  }
+
+  .countdownText {
+    font-size: var(--font-size-14);
+  }
+
+  .countdownValue {
+    display: block;
+    margin-top: 4px;
   }
 }
 
@@ -206,7 +225,7 @@
 @media (max-width: 743px) {
   .modal {
     width: 345px;
-    height: 541px;
+    height: 441px;
     max-width: calc(100% - 28px);
     padding: 40px 20px 20px;
   }
@@ -218,19 +237,19 @@
     width: 20px;
     height: 20px;
 
-    font-size: 20px;
+    font-size: var(--font-size-20);
   }
 
   .title {
     margin-bottom: 24px;
 
-    font-size: 24px;
+    font-size: var(--font-size-24);
   }
 
   .description {
     margin-bottom: 28px;
 
-    font-size: 12px;
+    font-size: var(--font-size-12);
     line-height: 1.5;
   }
 
@@ -248,18 +267,17 @@
 
   .confirmButton {
     max-width: none;
+    height: 55px;
   }
 
   .resultPoint {
     margin-top: 50px;
 
-    font-size: 24px;
+    font-size: var(--font-size-24);
   }
 
   .countdownText {
     margin-bottom: 24px;
-
-    font-size: 11px;
   }
 
   .resultImage {

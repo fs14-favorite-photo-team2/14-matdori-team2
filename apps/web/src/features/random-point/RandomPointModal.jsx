@@ -21,6 +21,18 @@ function formatRemaining(nextClaimableAt) {
   return `${hours}시간 ${minutes}분`
 }
 
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000
+
+function getNextKstMidnight(now) {
+  const kstNow = new Date(now.getTime() + KST_OFFSET_MS)
+  const kstDayStart = Date.UTC(
+    kstNow.getUTCFullYear(),
+    kstNow.getUTCMonth(),
+    kstNow.getUTCDate() + 1,
+  )
+  return new Date(kstDayStart - KST_OFFSET_MS)
+}
+
 export default function RandomPointModal({ isOpen, onClose, onClaimed }) {
   const [phase, setPhase] = useState('loading')
   const [selectedBoxId, setSelectedBoxId] = useState(null)
@@ -58,12 +70,18 @@ export default function RandomPointModal({ isOpen, onClose, onClaimed }) {
   }, [isOpen])
 
   useEffect(() => {
-    if ((phase !== 'result' && phase !== 'unavailable') || !nextClaimableAt) {
+    if (phase !== 'picking' && phase !== 'result' && phase !== 'unavailable') {
+      return undefined
+    }
+
+    if (phase !== 'picking' && !nextClaimableAt) {
       return undefined
     }
 
     function updateRemaining() {
-      setRemainingText(formatRemaining(nextClaimableAt))
+      const target =
+        phase === 'picking' ? getNextKstMidnight(new Date()) : nextClaimableAt
+      setRemainingText(formatRemaining(target))
     }
 
     updateRemaining()
@@ -153,6 +171,11 @@ export default function RandomPointModal({ isOpen, onClose, onClaimed }) {
               랜덤 상자 뽑기를 통해 포인트를 획득하세요!
             </p>
 
+            <p className={styles.countdownText}>
+              다음 기회까지 남은 시간{' '}
+              <span className={styles.countdownValue}>{remainingText}</span>
+            </p>
+
             <div className={styles.boxRow}>
               {BOXES.map((box) => (
                 <button
@@ -208,7 +231,8 @@ export default function RandomPointModal({ isOpen, onClose, onClaimed }) {
 
               <div className={styles.resultPoint}>{earnedPoints}P 획득!</div>
               <p className={styles.countdownText}>
-                다음 기회까지 남은 시간 {remainingText}
+                다음 기회까지 남은 시간{' '}
+                <span className={styles.countdownValue}>{remainingText}</span>
               </p>
             </div>
           </>
@@ -227,7 +251,8 @@ export default function RandomPointModal({ isOpen, onClose, onClaimed }) {
                 내일 다시 도전해 주세요.
               </p>
               <p className={styles.countdownText}>
-                다음 기회까지 남은 시간 {remainingText}
+                다음 기회까지 남은 시간{' '}
+                <span className={styles.countdownValue}>{remainingText}</span>
               </p>
             </div>
           </>
