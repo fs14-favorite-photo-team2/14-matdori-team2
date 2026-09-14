@@ -343,7 +343,7 @@ export default function MarketplaceListingPage() {
       />
 
       <RecipeSelectionModal
-        isOpen={isExchangeSelectionOpen}
+        isOpen={isExchangeSelectionOpen && selectedExchangeRecipe === null}
         onClose={handleCloseExchangeSelection}
         onSelectRecipe={handleSelectExchangeRecipe}
         recipes={MOCK_EXCHANGEABLE_RECIPES}
