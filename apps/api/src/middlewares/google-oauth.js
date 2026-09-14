@@ -1,5 +1,5 @@
-import { getClientOrigins } from '../config/client-origins.js'
-import passport, { isGoogleOAuthConfigured } from '../config/passport.js'
+import { env } from '../config/env.js'
+import passport from '../config/passport.js'
 import { ERROR_CODES } from '../constants/error-codes.js'
 import { AppError } from '../errors/app-error.js'
 
@@ -8,7 +8,7 @@ export const startGoogleOAuth = passport.authenticate('google', {
 })
 
 export function requireGoogleOAuthConfigured(_request, _response, next) {
-  if (!isGoogleOAuthConfigured) {
+  if (!env.googleOAuth.isConfigured) {
     return next(AppError.from(ERROR_CODES.GOOGLE_OAUTH_NOT_CONFIGURED))
   }
 
@@ -35,7 +35,7 @@ export function rememberOAuthRedirect(request, _response, next) {
 function isAllowedClientUrl(value) {
   try {
     const redirectUrl = new URL(value)
-    return getClientOrigins().some(
+    return env.clientOrigins.some(
       (origin) => redirectUrl.origin === new URL(origin).origin,
     )
   } catch {
