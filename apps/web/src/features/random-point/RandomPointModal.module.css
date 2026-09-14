@@ -1,0 +1,272 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+}
+
+.modal {
+  position: relative;
+
+  width: 455px;
+  height: 678px;
+  max-width: calc(100% - 48px);
+  padding: 56px 24px 24px;
+
+  display: flex;
+  flex-direction: column;
+
+  background: var(--color-gray-500, #161616);
+  color: var(--color-white, #ffffff);
+
+  border-radius: 2px;
+  text-align: center;
+}
+
+.contentGroup {
+  margin-top: 50px;
+}
+
+.modalCompact {
+  height: 420px;
+}
+
+.closeButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+
+  width: 24px;
+  height: 24px;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  background: transparent;
+
+  color: var(--color-white, #ffffff);
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.title {
+  margin: 0 0 40px;
+
+  font-family: var(--font-baskin-robbins), sans-serif;
+  font-size: 46px;
+  font-weight: 400;
+  line-height: 1;
+
+  letter-spacing: -0.03em;
+  color: var(--color-white, #ffffff);
+}
+
+.highlight {
+  color: var(--color-main, #efff04);
+}
+
+.description {
+  margin: 0 auto 40px;
+
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.4;
+
+  letter-spacing: -0.03em;
+  color: var(--color-white, #ffffff);
+}
+
+.boxRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 48px;
+
+  margin-bottom: 24px;
+}
+
+.boxButton {
+  position: relative;
+
+  width: 144px;
+  height: 120px;
+
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 2px solid transparent;
+  border-radius: 8px;
+
+  background: transparent;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.boxImage {
+  object-fit: contain;
+}
+
+.boxButton:hover {
+  border-color: var(--color-gray-400, #5a5a5a);
+}
+
+.boxSelected {
+  border-color: var(--color-main, #efff04);
+}
+
+.confirmButton {
+  width: 100%;
+  max-width: 400px;
+
+  margin: 8px auto 0;
+}
+
+.errorText {
+  margin: 0 0 12px;
+
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+
+  color: var(--color-red, #ff4d4f);
+}
+
+/* 결과 화면 */
+.resultPoint {
+  margin: 80px 0 16px;
+
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+
+  color: var(--color-main, #efff04);
+}
+
+.countdownText {
+  margin: 0 0 32px;
+
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.6;
+
+  color: var(--color-gray-300, #a4a4a4);
+}
+
+.resultImageWrap {
+  display: flex;
+  justify-content: center;
+}
+
+.resultImage {
+  width: 340px;
+  height: auto;
+}
+
+/* 태블릿: max-width 1023px 이하 */
+@media (max-width: 1023px) {
+  .modal {
+    width: 455px;
+    height: 658px;
+  }
+
+  .boxRow {
+    gap: 36px;
+  }
+
+  .boxButton {
+    width: 136px;
+    height: 116px;
+  }
+
+  .modalCompact {
+    height: 400px;
+  }
+}
+
+/* 모바일: max-width 743px 이하 */
+@media (max-width: 743px) {
+  .modal {
+    width: 345px;
+    height: 541px;
+    max-width: calc(100% - 28px);
+    padding: 40px 20px 20px;
+  }
+
+  .closeButton {
+    top: 12px;
+    right: 12px;
+
+    width: 20px;
+    height: 20px;
+
+    font-size: 20px;
+  }
+
+  .title {
+    margin-bottom: 24px;
+
+    font-size: 24px;
+  }
+
+  .description {
+    margin-bottom: 28px;
+
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .boxRow {
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .boxButton {
+    width: 92px;
+    height: 82px;
+
+    border-width: 2px;
+  }
+
+  .confirmButton {
+    max-width: none;
+  }
+
+  .resultPoint {
+    margin-top: 50px;
+
+    font-size: 24px;
+  }
+
+  .countdownText {
+    margin-bottom: 24px;
+
+    font-size: 11px;
+  }
+
+  .resultImage {
+    width: 240px;
+  }
+
+  .modalCompact {
+    height: 320px;
+  }
+}
