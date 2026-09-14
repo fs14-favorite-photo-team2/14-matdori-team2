@@ -1,9 +1,9 @@
 import cors from 'cors'
 
-import { getClientOrigins } from '../config/client-origins.js'
+import { env } from '../config/env.js'
 
 const corsMiddleware = cors({
-  origin: getClientOrigins(),
+  origin: env.clientOrigins,
   credentials: true,
 })
 

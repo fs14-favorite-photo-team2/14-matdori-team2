@@ -13,15 +13,29 @@ export default function SaleRegistrationModal({
   onClose,
   onSubmit,
   selectedRecipe,
+  mode = 'create',
+  initialValues,
 }) {
-  const [saleQuantity, setSaleQuantity] = useState(1)
-  const [unitPrice, setUnitPrice] = useState('')
-  const [desiredDifficulty, setDesiredDifficulty] = useState('')
-  const [desiredCategory, setDesiredCategory] = useState('')
-  const [exchangeDescription, setExchangeDescription] = useState('')
+  const isEditMode = mode === 'edit'
+
+  // 사용자가 이번 판매글에 등록하거나 수정해서 판매할 수량
+  const [saleQuantity, setSaleQuantity] = useState(initialValues?.quantity ?? 1)
+  const [unitPrice, setUnitPrice] = useState(
+    String(initialValues?.unitPrice ?? ''),
+  )
+  const [desiredDifficulty, setDesiredDifficulty] = useState(
+    initialValues?.desiredDifficulty ?? '',
+  )
+  const [desiredCategory, setDesiredCategory] = useState(
+    initialValues?.desiredCategory ?? '',
+  )
+  const [exchangeDescription, setExchangeDescription] = useState(
+    initialValues?.exchangeDescription ?? '',
+  )
 
   if (!selectedRecipe) return null
 
+  // 현재 레시피 카드 중 판매나 교환 제시에 묶이지 않아 이번에 판매할 수 있는 최대 수량
   const maxSaleQuantity = selectedRecipe.availableQuantity
 
   function handleDecreaseQuantity() {
@@ -95,11 +109,11 @@ export default function SaleRegistrationModal({
       isOpen={isOpen}
       onClose={onClose}
       variant="large"
-      ariaLabel="레시피 판매 정보 입력"
+      ariaLabel={isEditMode ? '레시피 판매 정보 수정' : '레시피 판매 정보 입력'}
     >
       <header className={styles.header}>
         <p className={`${styles.pageLabel} font-baskin-robbins`}>
-          나의 레시피 판매하기
+          {isEditMode ? '수정하기' : '나의 레시피 판매하기'}
         </p>
         <h2 className={`${styles.title} font-baskin-robbins`}>
           {selectedRecipe.title}
@@ -266,7 +280,7 @@ export default function SaleRegistrationModal({
           onClick={handleSubmit}
           disabled={!isFormValid}
         >
-          판매하기
+          {isEditMode ? '수정하기' : '판매하기'}
         </Button>
       </footer>
     </Modal>

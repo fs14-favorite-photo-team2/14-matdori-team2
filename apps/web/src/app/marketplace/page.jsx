@@ -11,9 +11,12 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
 import { MOCK_MARKET_LISTINGS } from '@/features/marketplace/mockListings'
-import { MOCK_REGISTERED_LISTINGS_KEY } from '@/features/sales/mockSaleableRecipes'
+import {
+  MOCK_REGISTERED_LISTINGS_KEY,
+  MOCK_SALEABLE_RECIPES,
+} from '@/features/marketplace/mockOwnedRecipes'
 import LoginRequiredModal from '@/features/auth/components/LoginRequiredModal/LoginRequiredModal'
-import SaleRecipeSelectionModal from '@/features/sales/components/SaleRecipeSelectionModal/SaleRecipeSelectionModal'
+import RecipeSelectionModal from '@/components/common/RecipeSelectionModal/RecipeSelectionModal'
 import SaleRegistrationModal from '@/features/sales/components/SaleRegistrationModal/SaleRegistrationModal'
 import styles from './page.module.css'
 
@@ -352,10 +355,13 @@ export default function MarketplacePage() {
         isOpen={isLoginRequiredModalOpen}
         onClose={() => setIsLoginRequiredModalOpen(false)}
       />
-      <SaleRecipeSelectionModal
+      <RecipeSelectionModal
         isOpen={isSaleModalOpen}
         onClose={() => setIsSaleModalOpen(false)}
         onSelectRecipe={handleSelectRecipe}
+        recipes={MOCK_SALEABLE_RECIPES}
+        title="나의 레시피 판매하기"
+        emptyMessage="판매 가능한 레시피가 없습니다."
       />
       <SaleRegistrationModal
         key={selectedRecipe?.recipeId ?? 'empty'}
