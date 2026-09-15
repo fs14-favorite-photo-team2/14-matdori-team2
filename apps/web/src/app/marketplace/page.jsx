@@ -71,7 +71,6 @@ export default function MarketplacePage() {
 
   const marketListings =
     marketListingsData?.pages.flatMap((page) => page.data) ?? []
-
   const loadMoreRef = useInfiniteScroll({
     enabled: isConfigured && !isFetchNextPageError,
     hasMore: Boolean(hasNextPage),
