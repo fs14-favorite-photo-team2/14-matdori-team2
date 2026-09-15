@@ -58,6 +58,7 @@ enum NotificationType {
   TRADE_OFFER_NEW
   TRADE_OFFER_ACCEPT
   TRADE_OFFER_REFUSE
+  TRADE_OFFER_CANCELED
 }
 
 model User {

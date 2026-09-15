@@ -21,6 +21,13 @@ export function toRecipeCopy({ recipe, ...copy }) {
   return { ...copy, recipe: toRecipeSummary(recipe) }
 }
 
+export function findRecipeCopyById(id) {
+  return prisma.recipeCopy.findUnique({
+    where: { id },
+    select: { ownerId: true, state: true },
+  })
+}
+
 export function findRecipeCopiesByOwner(ownerId, query) {
   const { state, sort, cursor, limit } = query
 
