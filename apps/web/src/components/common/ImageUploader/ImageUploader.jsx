@@ -41,9 +41,17 @@ export default function ImageUploader({ onChange }) {
     }
   }, [])
 
+  const ALLOWED_IMAGE_TYPES = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/heic',
+    'image/heif',
+  ])
+
   function validateFile(file) {
-    if (!file.type.startsWith('image/')) {
-      return '이미지 파일만 업로드 할 수 있어요.'
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+      return 'JPEG, PNG, WebP, HEIC, HEIF 이미지 파일만 업로드할 수 있습니다.'
     }
     return ''
   }
