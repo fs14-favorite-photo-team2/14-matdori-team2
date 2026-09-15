@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/queryKeys'
 import { getCurrentUser } from './api'
 
-export const CURRENT_USER_QUERY_KEY = ['currentUser']
+export const CURRENT_USER_QUERY_KEY = queryKeys.auth.currentUser()
 
 export default function useCurrentUser({ enabled = true } = {}) {
   const {

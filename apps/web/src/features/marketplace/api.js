@@ -28,7 +28,6 @@ export async function getMarketListings({
 
   return response.data
 }
-
 export async function getMarketListing(listingId) {
   const response = await api.get(`/market-listings/${listingId}`)
   return response.data.data

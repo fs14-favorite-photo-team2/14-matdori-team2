@@ -13,6 +13,7 @@ import {
   MOCK_REGISTERED_LISTINGS_KEY,
   MOCK_SALEABLE_RECIPES,
 } from '@/features/marketplace/mockOwnedRecipes'
+
 import LoginRequiredModal from '@/features/auth/components/LoginRequiredModal/LoginRequiredModal'
 import RecipeSelectionModal from '@/components/common/RecipeSelectionModal/RecipeSelectionModal'
 import SaleRegistrationModal from '@/features/sales/components/SaleRegistrationModal/SaleRegistrationModal'
@@ -38,7 +39,6 @@ export default function MarketplacePage() {
   const [pageSize, setPageSize] = useState(null)
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false)
   const [selectedRecipe, setSelectedRecipe] = useState(null)
-
   const {
     data: marketListingsData,
     error,
@@ -71,7 +71,6 @@ export default function MarketplacePage() {
 
   const marketListings =
     marketListingsData?.pages.flatMap((page) => page.data) ?? []
-
   const loadMoreRef = useInfiniteScroll({
     enabled: isConfigured && !isFetchNextPageError,
     hasMore: Boolean(hasNextPage),
