@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
+import { useQueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/queryKeys'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/common/Button/Button'
 import FormSelect from '@/components/common/FormSelect/FormSelect'
@@ -23,6 +24,7 @@ function createEmptyIngredient() {
 
 export default function CreateRecipePage() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [title, setTitle] = useState('')
   const [difficulty, setDifficulty] = useState('')
   const [category, setCategory] = useState('')
@@ -120,6 +122,8 @@ export default function CreateRecipePage() {
 
     try {
       const { data: result } = await api.post('/recipes', formData)
+
+      queryClient.invalidateQueries({ queryKey: queryKeys.myKitchen.all })
 
       const difficultyLabel =
         DIFFICULTY_OPTIONS.find((option) => option.value === difficulty)
