@@ -63,13 +63,18 @@ function cropImageToFile(img, zoom, fileName) {
   })
 }
 
-export default function ImageUploader({ onChange }) {
+export default function ImageUploader({ onChange, onProcessingChange }) {
   const inputRef = useRef(null)
   const imgRefs = useRef({})
 
   const [images, setImages] = useState([])
   const [activeId, setActiveId] = useState(null)
   const [error, setError] = useState('')
+  const [processingIds, setProcessingIds] = useState(() => new Set())
+
+  useEffect(() => {
+    onProcessingChange?.(processingIds.size > 0)
+  }, [processingIds, onProcessingChange])
 
   const activeImage = images.find((img) => img.id === activeId) ?? null
   const zoomPercent = activeImage
@@ -144,6 +149,12 @@ export default function ImageUploader({ onChange }) {
     setActiveId(newImages[0].id)
     emitChange(updated)
 
+    setProcessingIds((prev) => {
+      const next = new Set(prev)
+      newImages.forEach((img) => next.add(img.id))
+      return next
+    })
+
     await Promise.all(
       newImages.map(async (newImg) => {
         try {
@@ -162,7 +173,14 @@ export default function ImageUploader({ onChange }) {
             emitChange(next)
             return next
           })
-        } catch {}
+        } catch {
+        } finally {
+          setProcessingIds((prev) => {
+            const next = new Set(prev)
+            next.delete(newImg.id)
+            return next
+          })
+        }
       }),
     )
   }
@@ -181,6 +199,13 @@ export default function ImageUploader({ onChange }) {
       current === id ? (updated[0]?.id ?? null) : current,
     )
     emitChange(updated)
+
+    setProcessingIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
   }
 
   function handleZoomChange(event) {
@@ -196,19 +221,28 @@ export default function ImageUploader({ onChange }) {
     const imgEl = imgRefs.current[activeImage.id]
     if (!imgEl) return
 
-    cropImageToFile(imgEl, activeImage.zoom, activeImage.rawFile?.name).then(
-      (croppedFile) => {
+    const id = activeImage.id
+    setProcessingIds((prev) => new Set(prev).add(id))
+
+    cropImageToFile(imgEl, activeImage.zoom, activeImage.rawFile?.name)
+      .then((croppedFile) => {
         if (!croppedFile) return
 
         setImages((prev) => {
           const next = prev.map((img) =>
-            img.id === activeImage.id ? { ...img, croppedFile } : img,
+            img.id === id ? { ...img, croppedFile } : img,
           )
           emitChange(next)
           return next
         })
-      },
-    )
+      })
+      .finally(() => {
+        setProcessingIds((prev) => {
+          const next = new Set(prev)
+          next.delete(id)
+          return next
+        })
+      })
   }
 
   return (
