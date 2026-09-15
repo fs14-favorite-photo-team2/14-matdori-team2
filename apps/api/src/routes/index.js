@@ -6,6 +6,7 @@ import marketRouter from './market-listings.js'
 import listingTradeOffersRouter from './listing-trade-offers.js'
 import notificationsRouter from './notifications.js'
 import randomBoxRouter from './random-box.js'
+import recipesRouter from './recipes.js'
 import tradeOffersRouter from './trade-offers.js'
 
 const apiRouter = Router()
@@ -19,6 +20,7 @@ apiRouter.use(
 )
 apiRouter.use('/notifications', notificationsRouter)
 apiRouter.use('/random-box', randomBoxRouter)
+apiRouter.use('/recipes', recipesRouter)
 apiRouter.use('/trade-offers', tradeOffersRouter)
 
 export default apiRouter

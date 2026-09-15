@@ -1,4 +1,5 @@
 import express from 'express'
+import { fileURLToPath } from 'node:url'
 
 import { env } from './config/env.js'
 import passport from './config/passport.js'
@@ -16,6 +17,8 @@ import sessionMiddleware from './middlewares/session.js'
 import apiDocsRouter from './routes/api-docs.js'
 import apiRouter from './routes/index.js'
 
+const uploadsDirectory = fileURLToPath(new URL('../uploads/', import.meta.url))
+
 const app = express()
 
 app.set('trust proxy', env.trustProxy)
@@ -27,6 +30,8 @@ app.use('/api', apiRateLimit)
 app.use(express.json())
 app.use(sessionMiddleware)
 app.use(passport.initialize())
+
+app.use('/uploads', express.static(uploadsDirectory))
 
 app.get('/health', getHealthController)
 app.get('/ready', getReadyController)
