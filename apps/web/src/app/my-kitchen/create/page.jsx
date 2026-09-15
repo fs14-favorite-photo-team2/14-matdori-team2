@@ -32,6 +32,7 @@ export default function CreateRecipePage() {
   const [summary, setSummary] = useState('')
   const [content, setContent] = useState('')
   const [imageFiles, setImageFiles] = useState([])
+  const [isImageProcessing, setIsImageProcessing] = useState(false)
   const [ingredients, setIngredients] = useState(() =>
     Array.from({ length: 2 }, () => createEmptyIngredient()),
   )
@@ -60,6 +61,7 @@ export default function CreateRecipePage() {
     category !== '' &&
     isSupplyValid &&
     imageFiles.length > 0 &&
+    !isImageProcessing &&
     summary.trim() !== '' &&
     content.trim() !== '' &&
     isIngredientListValid(ingredients) &&
@@ -216,7 +218,10 @@ export default function CreateRecipePage() {
           <span className={styles.label}>
             사진 업로드(첫 번째로 업로드한 사진이 썸네일로 지정됩니다.)
           </span>
-          <ImageUploader onChange={setImageFiles} />
+          <ImageUploader
+            onChange={setImageFiles}
+            onProcessingChange={setIsImageProcessing}
+          />
         </div>
 
         <div className={styles.field}>
@@ -319,7 +324,11 @@ export default function CreateRecipePage() {
           className={styles.submitButton}
           disabled={!isFormValid || isSubmitting}
         >
-          {isSubmitting ? '생성 중...' : '생성하기'}
+          {isSubmitting
+            ? '생성 중...'
+            : isImageProcessing
+              ? '이미지 처리 중...'
+              : '생성하기'}
         </Button>
       </form>
     </div>
