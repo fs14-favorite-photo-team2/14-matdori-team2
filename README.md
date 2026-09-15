@@ -167,6 +167,9 @@ npm run dev:api
 값이 실제 프록시 구성보다 작으면 모든 사용자가 프록시 IP 하나로 묶이고, 크면 클라이언트가 IP를 위조할 수 있습니다.
 배포 후 요청의 IP가 실제 접속 IP와 다르면 코드 변경 없이 `TRUST_PROXY` 값만 조정합니다.
 
+다른 사이트가 로그인 세션으로 요청을 보내지 못하도록 `GET`, `HEAD`, `OPTIONS` 외의 `/api` 요청은 `Origin` 헤더를 확인합니다.
+`Origin`이 `CLIENT_ORIGIN` 또는 API 서버 자신의 origin과 다르면 `403 FORBIDDEN`을 반환합니다.
+
 Helmet 보안 헤더는 모든 환경에 적용합니다. 로컬 HTTP 개발을 위해
 HTTPS 전환 지시와 HSTS 헤더는 `NODE_ENV=production`에서만 활성화합니다.
 

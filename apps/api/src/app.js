@@ -14,6 +14,7 @@ import httpLoggerMiddleware from './middlewares/http-logger.js'
 import { notFoundHandler } from './middlewares/not-found.js'
 import { apiRateLimit } from './middlewares/rate-limit.js'
 import sessionMiddleware from './middlewares/session.js'
+import { verifyOrigin } from './middlewares/verify-origin.js'
 import apiDocsRouter from './routes/api-docs.js'
 import apiRouter from './routes/index.js'
 
@@ -26,6 +27,7 @@ app.set('trust proxy', env.trustProxy)
 app.use(httpLoggerMiddleware)
 app.use(helmetMiddleware)
 app.use(corsMiddleware)
+app.use('/api', verifyOrigin)
 app.use('/api', apiRateLimit)
 app.use(express.json())
 app.use(sessionMiddleware)

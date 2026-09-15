@@ -19,6 +19,9 @@ info:
     제한을 초과하면 `429 TOO_MANY_REQUESTS`와 재시도까지 남은 초를 나타내는
     `Retry-After` 응답 헤더를 반환합니다. `/health`, `/ready`, `/docs`와
     CORS 사전 요청은 API 요청 제한에 포함되지 않습니다.
+
+    `GET`, `HEAD`, `OPTIONS` 외의 요청은 `Origin` 헤더가 허용된 프론트엔드 origin과
+    다르면 `403 FORBIDDEN`을 반환합니다.
 servers:
   - url: /api
     description: 현재 API 서버
