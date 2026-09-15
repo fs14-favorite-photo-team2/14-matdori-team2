@@ -4,7 +4,6 @@ import { queryKeys } from '@/lib/queryKeys'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   createMarketListing,
-  deleteMarketListing,
   purchaseMarketListing,
   updateMarketListing,
   withdrawMarketListing,
@@ -57,30 +56,6 @@ export function useWithdrawMarketListing() {
 
   return useMutation({
     mutationFn: withdrawMarketListing,
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.marketplace.lists(),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.myKitchen.lists(),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.mySales.lists(),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.tradeOffers.all,
-        }),
-      ])
-    },
-  })
-}
-
-export function useDeleteMarketListing() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: deleteMarketListing,
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({

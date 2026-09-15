@@ -75,7 +75,6 @@ export default function SellerListingDetail({ listing }) {
   const [rejectTargetOffer, setRejectTargetOffer] = useState(null)
   const [approveTargetOffer, setApproveTargetOffer] = useState(null)
   const [isUnlistModalOpen, setIsUnlistModalOpen] = useState(false)
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const imageCount = recipe.imageUrls.length
@@ -171,11 +170,6 @@ export default function SellerListingDetail({ listing }) {
         showToast(getApiErrorMessage(error))
       },
     })
-  }
-
-  function handleDeleteConfirm() {
-    // TODO: 백엔드 삭제 정책 협의 후 API 연결
-    setIsDeleteModalOpen(false)
   }
 
   return (
@@ -382,16 +376,7 @@ export default function SellerListingDetail({ listing }) {
                 onClick={() => setIsUnlistModalOpen(true)}
                 disabled={listing.status !== 'ON_SALE'}
               >
-                판매 내리기
-              </Button>
-
-              <Button
-                type="button"
-                variant="secondary"
-                className={`${styles.sellerActionButton} ${styles.deleteRecipeButton}`}
-                onClick={() => setIsDeleteModalOpen(true)}
-              >
-                레시피 삭제하기
+                판매글 삭제하기
               </Button>
             </div>
           </div>
@@ -582,19 +567,10 @@ export default function SellerListingDetail({ listing }) {
         isOpen={isUnlistModalOpen}
         onClose={() => setIsUnlistModalOpen(false)}
         onConfirm={handleUnlistConfirm}
-        title="레시피 판매 내리기"
-        description="정말로 판매를 중단하시겠습니까?"
-        confirmLabel="판매 내리기"
-        isPending={withdrawMutation.isPending}
-      />
-
-      <ActionConfirmModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={handleDeleteConfirm}
-        title="레시피 삭제하기"
-        description="정말로 레시피를 삭제하시겠습니까?"
+        title="판매글 삭제하기"
+        description="정말로 판매글을 삭제하시겠습니까?"
         confirmLabel="삭제하기"
+        isPending={withdrawMutation.isPending}
       />
 
       <SaleEditModal

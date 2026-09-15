@@ -488,12 +488,6 @@
   width: 100%;
 }
 
-.sellerActions .deleteRecipeButton {
-  border-color: var(--color-red);
-  background-color: var(--color-red);
-  color: var(--color-white);
-}
-
 .tradeActionButtons {
   display: flex;
   gap: 16px;
