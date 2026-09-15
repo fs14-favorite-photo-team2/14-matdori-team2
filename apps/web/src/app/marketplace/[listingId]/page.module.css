@@ -364,6 +364,16 @@
   margin-top: 36px;
 }
 
+.tradeListError {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 0;
+  color: var(--color-gray-300);
+  text-align: center;
+}
+
 .tradeCard {
   display: flex;
   flex-direction: column;
@@ -494,6 +504,16 @@
 .approveTradeButton {
   flex: 1;
   min-width: 0;
+}
+
+.sentinel {
+  height: 1px;
+}
+
+.tradeListState {
+  padding: 24px 0;
+  color: var(--color-gray-300);
+  text-align: center;
 }
 
 @media (max-width: 1023px) {
