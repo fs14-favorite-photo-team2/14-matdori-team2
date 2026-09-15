@@ -47,6 +47,31 @@
   flex: 1;
 }
 
+.listState {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-gray-300);
+  text-align: center;
+}
+
+.nextPageState {
+  padding: 24px 0;
+  color: var(--color-gray-300);
+  text-align: center;
+}
+
+.nextPageError {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 0;
+  color: var(--color-gray-300);
+  text-align: center;
+}
+
 .cardGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
