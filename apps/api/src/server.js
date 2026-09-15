@@ -1,17 +1,17 @@
-import { config } from 'dotenv'
+import { env, validateServerEnv } from './config/env.js'
 
-config({ path: ['.env.local', '.env'] })
+validateServerEnv()
 
 const { default: app } = await import('./app.js')
 
-const port = process.env.PORT ?? 3001
+const port = env.port
 
 app.listen(port, () => {
   console.log(`API ready at http://localhost:${port}`)
   console.log(`Health check: http://localhost:${port}/health`)
   console.log(`Ready check: http://localhost:${port}/ready`)
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (!env.isProduction) {
     console.log(`API docs: http://localhost:${port}/docs`)
   }
 })

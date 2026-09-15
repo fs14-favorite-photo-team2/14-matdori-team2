@@ -455,9 +455,6 @@ paths:
         content:
           multipart/form-data:
             schema: { $ref: '#/components/schemas/CreateRecipeRequest' }
-            encoding:
-              ingredients:
-                contentType: application/json
       responses:
         '201':
           description: 레시피가 생성됨
@@ -471,20 +468,7 @@ paths:
                       data: { $ref: '#/components/schemas/RecipeDetail' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '409':
-          description: 월간 레시피 생성 한도에 도달함
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ErrorResponse' }
-              example:
-                {
-                  success: false,
-                  error:
-                    {
-                      code: MONTHLY_RECIPE_LIMIT_REACHED,
-                      message: 이번 달 레시피 생성 한도에 도달했습니다.,
-                    },
-                }
+        '500': { $ref: '#/components/responses/InternalServerError' }
   /recipes/{recipeId}:
     get:
       tags: [레시피]
@@ -522,9 +506,6 @@ paths:
         content:
           multipart/form-data:
             schema: { $ref: '#/components/schemas/UpdateRecipeRequest' }
-            encoding:
-              ingredients:
-                contentType: application/json
       responses:
         '200':
           description: 수정된 레시피 정보
@@ -658,6 +639,7 @@ paths:
       description: >-
         판매 중인 판매글의 상태를 WITHDRAWN으로 변경하고,
         판매글에 등록된 남은 레시피 사본을 다시 OWNED 상태로 돌립니다.
+        대기 중인 교환 제안도 취소하고 제안한 사본의 예약을 해제하며 제안자에게 알림을 보냅니다.
         판매글은 현재 사용자의 판매글 목록에는 계속 표시됩니다.
       operationId: withdrawMarketListing
       parameters:
@@ -755,6 +737,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TradeOfferCursorResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -763,7 +746,7 @@ paths:
     post:
       tags: [교환 제안]
       summary: 대기 중인 교환 제안 승인
-      description: 양쪽 레시피의 소유권 변경이 모두 완료된 경우에만 교환을 반영하고 판매글 재고를 차감합니다. 재고가 0이 되면 같은 판매글의 다른 대기 중인 제안을 취소 처리합니다.
+      description: 양쪽 레시피의 소유권 변경이 모두 완료된 경우에만 교환을 반영하고 판매글 재고를 차감합니다. 재고가 0이 되면 판매글을 SOLD_OUT 상태로 변경하고 같은 판매글의 다른 대기 중인 제안을 취소 처리합니다.
       operationId: acceptTradeOffer
       parameters:
         - $ref: '#/components/parameters/TradeOfferId'
@@ -773,6 +756,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TradeOfferResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -790,6 +774,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TradeOfferResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -803,6 +788,7 @@ paths:
         - $ref: '#/components/parameters/TradeOfferId'
       responses:
         '204': { description: 제안이 취소되고 제안한 사본의 예약이 해제됨 }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -829,6 +815,7 @@ paths:
             application/json:
               schema:
                 { $ref: '#/components/schemas/NotificationCursorResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
   /notifications/unread-count:
     get:
@@ -857,11 +844,7 @@ paths:
       summary: 개별 알림 읽음 처리
       operationId: readNotification
       parameters:
-        - name: notificationId
-          in: path
-          required: true
-          description: 알림 ID
-          schema: { type: integer, minimum: 1, example: 501 }
+        - $ref: '#/components/parameters/NotificationId'
       responses:
         '200':
           description: 수정된 알림
@@ -873,6 +856,7 @@ paths:
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/Notification' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
   /notifications/read-all:
@@ -901,6 +885,7 @@ paths:
     get:
       tags: [랜덤 상자]
       summary: 랜덤 상자 뽑기 가능 여부 조회
+      description: 하루에 한 번 뽑을 수 있으며 매일 자정(KST)에 초기화됩니다.
       operationId: getRandomBoxStatus
       responses:
         '200':
@@ -912,7 +897,9 @@ paths:
     post:
       tags: [랜덤 상자]
       summary: 랜덤 포인트 보상 획득
-      description: 마지막 뽑기 이후 60분에 한 번 실행할 수 있습니다.
+      description: >-
+        하루에 한 번 실행할 수 있고 매일 자정(KST)에 다시 열립니다.
+        첫 뽑기는 10~15포인트, 이후 뽑기는 1~5포인트를 지급합니다.
       operationId: claimRandomBox
       responses:
         '200':
@@ -922,10 +909,7 @@ paths:
               schema: { $ref: '#/components/schemas/RandomBoxClaimResponse' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429':
-          description: 다음 뽑기까지의 대기 시간이 지나지 않음
-          headers:
-            Retry-After:
-              schema: { type: integer, description: 다음 뽑기까지 남은 초 }
+          description: 오늘 이미 뽑아서 다음 초기화 시각이 지나지 않음
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -982,6 +966,12 @@ components:
       required: true
       description: 교환 제안 ID
       schema: { type: integer, minimum: 1, example: 205 }
+    NotificationId:
+      name: notificationId
+      in: path
+      required: true
+      description: 알림 ID
+      schema: { type: integer, minimum: 1, example: 501 }
     Keyword:
       name: keyword
       in: query
@@ -1075,6 +1065,7 @@ components:
         - EMAIL_ALREADY_EXISTS
         - NICKNAME_ALREADY_EXISTS
         - MONTHLY_RECIPE_LIMIT_REACHED
+        - RANDOM_BOX_NOT_READY
         - AUTHENTICATION_REQUIRED
         - INVALID_CREDENTIALS
         - GOOGLE_ACCOUNT_ONLY
@@ -1228,6 +1219,7 @@ components:
           TRADE_OFFER_NEW,
           TRADE_OFFER_ACCEPT,
           TRADE_OFFER_REFUSE,
+          TRADE_OFFER_CANCELED,
         ]
     RecipeSummary:
       type: object
@@ -1277,31 +1269,27 @@ components:
         - type: object
           required:
             - creator
+            - content
             - totalSupply
             - createdAt
-            - imageUrls
-            - ingredients
+            - updatedAt
           properties:
             creator: { $ref: '#/components/schemas/PublicUser' }
-            totalSupply: { type: integer, minimum: 1, maximum: 10 }
             content:
               type: string
-              description: 현재 사용자가 조리 내용을 볼 권한이 있는 경우에만 포함됩니다.
+              minLength: 1
+              maxLength: 20000
+              description: 상세조회 권한이 있는 사용자에게 반환하는 전체 조리 내용
+            totalSupply:
+              type: integer
+              minimum: 1
+              maximum: 10
             createdAt: { type: string, format: date-time }
-            imageUrls:
-              type: array
-              minItems: 1
-              maxItems: 10
-              description: 업로드 순서대로 반환하는 이미지 URL 목록. 첫 URL은 imageUrl과 같습니다.
-              items:
-                type: string
-                format: uri
+            updatedAt: { type: string, format: date-time }
             ingredients:
               type: array
-              description: >-
-                레시피 사본을 소유하거나 생성한 사용자에게 제공하는 전체 재료 목록으로,
-                강조 재료만 반환하는 RecipeSummary의 규칙을 대체합니다.
-                마이그레이션 이전 레시피는 재료를 보완하기 전까지 빈 배열일 수 있습니다.
+              description: 레시피 생성자 또는 사본 소유자에게 반환하는 전체 재료 목록
+              minItems: 1
               items:
                 $ref: '#/components/schemas/Ingredient'
     PublicUser:
@@ -1341,12 +1329,18 @@ components:
           type: array
           minItems: 1
           maxItems: 10
-          description: 이미지 파일 1~10개. images 필드를 반복하여 전송하며 첫 번째 파일이 대표 이미지입니다. 수정 시 생략하면 기존 이미지를 유지하고, 전송하면 전체 이미지 목록을 교체합니다.
+          description: >-
+            이미지 파일 1~10개를 images 필드로 전송합니다. JPEG, PNG, WebP, HEIC, HEIF 형식을 지원하며 파일당 최대 크기는 10MB입니다. 업로드 순서를 유지하고 첫 번째 이미지가 대표 이미지가 됩니다. 저장 시 방향 보정과 리사이징 후 WebP로 변환합니다.
           items:
             type: string
             format: binary
         ingredients:
-          $ref: '#/components/schemas/Ingredients'
+          type: string
+          description: >-
+            재료 배열을 JSON 문자열로 전송합니다. 재료는 최소 1개이며 각 재료에는
+            name, amount, isHighlight가 필요하고, 최소 1개의 isHighlight가
+            true여야 합니다.
+          example: '[{"name":"김치","amount":"200g","isHighlight":true},{"name":"돼지고기","amount":"150g","isHighlight":false}]'
     UpdateRecipeRequest:
       type: object
       additionalProperties: false
@@ -1367,7 +1361,12 @@ components:
             type: string
             format: binary
         ingredients:
-          $ref: '#/components/schemas/Ingredients'
+          type: string
+          description: >-
+            재료 배열을 JSON 문자열로 전송합니다. 재료는 최소 1개이며 각 재료에는
+            name, amount, isHighlight가 필요하고, 최소 1개의 isHighlight가
+            true여야 합니다.
+          example: '[{"name":"김치","amount":"200g","isHighlight":true},{"name":"돼지고기","amount":"150g","isHighlight":false}]'
     RecipeCopy:
       type: object
       required: [id, recipe, state, everPurchased, createdAt, updatedAt]
@@ -1584,12 +1583,17 @@ components:
       required: [canClaim, lastClaimedAt, nextClaimableAt]
       properties:
         canClaim: { type: boolean }
-        lastClaimedAt: { type: [string, 'null'], format: date-time }
+        lastClaimedAt:
+          {
+            type: [string, 'null'],
+            format: date-time,
+            description: 마지막으로 뽑은 시각. 아직 뽑은 적이 없으면 null입니다.,
+          }
         nextClaimableAt:
           {
             type: [string, 'null'],
             format: date-time,
-            description: 다음 뽑기가 가능해지는 시각. 지금 뽑을 수 있으면 null입니다.,
+            description: 다음 뽑기가 가능해지는 자정(KST). 지금 뽑을 수 있으면 null입니다.,
           }
     RandomBoxResponse:
       allOf:
@@ -1606,9 +1610,20 @@ components:
               type: object
               required: [rewardPoints, currentPoints, nextClaimableAt]
               properties:
-                rewardPoints: { type: integer }
+                rewardPoints:
+                  {
+                    type: integer,
+                    minimum: 1,
+                    maximum: 15,
+                    description: 이번에 획득한 포인트. 첫 뽑기는 10~15이고 이후 뽑기는 1~5입니다.,
+                  }
                 currentPoints: { type: integer, minimum: 0 }
-                nextClaimableAt: { type: string, format: date-time }
+                nextClaimableAt:
+                  {
+                    type: string,
+                    format: date-time,
+                    description: 다음 뽑기가 가능해지는 자정(KST),
+                  }
     CursorMeta:
       type: object
       required: [nextCursor, hasNext]
@@ -1675,24 +1690,30 @@ components:
       required:
         - name
         - amount
+        - isHighlight
       properties:
         name:
           type: string
           minLength: 1
+          maxLength: 100
           pattern: \S
           example: 트러플
         amount:
           type: string
           minLength: 1
+          maxLength: 100
           pattern: \S
           description: 단위를 포함한 분량 또는 약간, 취향껏 등의 표현
           example: 10g
         isHighlight:
           type: boolean
-          default: false
+          description: 대표 재료로 노출할지 여부
     Ingredients:
       type: array
-      description: 재료를 최소 1개 입력합니다. 수정 시 생략하면 유지하고 전송하면 전체 목록을 교체합니다. isHighlight 생략값은 false이며 강조할 재료 개수에는 제한이 없습니다.
+      description: 재료를 최소 1개 입력해야 하며 각 재료에는 name, amount,
+        isHighlight가 필요합니다. 전체 재료 중 최소 1개는
+        isHighlight가 true여야 합니다. 수정 시 생략하면 기존 목록을
+        유지하고, 전송하면 전체 재료 목록을 교체합니다.
       items:
         $ref: '#/components/schemas/Ingredient'
       minItems: 1

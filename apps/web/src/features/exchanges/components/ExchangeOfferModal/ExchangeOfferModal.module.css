@@ -1,0 +1,113 @@
+.header {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.pageLabel {
+  margin-bottom: 32px;
+  color: var(--color-gray-300);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+}
+
+.title {
+  font-size: var(--font-size-32);
+  font-weight: var(--font-weight-bold);
+}
+
+.content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+  margin-top: 32px;
+}
+
+.recipeCard {
+  min-width: 0;
+}
+
+.form {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.descriptionField {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--color-white);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-bold);
+}
+
+.descriptionField textarea {
+  width: 100%;
+  height: 160px;
+  padding: 16px 20px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 2px;
+  outline: none;
+  background-color: var(--color-black);
+  color: var(--color-white);
+  font-family: inherit;
+  font-size: var(--font-size-14);
+  line-height: 1.5;
+  resize: none;
+}
+
+.descriptionField textarea::placeholder {
+  color: var(--color-gray-300);
+}
+
+.descriptionField textarea:focus {
+  border-color: var(--color-white);
+}
+
+.footer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.footer button {
+  width: 100%;
+}
+
+@media (max-width: 743px) {
+  .header {
+    padding-bottom: 16px;
+  }
+
+  .pageLabel {
+    margin-bottom: 24px;
+    font-size: var(--font-size-12);
+  }
+
+  .title {
+    font-size: var(--font-size-20);
+  }
+
+  .content {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    margin-top: 16px;
+  }
+
+  .descriptionField {
+    gap: 8px;
+    font-size: var(--font-size-12);
+  }
+
+  .descriptionField textarea {
+    height: 140px;
+    padding: 14px 16px;
+    font-size: var(--font-size-12);
+  }
+
+  .footer {
+    gap: 12px;
+    margin-top: 20px;
+  }
+}

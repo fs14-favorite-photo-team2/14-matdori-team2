@@ -11,15 +11,9 @@ import styles from './page.module.css'
 
 const MAX_SUPPLY = 10
 
-let nextIngredientId = 0
-function createIngredientId() {
-  nextIngredientId += 1
-  return `ingredient-${nextIngredientId}`
-}
-
 function createEmptyIngredient() {
   return {
-    id: createIngredientId(),
+    id: crypto.randomUUID(),
     name: '',
     amount: '',
     isHighlight: false,
@@ -36,7 +30,7 @@ export default function CreateRecipePage() {
   const [content, setContent] = useState('')
   const [imageFiles, setImageFiles] = useState([])
   const [ingredients, setIngredients] = useState(() =>
-    Array.from({ length: 4 }, () => createEmptyIngredient()),
+    Array.from({ length: 2 }, () => createEmptyIngredient()),
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -212,14 +206,13 @@ export default function CreateRecipePage() {
           </label>
           <input
             id="totalSupply"
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
+            type="number"
+            min="1"
+            max={MAX_SUPPLY}
             className={`${styles.input} ${totalSupply !== '' && !isSupplyValid ? styles.inputError : ''}`}
             value={totalSupply}
             onChange={(e) => {
-              const onlyNums = e.target.value.replace(/[^0-9]/g, '')
-              setTotalSupply(onlyNums)
+              setTotalSupply(e.target.value)
             }}
             placeholder="총 발행량을 입력해 주세요"
           />
@@ -231,11 +224,17 @@ export default function CreateRecipePage() {
         </div>
 
         <div className={styles.field}>
-          <span className={styles.label}>사진 업로드</span>
+          <span className={styles.label}>
+            사진 업로드(첫 번째로 업로드한 사진이 썸네일로 지정됩니다.)
+          </span>
           <ImageUploader onChange={setImageFiles} />
         </div>
 
         <div className={styles.field}>
+          <div className={styles.hintBox}>
+            <span className={styles.hintIcon}>⭐</span>
+            <span>하이라이트 재료를 1개 이상 선택해 주세요.</span>
+          </div>
           {ingredients.map((ingredient) => (
             <div key={ingredient.id} className={styles.ingredientRow}>
               <div className={styles.ingredientRowGrid}>
