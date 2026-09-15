@@ -32,7 +32,7 @@ function getMobileViewportSnapshot() {
   return window.matchMedia(MOBILE_MEDIA_QUERY).matches
 }
 
-function getServerMobileViewportSnapshow() {
+function getServerMobileViewportSnapshot() {
   return false
 }
 
@@ -53,7 +53,7 @@ export default function Header() {
   const isMobileViewport = useSyncExternalStore(
     subscribeToMobileViewport,
     getMobileViewportSnapshot,
-    getServerMobileViewportSnapshow,
+    getServerMobileViewportSnapshot,
   )
 
   const [showLogoutToast, setShowLogoutToast] = useState(false)
