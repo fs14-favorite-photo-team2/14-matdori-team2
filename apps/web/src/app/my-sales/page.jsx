@@ -66,7 +66,7 @@ export default function MySalesPage() {
   const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
 
-  // ---- 1) 내가 등록한 판매글 (무한스크롤) ----
+  // ---- 내가 등록한 판매글  ----
   const {
     data: listingsPages,
     fetchNextPage: fetchNextListings,
@@ -78,9 +78,7 @@ export default function MySalesPage() {
     category: filters.category,
   })
 
-  // ---- 2) 내가 보낸 교환 제안 (무한스크롤) ----
-  // 참고: trade-offers API는 keyword/difficulty/category 필터를 지원하지 않아
-  // 항상 전체(PENDING)를 받아온 뒤 프론트에서 필터링합니다.
+  // ---- 내가 보낸 교환 제안 ----
   const {
     data: offersPages,
     fetchNextPage: fetchNextOffers,
@@ -98,7 +96,7 @@ export default function MySalesPage() {
     [offersPages],
   )
 
-  // ---- 3) 보낸 제안들이 가리키는 판매글 상세조회 (N+1 우회) ----
+  // ---- 보낸 제안들이 가리키는 판매글 상세조회  ----
   const pendingListingIds = useMemo(
     () => [...new Set(sentOffers.map((offer) => offer.listingId))],
     [sentOffers],
@@ -114,7 +112,6 @@ export default function MySalesPage() {
     return map
   }, [listingDetailQueries, pendingListingIds])
 
-  // ---- 4) 두 목록을 합쳐서 화면용 데이터로 변환 ----
   const displayableListings = useMemo(() => {
     const ownListings = myListings.map(normalizeOwnListing)
     const offerListings = sentOffers
@@ -134,8 +131,6 @@ export default function MySalesPage() {
     }))
   }, [displayableListings])
 
-  // keyword/category/listingType/status 필터는 로컬(클라이언트)에서 최종 적용
-  // (trade-offers 쪽은 서버가 필터를 지원하지 않아 여기서 걸러야 함)
   const filteredListings = useMemo(
     () => getFilteredListings(displayableListings, keyword, filters),
     [displayableListings, keyword, filters],
@@ -146,7 +141,6 @@ export default function MySalesPage() {
     [displayableListings, keyword, draftFilters],
   )
 
-  // 둘 중 하나라도 다음 페이지가 있으면 "더 불러올 수 있음" 처리
   const hasNext = hasNextListings || hasNextOffers
   const isFetchingNext = isFetchingNextListings || isFetchingNextOffers
 
@@ -155,7 +149,6 @@ export default function MySalesPage() {
     if (hasNextOffers) fetchNextOffers()
   }
 
-  // 스크롤이 바닥에 닿으면 다음 페이지 요청
   const [sentinelRef, setSentinelRef] = useState(null)
 
   useEffect(() => {
@@ -172,7 +165,6 @@ export default function MySalesPage() {
 
     observer.observe(sentinelRef)
     return () => observer.disconnect()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sentinelRef, hasNext, isFetchingNext])
 
   function handleKeywordChange(nextKeyword) {
