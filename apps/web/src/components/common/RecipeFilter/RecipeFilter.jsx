@@ -15,7 +15,7 @@ export default function RecipeFilter({
   sortOptions = [],
   sort = '',
   isMobileOpen = false,
-  resultCount = 0,
+  resultCount,
   onFilterChange,
   onDraftFilterChange,
   onSortChange,
@@ -285,7 +285,9 @@ export default function RecipeFilter({
                 type="button"
                 onClick={() => onApply?.(draftFilters)}
               >
-                {resultCount}개 레시피 보기
+                {resultCount == null
+                  ? '레시피 보기'
+                  : `${resultCount}개 레시피 보기`}
               </button>
             </footer>
           </section>
