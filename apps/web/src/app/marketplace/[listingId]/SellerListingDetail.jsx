@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useWithdrawMarketListing } from '@/features/marketplace/useMarketListingMutations'
 import Image from 'next/image'
 import styles from './page.module.css'
 import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
@@ -8,6 +10,9 @@ import Button from '@/components/common/Button/Button'
 import MobileHeader from '@/components/layout/Header/MobileHeader/MobileHeader'
 import ActionConfirmModal from '@/components/common/ActionConfirmModal/ActionConfirmModal'
 import SaleEditModal from '@/features/sales/components/SaleEditModal/SaleEditModal'
+import Toast from '@/components/common/Toast/Toast'
+import useTimedToast from '@/hooks/useTimedToast'
+import getApiErrorMessage from '@/utils/getApiErrorMessage'
 
 const DIFFICULTY_CLASS_NAMES = {
   easy: styles.difficultyEasy,
@@ -18,6 +23,9 @@ const DIFFICULTY_CLASS_NAMES = {
 
 export default function SellerListingDetail({ listing }) {
   const { recipe, seller, myTradeOffers } = listing
+  const router = useRouter()
+  const withdrawMutation = useWithdrawMarketListing()
+  const { toastMessage, showToast } = useTimedToast()
 
   const difficultyOption = DIFFICULTY_OPTIONS.find(
     (option) => option.value === recipe.difficulty,
@@ -104,17 +112,32 @@ export default function SellerListingDetail({ listing }) {
   }
 
   function handleUnlistConfirm() {
-    // TODO: 판매 내리기 API 연결 후 마켓플레이스와 마이 키친 재조회
-    setIsUnlistModalOpen(false)
+    if (withdrawMutation.isPending) return
+
+    withdrawMutation.mutate(listing.id, {
+      onSuccess: () => {
+        setIsUnlistModalOpen(false)
+        router.replace('/marketplace')
+      },
+
+      onError: (error) => {
+        showToast(getApiErrorMessage(error))
+      },
+    })
   }
 
   function handleDeleteConfirm() {
-    // TODO: 레시피 삭제 API 연결 후 deletedAt이 적용된 데이터를 목록에서 제거
+    // TODO: 백엔드 삭제 정책 협의 후 API 연결
     setIsDeleteModalOpen(false)
   }
 
   return (
     <main className={styles.page}>
+      {toastMessage && (
+        <div className={styles.toastWrapper}>
+          <Toast message={toastMessage} />
+        </div>
+      )}
       <div className={styles.container}>
         <MobileHeader title="마켓플레이스" backHref="/marketplace" />
 
@@ -310,6 +333,7 @@ export default function SellerListingDetail({ listing }) {
                 variant="secondary"
                 className={styles.sellerActionButton}
                 onClick={() => setIsUnlistModalOpen(true)}
+                disabled={listing.status !== 'ON_SALE'}
               >
                 판매 내리기
               </Button>
@@ -446,6 +470,7 @@ export default function SellerListingDetail({ listing }) {
         title="레시피 판매 내리기"
         description="정말로 판매를 중단하시겠습니까?"
         confirmLabel="판매 내리기"
+        isPending={withdrawMutation.isPending}
       />
 
       <ActionConfirmModal
