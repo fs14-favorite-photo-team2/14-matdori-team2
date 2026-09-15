@@ -9,6 +9,7 @@ import {
   useMySentTradeOffers,
   usePendingOfferListingDetails,
 } from '@/features/my-sales/hooks'
+import useCurrentUser from '@/features/auth/useCurrentUser'
 import {
   normalizeOwnListing,
   normalizeSentOffer,
@@ -59,7 +60,8 @@ function getFilteredListings(listings, keyword, targetFilters) {
 
 export default function MySalesPage() {
   const router = useRouter()
-  const nickname = '유디'
+  const { user } = useCurrentUser()
+  const nickname = user?.nickname ?? ''
 
   const [keyword, setKeyword] = useState('')
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
