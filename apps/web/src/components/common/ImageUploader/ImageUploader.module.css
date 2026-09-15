@@ -2,8 +2,7 @@
   width: 100%;
 }
 
-.hiddenInput,
-.hiddenCanvas {
+.hiddenInput {
   display: none;
 }
 
