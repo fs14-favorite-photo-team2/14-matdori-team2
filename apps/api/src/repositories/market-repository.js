@@ -230,15 +230,370 @@ export function createMarketListingRecord({
   })
 }
 
-// 판매글 수정
-export function updateMarketListingById(listingId, data) {
-  return prisma.marketListing.update({
+function listingUpdateError(
+  field,
+  message,
+  code = 'MARKET_LISTING_UPDATE_CONFLICT',
+) {
+  const error = new Error(message)
+
+  error.code = code
+  error.field = field
+
+  return error
+}
+
+// 추가 가능한 사본 조건 함수 추가
+function getAvailableCopyWhere({ listingId, sellerId, recipeId, listingType }) {
+  const sellsForPoints = listingType !== 'EXCHANGE'
+
+  return {
+    recipeId,
+    ownerId: sellerId,
+    state: 'OWNED',
+    listingId: null,
+
+    // 해당 판매글에서 이미 교환 완료된 사본은 다시 등록하지 않음
+    receivedInTrades: {
+      none: {
+        listingId,
+        status: 'ACCEPTED',
+      },
+    },
+
+    // SALE/BOTH에서는 구매 이력이 있는 사본을 재판매할 수 없음
+    // EXCHANGE에서는 해당 판매글에서 판매 완료된 사본만 제외
+    purchases: {
+      none: sellsForPoints ? {} : { listingId },
+    },
+
+    ...(sellsForPoints ? { everPurchased: false } : {}),
+  }
+}
+
+async function loadMarketListingQuantityInfo(transaction, listingId, sellerId) {
+  const listing = await transaction.marketListing.findFirst({
     where: {
       id: listingId,
+      sellerId,
+      deletedAt: null,
     },
-    data,
-    select: marketListingSelect,
+    select: {
+      id: true,
+      recipeId: true,
+      listingType: true,
+      recipe: {
+        select: {
+          totalSupply: true,
+        },
+      },
+    },
   })
+
+  if (!listing) {
+    return null
+  }
+
+  const availableWhere = getAvailableCopyWhere({
+    listingId,
+    sellerId,
+    recipeId: listing.recipeId,
+    listingType: listing.listingType,
+  })
+
+  const [
+    soldQuantity,
+    exchangedQuantity,
+    currentRemainingQuantity,
+    availableAdditionalQuantity,
+  ] = await Promise.all([
+    transaction.purchase.count({
+      where: {
+        listingId,
+      },
+    }),
+
+    transaction.tradeOffer.count({
+      where: {
+        listingId,
+        status: 'ACCEPTED',
+        receivedCopyId: {
+          not: null,
+        },
+      },
+    }),
+
+    transaction.recipeCopy.count({
+      where: {
+        listingId,
+        ownerId: sellerId,
+        recipeId: listing.recipeId,
+        state: 'LISTED',
+      },
+    }),
+
+    transaction.recipeCopy.count({
+      where: availableWhere,
+    }),
+  ])
+
+  const completedQuantity = soldQuantity + exchangedQuantity
+
+  const maximumBySupply = Math.max(
+    0,
+    listing.recipe.totalSupply - completedQuantity,
+  )
+
+  const maximumByOwnership =
+    currentRemainingQuantity + availableAdditionalQuantity
+
+  const maximumQuantity = Math.min(maximumBySupply, maximumByOwnership)
+
+  return {
+    soldQuantity,
+    exchangedQuantity,
+    completedQuantity,
+    availableAdditionalQuantity,
+    maximumQuantity,
+  }
+}
+
+export function findMarketListingQuantityInfo(listingId, sellerId) {
+  return loadMarketListingQuantityInfo(prisma, listingId, sellerId)
+}
+
+// 판매글 수정
+export function updateMarketListingRecord({
+  listingId,
+  sellerId,
+  expectedUpdatedAt,
+  remainingQuantity,
+  data,
+}) {
+  return prisma.$transaction(
+    async (transaction) => {
+      const claimed = await transaction.marketListing.updateMany({
+        where: {
+          id: listingId,
+          sellerId,
+          status: 'ON_SALE',
+          deletedAt: null,
+          updatedAt: expectedUpdatedAt,
+        },
+        data: {
+          updatedAt: new Date(),
+        },
+      })
+
+      if (claimed.count !== 1) {
+        throw listingUpdateError(
+          'listingId',
+          '판매글 상태가 변경되었습니다. 새로고침 후 다시 시도해 주세요.',
+        )
+      }
+
+      const listing = await transaction.marketListing.findUniqueOrThrow({
+        where: {
+          id: listingId,
+        },
+        include: {
+          recipe: {
+            select: {
+              creatorId: true,
+              totalSupply: true,
+            },
+          },
+        },
+      })
+
+      // 판매 중인 사본을 잠가 구매·교환과의 동시 변경을 막음
+      const listedCopies = await transaction.$queryRaw`
+        SELECT "id", "ownerId", "recipeId", "everPurchased"
+        FROM "RecipeCopy"
+        WHERE "listingId" = ${listingId}
+          AND "state" = 'LISTED'
+        ORDER BY "id" DESC
+        FOR UPDATE
+      `
+
+      if (
+        listedCopies.some(
+          (copy) =>
+            copy.ownerId !== sellerId || copy.recipeId !== listing.recipeId,
+        )
+      ) {
+        throw listingUpdateError(
+          'listingId',
+          '판매글에 연결된 사본 정보를 확인해 주세요.',
+        )
+      }
+
+      const nextListingType = data.listingType ?? listing.listingType
+
+      const sellsForPoints = nextListingType !== 'EXCHANGE'
+
+      // 교환 전용 글을 SALE/BOTH로 바꿀 때도 재판매 정책 검사
+      if (sellsForPoints && listing.recipe.creatorId !== sellerId) {
+        throw listingUpdateError(
+          'listingType',
+          '직접 생성한 레시피의 사본만 판매할 수 있습니다.',
+          'MARKET_LISTING_UPDATE_FORBIDDEN',
+        )
+      }
+
+      if (sellsForPoints && listedCopies.some((copy) => copy.everPurchased)) {
+        throw listingUpdateError(
+          'listingType',
+          '이미 구매된 사본은 다시 포인트로 판매할 수 없습니다.',
+        )
+      }
+
+      if (remainingQuantity !== undefined) {
+        const [soldQuantity, exchangedQuantity] = await Promise.all([
+          transaction.purchase.count({
+            where: {
+              listingId,
+            },
+          }),
+
+          transaction.tradeOffer.count({
+            where: {
+              listingId,
+              status: 'ACCEPTED',
+              receivedCopyId: {
+                not: null,
+              },
+            },
+          }),
+        ])
+
+        const completedQuantity = soldQuantity + exchangedQuantity
+
+        const availableWhere = getAvailableCopyWhere({
+          listingId,
+          sellerId,
+          recipeId: listing.recipeId,
+          listingType: nextListingType,
+        })
+
+        const availableCopies = await transaction.recipeCopy.findMany({
+          where: availableWhere,
+          select: {
+            id: true,
+          },
+          orderBy: {
+            id: 'asc',
+          },
+        })
+
+        const maximumBySupply = Math.max(
+          0,
+          listing.recipe.totalSupply - completedQuantity,
+        )
+
+        const maximumByOwnership = listedCopies.length + availableCopies.length
+
+        const maximumQuantity = Math.min(maximumBySupply, maximumByOwnership)
+
+        if (remainingQuantity > maximumQuantity) {
+          throw listingUpdateError(
+            'remainingQuantity',
+            `현재 변경 가능한 최대 판매 수량은 ${maximumQuantity}개입니다.`,
+          )
+        }
+
+        const difference = remainingQuantity - listedCopies.length
+
+        if (difference > 0) {
+          const copyIds = availableCopies
+            .slice(0, difference)
+            .map((copy) => copy.id)
+
+          const reserved = await transaction.recipeCopy.updateMany({
+            where: {
+              ...availableWhere,
+              id: {
+                in: copyIds,
+              },
+            },
+            data: {
+              state: 'LISTED',
+              listingId,
+            },
+          })
+
+          if (reserved.count !== difference) {
+            throw listingUpdateError(
+              'remainingQuantity',
+              '사본 상태가 변경되었습니다. 다시 조회한 후 수정해 주세요.',
+            )
+          }
+        } else if (difference < 0) {
+          const copyIds = listedCopies
+            .slice(0, -difference)
+            .map((copy) => copy.id)
+
+          const released = await transaction.recipeCopy.updateMany({
+            where: {
+              id: {
+                in: copyIds,
+              },
+              recipeId: listing.recipeId,
+              ownerId: sellerId,
+              listingId,
+              state: 'LISTED',
+            },
+            data: {
+              state: 'OWNED',
+              listingId: null,
+            },
+          })
+
+          if (released.count !== -difference) {
+            throw listingUpdateError(
+              'remainingQuantity',
+              '사본 상태가 변경되었습니다. 다시 조회한 후 수정해 주세요.',
+            )
+          }
+        }
+      }
+
+      const updatedListing = await transaction.marketListing.update({
+        where: {
+          id: listingId,
+        },
+        data: {
+          ...data,
+          // remainingQuantity는 최소 1이므로 수정으로 SOLD_OUT 처리하지 않음
+          status: 'ON_SALE',
+        },
+      })
+
+      // SALE로 변경하면 기존 대기 교환 제안을 취소
+      if (nextListingType === 'SALE') {
+        await cancelPendingTradeOffers(transaction, updatedListing)
+      }
+
+      const [result, quantityInfo] = await Promise.all([
+        transaction.marketListing.findUniqueOrThrow({
+          where: {
+            id: listingId,
+          },
+          select: marketListingSelect,
+        }),
+
+        loadMarketListingQuantityInfo(transaction, listingId, sellerId),
+      ])
+
+      return {
+        ...result,
+        ...quantityInfo,
+      }
+    },
+    {
+      isolationLevel: 'ReadCommitted',
+    },
+  )
 }
 
 // 판매글 내리기 + 판매글에 달린 사본 복구
