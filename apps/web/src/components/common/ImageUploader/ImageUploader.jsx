@@ -173,7 +173,21 @@ export default function ImageUploader({ onChange, onProcessingChange }) {
             emitChange(next)
             return next
           })
-        } catch {
+        } catch (err) {
+          console.error('이미지 크롭 실패:', err)
+          setError(
+            '이미지를 처리하는 중 문제가 발생했습니다. 다시 시도해주세요.',
+          )
+          // 실패한 이미지는 목록/선택에서 제거
+          setImages((prev) => {
+            const next = prev.filter((img) => img.id !== newImg.id)
+            emitChange(next)
+            setActiveId((current) =>
+              current === newImg.id ? (next[0]?.id ?? null) : current,
+            )
+            return next
+          })
+          URL.revokeObjectURL(newImg.previewUrl)
         } finally {
           setProcessingIds((prev) => {
             const next = new Set(prev)
@@ -227,7 +241,6 @@ export default function ImageUploader({ onChange, onProcessingChange }) {
     cropImageToFile(imgEl, activeImage.zoom, activeImage.rawFile?.name)
       .then((croppedFile) => {
         if (!croppedFile) return
-
         setImages((prev) => {
           const next = prev.map((img) =>
             img.id === id ? { ...img, croppedFile } : img,
@@ -235,6 +248,10 @@ export default function ImageUploader({ onChange, onProcessingChange }) {
           emitChange(next)
           return next
         })
+      })
+      .catch((err) => {
+        console.error('줌 크롭 실패:', err)
+        setError('사진 크기 조정 중 문제가 발생했습니다. 다시 시도해주세요.')
       })
       .finally(() => {
         setProcessingIds((prev) => {
