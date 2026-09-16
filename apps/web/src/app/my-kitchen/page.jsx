@@ -8,6 +8,7 @@ import SearchBar from '@/components/common/SearchBar/SearchBar'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
 import { fetchMyRecipeCopies } from '@/features/my-kitchen/api/recipeCopies'
+import { queryKeys } from '@/lib/queryKeys'
 import useCurrentUser from '@/features/auth/useCurrentUser'
 import {
   DIFFICULTY_OPTIONS,
@@ -67,7 +68,6 @@ export default function MyKitchenPage() {
     return () => window.removeEventListener('resize', applySize)
   }, [])
 
-  // TODO: 공통 queryKeys PR 병합되면 queryKeys.myRecipeCopies(...)로 교체
   const {
     data,
     error,
@@ -76,15 +76,12 @@ export default function MyKitchenPage() {
     hasNextPage,
     fetchNextPage,
   } = useInfiniteQuery({
-    queryKey: [
-      'myRecipeCopies',
-      {
-        keyword,
-        difficulty: filters.difficulty,
-        category: filters.category,
-        pageSize,
-      },
-    ],
+    queryKey: queryKeys.myKitchen.list({
+      keyword,
+      difficulty: filters.difficulty,
+      category: filters.category,
+      pageSize,
+    }),
     queryFn: ({ pageParam }) =>
       fetchMyRecipeCopies({
         state: 'OWNED',
