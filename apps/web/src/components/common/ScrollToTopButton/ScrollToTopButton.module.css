@@ -13,8 +13,6 @@
   border: none;
   border-radius: 50%;
 
-  background: var(--color-main, #efff04);
-  color: var(--color-gray-500, #161616);
   font-size: var(--font-size-20);
   font-weight: var(--font-weight-bold);
 
