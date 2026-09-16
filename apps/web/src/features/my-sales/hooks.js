@@ -1,12 +1,8 @@
 'use client'
 
-import { useInfiniteQuery, useQueries } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/queryKeys'
-import {
-  fetchMarketListingDetail,
-  fetchMyMarketListings,
-  fetchMySentTradeOffers,
-} from './api'
+import { fetchMyMarketListings, fetchMySentTradeOffers } from './api'
 
 export function useMyMarketListings({ keyword, difficulty, category } = {}) {
   return useInfiniteQuery({
@@ -35,15 +31,5 @@ export function useMySentTradeOffers({ status } = {}) {
     initialPageParam: undefined,
     getNextPageParam: (lastPage) =>
       lastPage.meta.hasNext ? lastPage.meta.nextCursor : undefined,
-  })
-}
-
-export function usePendingOfferListingDetails(listingIds = []) {
-  return useQueries({
-    queries: listingIds.map((listingId) => ({
-      queryKey: queryKeys.marketplace.detail(listingId),
-      queryFn: () => fetchMarketListingDetail(listingId),
-      staleTime: 5 * 60 * 1000,
-    })),
   })
 }

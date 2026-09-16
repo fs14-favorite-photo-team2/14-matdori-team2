@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation'
 import {
   useMyMarketListings,
   useMySentTradeOffers,
-  usePendingOfferListingDetails,
 } from '@/features/my-sales/hooks'
 import useCurrentUser from '@/features/auth/useCurrentUser'
 import {
@@ -98,30 +97,12 @@ export default function MySalesPage() {
     [offersPages],
   )
 
-  // ---- 보낸 제안들이 가리키는 판매글 상세조회  ----
-  const pendingListingIds = useMemo(
-    () => [...new Set(sentOffers.map((offer) => offer.listingId))],
-    [sentOffers],
-  )
-
-  const listingDetailQueries = usePendingOfferListingDetails(pendingListingIds)
-
-  const listingDetailMap = useMemo(() => {
-    const map = new Map()
-    listingDetailQueries.forEach((query, index) => {
-      if (query.data) map.set(pendingListingIds[index], query.data)
-    })
-    return map
-  }, [listingDetailQueries, pendingListingIds])
-
   const displayableListings = useMemo(() => {
     const ownListings = myListings.map(normalizeOwnListing)
-    const offerListings = sentOffers
-      .map((offer) => normalizeSentOffer(offer, listingDetailMap))
-      .filter(Boolean)
+    const offerListings = sentOffers.map(normalizeSentOffer).filter(Boolean)
 
     return [...ownListings, ...offerListings]
-  }, [myListings, sentOffers, listingDetailMap])
+  }, [myListings, sentOffers])
 
   const difficultyCounts = useMemo(() => {
     return DIFFICULTY_OPTIONS.map((option) => ({
