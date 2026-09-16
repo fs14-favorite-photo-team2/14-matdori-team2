@@ -5,12 +5,11 @@ import Modal from '@/components/common/Modal/Modal'
 import SearchBar from '@/components/common/SearchBar/SearchBar'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
-import { MOCK_SALEABLE_RECIPES } from '../../mockSaleableRecipes'
 import {
   DEFAULT_FILTERS,
   MY_KITCHEN_FILTER_GROUPS,
 } from '@/constants/RecipeOptions'
-import styles from './SaleRecipeSelectionModal.module.css'
+import styles from './RecipeSelectionModal.module.css'
 
 const PAGE_SIZE = 10
 
@@ -33,10 +32,13 @@ function getFilteredRecipes(recipes, keyword, selectedFilters) {
   })
 }
 
-export default function SaleRecipeSelectionModal({
+export default function RecipeSelectionModal({
   isOpen,
   onClose,
   onSelectRecipe,
+  recipes = [],
+  title,
+  emptyMessage,
 }) {
   const [searchInput, setSearchInput] = useState('')
   const [filters, setFilters] = useState({ ...DEFAULT_FILTERS })
@@ -46,14 +48,10 @@ export default function SaleRecipeSelectionModal({
   const modalScrollRef = useRef(null)
   const loadMoreRef = useRef(null)
 
-  const filteredRecipes = getFilteredRecipes(
-    MOCK_SALEABLE_RECIPES,
-    searchInput,
-    filters,
-  )
+  const filteredRecipes = getFilteredRecipes(recipes, searchInput, filters)
 
   const draftFilteredRecipes = getFilteredRecipes(
-    MOCK_SALEABLE_RECIPES,
+    recipes,
     searchInput,
     draftFilters,
   )
@@ -130,15 +128,13 @@ export default function SaleRecipeSelectionModal({
       isOpen={isOpen}
       onClose={onClose}
       variant="large"
-      ariaLabel="나의 레시피 판매하기"
+      ariaLabel={title}
       dialogRef={modalScrollRef}
     >
       <header className={styles.header}>
         <p className={`${styles.pageLabel} font-baskin-robbins`}>마이 키친</p>
 
-        <h2 className={`${styles.title} font-baskin-robbins`}>
-          나의 레시피 판매하기
-        </h2>
+        <h2 className={`${styles.title} font-baskin-robbins`}>{title}</h2>
       </header>
 
       <section className={styles.controls}>
@@ -169,7 +165,7 @@ export default function SaleRecipeSelectionModal({
       </section>
 
       {visibleRecipes.length === 0 ? (
-        <p className={styles.emptyText}>판매 가능한 레시피가 없습니다.</p>
+        <p className={styles.emptyText}>{emptyMessage}</p>
       ) : (
         <section className={styles.recipeGrid}>
           {visibleRecipes.map((recipe) => (
