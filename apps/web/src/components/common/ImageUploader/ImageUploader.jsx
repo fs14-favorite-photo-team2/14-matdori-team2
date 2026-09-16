@@ -16,7 +16,7 @@ function createId() {
   return `img-${nextId}`
 }
 
-export default function ImageUploader({ onChange }) {
+export default function ImageUploader({ onChange, initialCount = 0 }) {
   const inputRef = useRef(null)
   const imgRefs = useRef({})
   const canvasRef = useRef(null)
@@ -274,7 +274,7 @@ export default function ImageUploader({ onChange }) {
       )}
 
       <p className={styles.countText}>
-        {images.length} / {MAX_IMAGES}
+        {images.length > 0 ? images.length : initialCount} / {MAX_IMAGES}
       </p>
 
       {error && <p className={styles.errorText}>{error}</p>}
