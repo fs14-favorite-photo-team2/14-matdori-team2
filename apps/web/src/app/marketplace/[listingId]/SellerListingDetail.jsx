@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useWithdrawMarketListing } from '@/features/marketplace/useMarketListingMutations'
 import Image from 'next/image'
 import styles from './page.module.css'
 import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
@@ -8,6 +10,15 @@ import Button from '@/components/common/Button/Button'
 import MobileHeader from '@/components/layout/Header/MobileHeader/MobileHeader'
 import ActionConfirmModal from '@/components/common/ActionConfirmModal/ActionConfirmModal'
 import SaleEditModal from '@/features/sales/components/SaleEditModal/SaleEditModal'
+import Toast from '@/components/common/Toast/Toast'
+import useTimedToast from '@/hooks/useTimedToast'
+import getApiErrorMessage from '@/utils/getApiErrorMessage'
+import { useListingTradeOffers } from '@/features/exchanges/useTradeOffers'
+import {
+  useAcceptTradeOffer,
+  useRejectTradeOffer,
+} from '@/features/exchanges/useTradeOfferMutations'
+import useInfiniteScroll from '@/hooks/useInfiniteScroll'
 
 const DIFFICULTY_CLASS_NAMES = {
   easy: styles.difficultyEasy,
@@ -17,7 +28,36 @@ const DIFFICULTY_CLASS_NAMES = {
 }
 
 export default function SellerListingDetail({ listing }) {
-  const { recipe, seller, myTradeOffers } = listing
+  const { recipe, seller } = listing
+  const router = useRouter()
+  const withdrawMutation = useWithdrawMarketListing()
+  const rejectTradeOfferMutation = useRejectTradeOffer()
+  const acceptTradeOfferMutation = useAcceptTradeOffer()
+  const { toastMessage, showToast } = useTimedToast()
+
+  const {
+    tradeOffers,
+    error: tradeOffersError,
+    isPending: isTradeOffersPending,
+    isError: isTradeOffersError,
+    isRefetching: isTradeOffersRefetching,
+    refetch: refetchTradeOffers,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    fetchNextPage,
+  } = useListingTradeOffers(
+    listing.id,
+    { status: 'PENDING' },
+    { enabled: listing.listingType !== 'SALE' },
+  )
+
+  const tradeOfferSentinelRef = useInfiniteScroll({
+    enabled: listing.listingType !== 'SALE' && !isFetchNextPageError,
+    hasMore: Boolean(hasNextPage),
+    isLoading: isFetchingNextPage,
+    onLoadMore: fetchNextPage,
+  })
 
   const difficultyOption = DIFFICULTY_OPTIONS.find(
     (option) => option.value === recipe.difficulty,
@@ -32,11 +72,9 @@ export default function SellerListingDetail({ listing }) {
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isRecipeDetailOpen, setIsRecipeDetailOpen] = useState(false)
-  const [tradeOffers, setTradeOffers] = useState(myTradeOffers)
   const [rejectTargetOffer, setRejectTargetOffer] = useState(null)
   const [approveTargetOffer, setApproveTargetOffer] = useState(null)
   const [isUnlistModalOpen, setIsUnlistModalOpen] = useState(false)
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const imageCount = recipe.imageUrls.length
@@ -82,39 +120,65 @@ export default function SellerListingDetail({ listing }) {
   )
 
   function handleRejectTradeOffer() {
-    if (!rejectTargetOffer) return
+    if (!rejectTargetOffer || rejectTradeOfferMutation.isPending) return
 
-    // TODO: 교환 제시 거절 API 연결 후 목록 재조회
-    setTradeOffers((currentOffers) =>
-      currentOffers.filter((offer) => offer.id !== rejectTargetOffer.id),
+    rejectTradeOfferMutation.mutate(
+      {
+        tradeOfferId: rejectTargetOffer.id,
+        listingId: listing.id,
+      },
+      {
+        onSuccess: () => {
+          setRejectTargetOffer(null)
+        },
+        onError: (error) => {
+          showToast(getApiErrorMessage(error))
+        },
+      },
     )
-
-    setRejectTargetOffer(null)
   }
 
   function handleApproveTradeOffer() {
-    if (!approveTargetOffer) return
+    if (!approveTargetOffer || acceptTradeOfferMutation.isPending) return
 
-    // TODO: 교환 제시 승인 API 연결 후 양쪽 레시피와 목록 재조회
-    setTradeOffers((currentOffers) =>
-      currentOffers.filter((offer) => offer.id !== approveTargetOffer.id),
+    acceptTradeOfferMutation.mutate(
+      {
+        tradeOfferId: approveTargetOffer.id,
+        listingId: listing.id,
+      },
+      {
+        onSuccess: () => {
+          setApproveTargetOffer(null)
+        },
+        onError: (error) => {
+          showToast(getApiErrorMessage(error))
+        },
+      },
     )
-
-    setApproveTargetOffer(null)
   }
 
   function handleUnlistConfirm() {
-    // TODO: 판매 내리기 API 연결 후 마켓플레이스와 마이 키친 재조회
-    setIsUnlistModalOpen(false)
-  }
+    if (withdrawMutation.isPending) return
 
-  function handleDeleteConfirm() {
-    // TODO: 레시피 삭제 API 연결 후 deletedAt이 적용된 데이터를 목록에서 제거
-    setIsDeleteModalOpen(false)
+    withdrawMutation.mutate(listing.id, {
+      onSuccess: () => {
+        setIsUnlistModalOpen(false)
+        router.replace('/marketplace')
+      },
+
+      onError: (error) => {
+        showToast(getApiErrorMessage(error))
+      },
+    })
   }
 
   return (
     <main className={styles.page}>
+      {toastMessage && (
+        <div className={styles.toastWrapper}>
+          <Toast message={toastMessage} />
+        </div>
+      )}
       <div className={styles.container}>
         <MobileHeader title="마켓플레이스" backHref="/marketplace" />
 
@@ -310,112 +374,171 @@ export default function SellerListingDetail({ listing }) {
                 variant="secondary"
                 className={styles.sellerActionButton}
                 onClick={() => setIsUnlistModalOpen(true)}
+                disabled={listing.status !== 'ON_SALE'}
               >
-                판매 내리기
-              </Button>
-
-              <Button
-                type="button"
-                variant="secondary"
-                className={`${styles.sellerActionButton} ${styles.deleteRecipeButton}`}
-                onClick={() => setIsDeleteModalOpen(true)}
-              >
-                레시피 삭제하기
+                판매글 삭제하기
               </Button>
             </div>
           </div>
         </section>
+        {isExchangeAvailable && (
+          <section className={styles.myTradeSection}>
+            <h2 className={`${styles.tradeSectionTitle} font-baskin-robbins`}>
+              교환 제시 목록
+            </h2>
 
-        <section className={styles.myTradeSection}>
-          <h2 className={`${styles.tradeSectionTitle} font-baskin-robbins`}>
-            교환 제시 목록
-          </h2>
+            {isTradeOffersPending ? (
+              <p className={styles.tradeListState} role="status">
+                교환 제안을 불러오는 중...
+              </p>
+            ) : isTradeOffersError && tradeOffers.length === 0 ? (
+              <div className={styles.tradeListError}>
+                <p>
+                  {getApiErrorMessage(
+                    tradeOffersError,
+                    '교환 제안을 불러오지 못했습니다.',
+                  )}
+                </p>
 
-          <div className={styles.myTradeList}>
-            {tradeOffers.map((tradeOffer) => {
-              const offeredRecipe = tradeOffer.offeredCopy.recipe
-              const offeredThumbnailUrl = offeredRecipe.imageUrls[0]
-              const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
-                (option) => option.value === offeredRecipe.difficulty,
-              )
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => refetchTradeOffers()}
+                  disabled={isTradeOffersRefetching}
+                >
+                  {isTradeOffersRefetching ? '불러오는 중...' : '다시 시도'}
+                </Button>
+              </div>
+            ) : tradeOffers.length === 0 ? (
+              <p className={styles.tradeListState}>
+                아직 받은 교환 제안이 없습니다.
+              </p>
+            ) : (
+              <>
+                <div className={styles.myTradeList}>
+                  {tradeOffers.map((tradeOffer) => {
+                    const offeredRecipe = tradeOffer.offeredCopy.recipe
+                    const offeredThumbnailUrl = offeredRecipe.imageUrls[0]
+                    const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
+                      (option) => option.value === offeredRecipe.difficulty,
+                    )
 
-              const offeredCategoryOption = CATEGORY_OPTIONS.find(
-                (option) => option.value === offeredRecipe.category,
-              )
+                    const offeredCategoryOption = CATEGORY_OPTIONS.find(
+                      (option) => option.value === offeredRecipe.category,
+                    )
 
-              const offeredDifficultyClassName =
-                DIFFICULTY_CLASS_NAMES[offeredDifficultyOption?.tone] ?? ''
+                    const offeredDifficultyClassName =
+                      DIFFICULTY_CLASS_NAMES[offeredDifficultyOption?.tone] ??
+                      ''
 
-              return (
-                <article key={tradeOffer.id} className={styles.tradeCard}>
-                  <div className={styles.tradeImageWrapper}>
-                    <Image
-                      src={offeredThumbnailUrl}
-                      alt={offeredRecipe.title}
-                      fill
-                      sizes="(max-width: 1023px) 50vw, 360px"
-                      className={styles.tradeImage}
-                    />
-                  </div>
+                    return (
+                      <article key={tradeOffer.id} className={styles.tradeCard}>
+                        <div className={styles.tradeImageWrapper}>
+                          <Image
+                            src={offeredThumbnailUrl}
+                            alt={offeredRecipe.title}
+                            fill
+                            sizes="(max-width: 1023px) 50vw, 360px"
+                            className={styles.tradeImage}
+                          />
+                        </div>
 
-                  <h3 className={styles.tradeCardTitle}>
-                    {offeredRecipe.title}
-                  </h3>
+                        <h3 className={styles.tradeCardTitle}>
+                          {offeredRecipe.title}
+                        </h3>
 
-                  <div className={styles.tradeCardMeta}>
-                    <div className={styles.tradeRecipeMeta}>
-                      <span
-                        className={`${styles.difficulty} ${offeredDifficultyClassName}`}
-                      >
-                        {offeredDifficultyOption?.label ??
-                          offeredRecipe.difficulty}
-                      </span>
+                        <div className={styles.tradeCardMeta}>
+                          <div className={styles.tradeRecipeMeta}>
+                            <span
+                              className={`${styles.difficulty} ${offeredDifficultyClassName}`}
+                            >
+                              {offeredDifficultyOption?.label ??
+                                offeredRecipe.difficulty}
+                            </span>
 
-                      <span className={styles.metaDivider}>|</span>
+                            <span className={styles.metaDivider}>|</span>
 
-                      <span className={styles.category}>
-                        {offeredCategoryOption?.label ?? offeredRecipe.category}
-                      </span>
-                    </div>
+                            <span className={styles.category}>
+                              {offeredCategoryOption?.label ??
+                                offeredRecipe.category}
+                            </span>
+                          </div>
 
-                    <span className={styles.proposerNickname}>
-                      {tradeOffer.proposer.nickname}
-                    </span>
-                  </div>
+                          <span className={styles.proposerNickname}>
+                            {tradeOffer.proposer.nickname}
+                          </span>
+                        </div>
 
-                  <p className={styles.tradeDescription}>
-                    {tradeOffer.description}
+                        <p className={styles.tradeDescription}>
+                          {tradeOffer.message}
+                        </p>
+
+                        <div className={styles.tradeActionButtons}>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className={styles.rejectTradeButton}
+                            onClick={() => setRejectTargetOffer(tradeOffer)}
+                          >
+                            거절하기
+                          </Button>
+
+                          <Button
+                            type="button"
+                            className={styles.approveTradeButton}
+                            onClick={() => setApproveTargetOffer(tradeOffer)}
+                          >
+                            승인하기
+                          </Button>
+                        </div>
+                      </article>
+                    )
+                  })}
+                </div>
+
+                {hasNextPage && (
+                  <div
+                    ref={tradeOfferSentinelRef}
+                    className={styles.sentinel}
+                  />
+                )}
+
+                {isFetchingNextPage && (
+                  <p className={styles.tradeListState} role="status">
+                    교환 제안을 더 불러오는 중...
                   </p>
+                )}
 
-                  <div className={styles.tradeActionButtons}>
+                {isFetchNextPageError && (
+                  <div className={styles.tradeListError}>
+                    <p>
+                      {getApiErrorMessage(
+                        tradeOffersError,
+                        '교환 제안을 더 불러오지 못했습니다.',
+                      )}
+                    </p>
+
                     <Button
                       type="button"
                       variant="secondary"
-                      className={styles.rejectTradeButton}
-                      onClick={() => setRejectTargetOffer(tradeOffer)}
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
                     >
-                      거절하기
-                    </Button>
-
-                    <Button
-                      type="button"
-                      className={styles.approveTradeButton}
-                      onClick={() => setApproveTargetOffer(tradeOffer)}
-                    >
-                      승인하기
+                      다시 시도
                     </Button>
                   </div>
-                </article>
-              )
-            })}
-          </div>
-        </section>
+                )}
+              </>
+            )}
+          </section>
+        )}
       </div>
       <ActionConfirmModal
         isOpen={rejectTargetOffer !== null}
         onClose={() => setRejectTargetOffer(null)}
         onConfirm={handleRejectTradeOffer}
         title="교환 제시 거절"
+        isPending={rejectTradeOfferMutation.isPending}
         description={
           rejectTargetRecipe
             ? `[${rejectTargetDifficultyOption?.label ?? rejectTargetRecipe.difficulty} | ${rejectTargetRecipe.title}] 카드와의 교환을 거절하시겠습니까?`
@@ -430,6 +553,7 @@ export default function SellerListingDetail({ listing }) {
         onClose={() => setApproveTargetOffer(null)}
         onConfirm={handleApproveTradeOffer}
         title="교환 제시 승인"
+        isPending={acceptTradeOfferMutation.isPending}
         description={
           approveTargetRecipe
             ? `[${approveTargetDifficultyOption?.label ?? approveTargetRecipe.difficulty} | ${approveTargetRecipe.title}] 카드와의 교환을 승인하시겠습니까?`
@@ -443,18 +567,10 @@ export default function SellerListingDetail({ listing }) {
         isOpen={isUnlistModalOpen}
         onClose={() => setIsUnlistModalOpen(false)}
         onConfirm={handleUnlistConfirm}
-        title="레시피 판매 내리기"
-        description="정말로 판매를 중단하시겠습니까?"
-        confirmLabel="판매 내리기"
-      />
-
-      <ActionConfirmModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={handleDeleteConfirm}
-        title="레시피 삭제하기"
-        description="정말로 레시피를 삭제하시겠습니까?"
+        title="판매글 삭제하기"
+        description="정말로 판매글을 삭제하시겠습니까?"
         confirmLabel="삭제하기"
+        isPending={withdrawMutation.isPending}
       />
 
       <SaleEditModal

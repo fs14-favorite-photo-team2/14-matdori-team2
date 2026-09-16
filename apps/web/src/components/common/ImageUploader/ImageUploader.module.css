@@ -2,8 +2,7 @@
   width: 100%;
 }
 
-.hiddenInput,
-.hiddenCanvas {
+.hiddenInput {
   display: none;
 }
 
@@ -177,25 +176,6 @@
   font-size: var(--font-size-10);
   font-weight: var(--font-weight-bold);
   line-height: 1.4;
-}
-
-.thumbnailSetMain {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 2px 0;
-  border: none;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.6);
-  color: var(--color-white);
-  font-size: 9px;
-  line-height: 1.4;
-  cursor: pointer;
-}
-
-.thumbnailSetMain:hover {
-  background: rgba(0, 0, 0, 0.8);
 }
 
 .countText {
