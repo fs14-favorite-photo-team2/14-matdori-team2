@@ -13,6 +13,7 @@ export function normalizeOwnListing(listing) {
 
 export function normalizeSentOffer(offer) {
   const { listing } = offer
+
   if (!listing) return null
 
   return {
@@ -20,6 +21,7 @@ export function normalizeSentOffer(offer) {
     relationType: 'SENT_OFFER',
     tradeOfferStatus: offer.status,
     listingStatus: listing.status,
+    badgeType: 'exchangePending',
     sellerNickname: listing.seller?.nickname,
     recipe: listing.recipe,
     remainingQuantity: listing.remainingQuantity,
