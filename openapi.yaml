@@ -1506,7 +1506,7 @@ components:
       type: object
       required:
         - id
-        - listingId
+        - listing
         - proposer
         - offeredCopy
         - status
@@ -1515,8 +1515,7 @@ components:
       properties:
         id:
           { type: integer, minimum: 1, description: 교환 제안 ID, example: 205 }
-        listingId:
-          { type: integer, minimum: 1, description: 판매글 ID, example: 101 }
+        listing: { $ref: '#/components/schemas/ListingSummary' }
         proposer: { $ref: '#/components/schemas/PublicUser' }
         offeredCopy: { $ref: '#/components/schemas/RecipeCopy' }
         receivedCopyId:
