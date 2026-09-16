@@ -1,3 +1,5 @@
+'use client'
+
 import Button from '@/components/common/Button/Button'
 import styles from '@/features/auth/AuthPage.module.css'
 import Image from 'next/image'
@@ -9,6 +11,17 @@ export default function AuthPageLayout({
   guideHref,
   guideLinkText,
 }) {
+  function handleGoogleLogin() {
+    const googleOAuthUrl = new URL(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/google`,
+    )
+    const redirectUri = `${window.location.origin}/marketplace`
+
+    googleOAuthUrl.searchParams.set('redirectUri', redirectUri)
+
+    window.location.href = googleOAuthUrl.toString()
+  }
+
   return (
     <main className={styles.page}>
       <div className={styles.container}>
@@ -25,7 +38,11 @@ export default function AuthPageLayout({
 
         {children}
 
-        <Button type="button" className={styles.googleButton}>
+        <Button
+          type="button"
+          className={styles.googleButton}
+          onClick={handleGoogleLogin}
+        >
           <Image src="/logos/google-logo.svg" alt="" width={22} height={22} />
           Google로 시작하기
         </Button>
