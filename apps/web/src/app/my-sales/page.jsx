@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -127,10 +127,10 @@ export default function MySalesPage() {
   const hasNext = hasNextListings || hasNextOffers
   const isFetchingNext = isFetchingNextListings || isFetchingNextOffers
 
-  function handleLoadMore() {
+  const handleLoadMore = useCallback(() => {
     if (hasNextListings) fetchNextListings()
     if (hasNextOffers) fetchNextOffers()
-  }
+  }, [hasNextListings, hasNextOffers, fetchNextListings, fetchNextOffers])
 
   const [sentinelRef, setSentinelRef] = useState(null)
 
@@ -148,7 +148,7 @@ export default function MySalesPage() {
 
     observer.observe(sentinelRef)
     return () => observer.disconnect()
-  }, [sentinelRef, hasNext, isFetchingNext])
+  }, [sentinelRef, hasNext, isFetchingNext, handleLoadMore])
 
   function handleKeywordChange(nextKeyword) {
     setKeyword(nextKeyword)
