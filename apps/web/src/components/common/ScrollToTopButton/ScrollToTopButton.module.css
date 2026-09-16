@@ -1,0 +1,43 @@
+.scrollTopButton {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 50%;
+
+  background: var(--color-main, #efff04);
+  color: var(--color-gray-500, #161616);
+  font-size: var(--font-size-20);
+  font-weight: var(--font-weight-bold);
+
+  cursor: pointer;
+  z-index: 900;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.scrollTopButton:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 743px) {
+  .scrollTopButton {
+    right: 16px;
+    bottom: 90px;
+
+    width: 40px;
+    height: 40px;
+    font-size: var(--font-size-16);
+  }
+}
