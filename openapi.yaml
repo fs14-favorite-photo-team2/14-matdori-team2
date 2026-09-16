@@ -1226,6 +1226,7 @@ components:
       required:
         - id
         - title
+        - creator
         - imageUrl
         - imageUrls
         - difficulty
@@ -1236,6 +1237,7 @@ components:
       properties:
         id: { type: integer, minimum: 1, description: 레시피 ID, example: 42 }
         title: { type: string, minLength: 1, maxLength: 100 }
+        creator: { $ref: '#/components/schemas/PublicUser' }
         imageUrl:
           {
             type: string,
@@ -1268,13 +1270,11 @@ components:
         - $ref: '#/components/schemas/RecipeSummary'
         - type: object
           required:
-            - creator
             - content
             - totalSupply
             - createdAt
             - updatedAt
           properties:
-            creator: { $ref: '#/components/schemas/PublicUser' }
             content:
               type: string
               minLength: 1
