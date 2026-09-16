@@ -10,6 +10,7 @@ export const recipeSummarySelect = {
   summary: true,
   minPrice: true,
   ingredients: true,
+  creator: { select: publicUserSelect },
 }
 
 export function toRecipeSummary({ imageUrls, ingredients, ...recipe }) {
@@ -41,9 +42,6 @@ export function countRecipesCreatedSince({ creatorId, since }) {
 
 export const recipeDetailSelect = {
   ...recipeSummarySelect,
-  creator: {
-    select: publicUserSelect,
-  },
   content: true,
   totalSupply: true,
   createdAt: true,

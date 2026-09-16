@@ -8,12 +8,16 @@ import {
 } from '../generated/prisma/enums.ts'
 import { CREATED_AT_ORDER_BY } from '../utils/sort-orders.js'
 import { findCursorPage } from './cursor-page.js'
+import {
+  listingSummarySelect,
+  toListingSummary,
+} from './market-listing-repository.js'
 import { recipeCopySelect, toRecipeCopy } from './recipe-copy-repository.js'
 import { publicUserSelect } from './user-repository.js'
 
 export const tradeOfferSelect = {
   id: true,
-  listingId: true,
+  listing: { select: listingSummarySelect },
   proposer: { select: publicUserSelect },
   offeredCopy: { select: recipeCopySelect },
   receivedCopyId: true,
@@ -23,8 +27,12 @@ export const tradeOfferSelect = {
   decidedAt: true,
 }
 
-export function toTradeOffer({ offeredCopy, ...tradeOffer }) {
-  return { ...tradeOffer, offeredCopy: toRecipeCopy(offeredCopy) }
+export function toTradeOffer({ listing, offeredCopy, ...tradeOffer }) {
+  return {
+    ...tradeOffer,
+    listing: toListingSummary(listing),
+    offeredCopy: toRecipeCopy(offeredCopy),
+  }
 }
 
 function findTradeOffers(where, { status, sort, cursor, limit }) {
