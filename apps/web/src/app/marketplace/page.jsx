@@ -9,6 +9,7 @@ import { SORT_OPTIONS } from '@/constants/SortOptions'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
+import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
 import {
   MOCK_REGISTERED_LISTINGS_KEY,
   MOCK_SALEABLE_RECIPES,
@@ -315,7 +316,10 @@ export default function MarketplacePage() {
         </section>
 
         {isPending ? (
-          <p className={styles.listState}>레시피를 불러오는 중...</p>
+          <LoadingIndicator
+            variant="page"
+            message="레시피를 불러오는 중입니다"
+          />
         ) : marketListings.length === 0 ? (
           <p className={styles.listState}>조건에 맞는 레시피가 없습니다.</p>
         ) : (
@@ -346,9 +350,7 @@ export default function MarketplacePage() {
               <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
             )}
 
-            {isFetchingNextPage && (
-              <p className={styles.nextPageState}>레시피를 더 불러오는 중...</p>
-            )}
+            {isFetchingNextPage && <LoadingIndicator variant="list" />}
 
             {isFetchNextPageError && (
               <div className={styles.nextPageError}>

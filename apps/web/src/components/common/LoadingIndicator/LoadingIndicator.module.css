@@ -1,0 +1,14 @@
+.loadingText {
+  text-align: center;
+  color: var(--color-gray-500);
+}
+
+.page {
+  padding: 40px 0;
+  font-size: var(--font-size-md);
+}
+
+.list {
+  padding: 16px 0;
+  font-size: var(--font-size-sm);
+}
