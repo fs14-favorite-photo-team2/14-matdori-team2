@@ -28,3 +28,26 @@ export async function getMarketListings({
 
   return response.data
 }
+export async function getMarketListing(listingId) {
+  const response = await api.get(`/market-listings/${listingId}`)
+  return response.data.data
+}
+
+export async function createMarketListing(data) {
+  const response = await api.post('/market-listings', data)
+  return response.data.data
+}
+
+export async function updateMarketListing(listingId, data) {
+  const response = await api.patch(`/market-listings/${listingId}`, data)
+  return response.data.data
+}
+
+export async function withdrawMarketListing(listingId) {
+  await api.post(`/market-listings/${listingId}/withdraw`)
+}
+
+export async function purchaseMarketListing(listingId) {
+  const response = await api.post(`/market-listings/${listingId}/purchases`)
+  return response.data.data
+}
