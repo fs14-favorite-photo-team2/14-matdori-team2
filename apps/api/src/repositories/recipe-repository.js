@@ -8,7 +8,6 @@ export const recipeSummarySelect = {
   difficulty: true,
   category: true,
   summary: true,
-  minPrice: true,
   ingredients: true,
 }
 
@@ -65,7 +64,6 @@ export function createRecipeRecord({
   title,
   imageUrls,
   ingredients,
-  minPrice,
   difficulty,
   category,
   summary,
@@ -78,7 +76,6 @@ export function createRecipeRecord({
       title,
       imageUrls,
       ingredients,
-      minPrice,
       difficulty,
       category,
       summary,

@@ -11,7 +11,6 @@ const marketListingSelect = {
       difficulty: true,
       category: true,
       summary: true,
-      minPrice: true,
       imageUrls: true,
       ingredients: true,
     },
