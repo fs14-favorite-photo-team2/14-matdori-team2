@@ -1,6 +1,10 @@
+'use client'
+
+import { useState } from 'react'
 import Image from 'next/image'
 import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
 import styles from './RecipeCard.module.css'
+const DEFAULT_THUMBNAIL = '/images/recipe-placeholder-4x3.png'
 
 const BADGE_LABELS = {
   selling: '판매 중',
@@ -41,6 +45,7 @@ export default function RecipeCard({
   const difficultyClassName =
     DIFFICULTY_CLASS_NAMES[difficultyOption?.tone] ?? ''
   const categoryLabel = categoryOption?.label ?? category
+  const [imageSrc, setImageSrc] = useState(thumbnailUrl || DEFAULT_THUMBNAIL)
 
   return (
     <article className={styles.card}>
@@ -59,10 +64,11 @@ export default function RecipeCard({
           className={`${styles.recipeImage} ${
             isSoldOut ? styles.soldOutImage : ''
           }`}
-          src={thumbnailUrl}
+          src={imageSrc}
           alt={title}
           width={500}
           height={375}
+          onError={() => setImageSrc(DEFAULT_THUMBNAIL)}
         />
         {isSoldOut && (
           <Image
