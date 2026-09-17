@@ -30,9 +30,10 @@ function cropImageToFile(img, zoom, fileName) {
     const canvas = document.createElement('canvas')
     canvas.width = OUTPUT_WIDTH
     canvas.height = OUTPUT_HEIGHT
-    const ctx = canvas.getContext('2d')
 
+    const ctx = canvas.getContext('2d')
     const { naturalWidth, naturalHeight } = img
+
     const coverScale = Math.max(
       OUTPUT_WIDTH / naturalWidth,
       OUTPUT_HEIGHT / naturalHeight,
@@ -53,8 +54,11 @@ function cropImageToFile(img, zoom, fileName) {
           resolve(null)
           return
         }
+
         resolve(
-          new File([blob], fileName || 'cropped.jpg', { type: 'image/jpeg' }),
+          new File([blob], fileName || 'cropped.jpg', {
+            type: 'image/jpeg',
+          }),
         )
       },
       'image/jpeg',
@@ -63,7 +67,11 @@ function cropImageToFile(img, zoom, fileName) {
   })
 }
 
-export default function ImageUploader({ onChange, onProcessingChange }) {
+export default function ImageUploader({
+  onChange,
+  onProcessingChange,
+  initialCount = 0,
+}) {
   const inputRef = useRef(null)
   const imgRefs = useRef({})
 
@@ -76,7 +84,11 @@ export default function ImageUploader({ onChange, onProcessingChange }) {
     onProcessingChange?.(processingIds.size > 0)
   }, [processingIds, onProcessingChange])
 
-  const activeImage = images.find((img) => img.id === activeId) ?? null
+  const effectiveActiveId = images.some((img) => img.id === activeId)
+    ? activeId
+    : (images[0]?.id ?? null)
+
+  const activeImage = images.find((img) => img.id === effectiveActiveId) ?? null
   const zoomPercent = activeImage
     ? Math.round((activeImage.zoom / MIN_ZOOM) * 100)
     : 100
@@ -92,6 +104,11 @@ export default function ImageUploader({ onChange, onProcessingChange }) {
     }
   }, [])
 
+  useEffect(() => {
+    onChange?.(images.map((img) => img.croppedFile))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images])
+
   const ALLOWED_IMAGE_TYPES = new Set([
     'image/jpeg',
     'image/png',
@@ -105,10 +122,6 @@ export default function ImageUploader({ onChange, onProcessingChange }) {
       return 'JPEG, PNG, WebP, HEIC, HEIF 이미지 파일만 업로드할 수 있습니다.'
     }
     return ''
-  }
-
-  function emitChange(imageList) {
-    onChange?.(imageList.map((img) => img.croppedFile))
   }
 
   function handleSelectClick() {
@@ -147,7 +160,6 @@ export default function ImageUploader({ onChange, onProcessingChange }) {
     const updated = [...images, ...newImages]
     setImages(updated)
     setActiveId(newImages[0].id)
-    emitChange(updated)
 
     setProcessingIds((prev) => {
       const next = new Set(prev)
@@ -166,27 +178,17 @@ export default function ImageUploader({ onChange, onProcessingChange }) {
           )
           if (!croppedFile) return
 
-          setImages((prev) => {
-            const next = prev.map((img) =>
+          setImages((prev) =>
+            prev.map((img) =>
               img.id === newImg.id ? { ...img, croppedFile } : img,
-            )
-            emitChange(next)
-            return next
-          })
+            ),
+          )
         } catch (err) {
           console.error('이미지 크롭 실패:', err)
           setError(
             '이미지를 처리하는 중 문제가 발생했습니다. 다시 시도해주세요.',
           )
-          // 실패한 이미지는 목록/선택에서 제거
-          setImages((prev) => {
-            const next = prev.filter((img) => img.id !== newImg.id)
-            emitChange(next)
-            setActiveId((current) =>
-              current === newImg.id ? (next[0]?.id ?? null) : current,
-            )
-            return next
-          })
+          setImages((prev) => prev.filter((img) => img.id !== newImg.id))
           URL.revokeObjectURL(newImg.previewUrl)
         } finally {
           setProcessingIds((prev) => {
@@ -209,10 +211,6 @@ export default function ImageUploader({ onChange, onProcessingChange }) {
 
     const updated = images.filter((img) => img.id !== id)
     setImages(updated)
-    setActiveId((current) =>
-      current === id ? (updated[0]?.id ?? null) : current,
-    )
-    emitChange(updated)
 
     setProcessingIds((prev) => {
       if (!prev.has(id)) return prev
@@ -241,13 +239,9 @@ export default function ImageUploader({ onChange, onProcessingChange }) {
     cropImageToFile(imgEl, activeImage.zoom, activeImage.rawFile?.name)
       .then((croppedFile) => {
         if (!croppedFile) return
-        setImages((prev) => {
-          const next = prev.map((img) =>
-            img.id === id ? { ...img, croppedFile } : img,
-          )
-          emitChange(next)
-          return next
-        })
+        setImages((prev) =>
+          prev.map((img) => (img.id === id ? { ...img, croppedFile } : img)),
+        )
       })
       .catch((err) => {
         console.error('줌 크롭 실패:', err)
@@ -337,7 +331,7 @@ export default function ImageUploader({ onChange, onProcessingChange }) {
           {images.map((img, index) => (
             <div
               key={img.id}
-              className={`${styles.thumbnail} ${img.id === activeId ? styles.thumbnailActive : ''}`}
+              className={`${styles.thumbnail} ${img.id === effectiveActiveId ? styles.thumbnailActive : ''}`}
               onClick={() => handleSelectThumbnail(img.id)}
             >
               <img
@@ -369,7 +363,7 @@ export default function ImageUploader({ onChange, onProcessingChange }) {
       )}
 
       <p className={styles.countText}>
-        {images.length} / {MAX_IMAGES}
+        {images.length > 0 ? images.length : initialCount} / {MAX_IMAGES}
       </p>
 
       {error && <p className={styles.errorText}>{error}</p>}
