@@ -1,23 +1,13 @@
-function sessionOperation(run) {
-  return new Promise((resolve, reject) => {
-    run((error) => {
-      if (error) {
-        reject(error)
-      } else {
-        resolve()
-      }
-    })
-  })
-}
+import { promisify } from 'node:util'
 
 export function regenerateSession(session) {
-  return sessionOperation((done) => session.regenerate(done))
+  return promisify(session.regenerate.bind(session))()
 }
 
 export function saveSession(session) {
-  return sessionOperation((done) => session.save(done))
+  return promisify(session.save.bind(session))()
 }
 
 export function destroySession(session) {
-  return sessionOperation((done) => session.destroy(done))
+  return promisify(session.destroy.bind(session))()
 }

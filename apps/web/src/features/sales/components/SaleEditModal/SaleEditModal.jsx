@@ -1,12 +1,17 @@
 import SaleRegistrationModal from '../SaleRegistrationModal/SaleRegistrationModal'
 
-export default function SaleEditModal({ isOpen, onClose, onSubmit, listing }) {
+export default function SaleEditModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  listing,
+  isPending = false,
+}) {
   if (!isOpen || !listing) return null
 
   // 기존 판매글에 남은 수량과 별도로 판매 가능한 보유 수량을 합친 수정 가능 최대 수량
   // 이미 판매된 수량(initialQuantity - remainingQuantity)은 다시 판매할 수 없으므로 포함하지 않는다.
-  const maxSaleQuantity =
-    listing.remainingQuantity + (listing.availableOwnedQuantity ?? 0)
+  const maxSaleQuantity = listing.maximumQuantity ?? listing.remainingQuantity
 
   const selectedRecipe = {
     recipeId: listing.recipe.id,
@@ -42,6 +47,7 @@ export default function SaleEditModal({ isOpen, onClose, onSubmit, listing }) {
       selectedRecipe={selectedRecipe}
       mode="edit"
       initialValues={initialValues}
+      isPending={isPending}
     />
   )
 }

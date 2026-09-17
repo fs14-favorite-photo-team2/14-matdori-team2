@@ -5,6 +5,7 @@ import { basename, join } from 'node:path'
 
 import sharp from 'sharp'
 
+import { env } from '../config/env.js'
 import { ERROR_CODES } from '../constants/error-codes.js'
 import { AppError } from '../errors/app-error.js'
 
@@ -12,8 +13,6 @@ const RECIPE_IMAGE_URL_PREFIX = '/uploads/recipes/'
 const RECIPE_IMAGE_DIRECTORY = fileURLToPath(
   new URL('../../uploads/recipes/', import.meta.url),
 )
-
-const API_ORIGIN = process.env.API_ORIGIN ?? 'http://localhost:3001'
 
 const MAX_IMAGE_WIDTH = 1600
 const MAX_IMAGE_HEIGHT = 1600
@@ -48,7 +47,7 @@ export async function saveRecipeImages(files) {
 
       const imageUrl = new URL(
         `${RECIPE_IMAGE_URL_PREFIX}${filename}`,
-        API_ORIGIN,
+        env.apiOrigin,
       ).toString()
 
       savedImages.push({
