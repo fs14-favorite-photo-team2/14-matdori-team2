@@ -1,21 +1,11 @@
 import { prisma } from '../db/prisma.js'
+import { recipeSummarySelect } from './recipe-repository.js'
 import { cancelPendingTradeOffers } from './trade-offer-repository.js'
 
 // 공통으로 불러올 필드 부분
 const marketListingSelect = {
   id: true,
-  recipe: {
-    select: {
-      id: true,
-      title: true,
-      difficulty: true,
-      category: true,
-      summary: true,
-      minPrice: true,
-      imageUrls: true,
-      ingredients: true,
-    },
-  },
+  recipe: { select: recipeSummarySelect },
   seller: {
     select: {
       id: true,
