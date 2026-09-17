@@ -36,7 +36,7 @@ const DIFFICULTY_CLASS_NAMES = {
   master: styles.difficultyMaster,
 }
 
-function MarketplaceListingContent({ listing, currentUserId }) {
+function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
   const isSeller = currentUserId === listing.seller.id
   const { recipe, seller } = listing
   const thumbnailUrl = recipe.imageUrls[0]
@@ -169,6 +169,7 @@ function MarketplaceListingContent({ listing, currentUserId }) {
     purchaseMutation.mutate(listing.id, {
       onSuccess: () => {
         setIsPurchaseModalOpen(false)
+        onPurchased?.()
 
         const params = new URLSearchParams({
           difficultyLabel: difficultyOption?.label ?? recipe.difficulty,
@@ -532,7 +533,11 @@ function MarketplaceListingContent({ listing, currentUserId }) {
 
 export default function MarketplaceListingPage() {
   const { listingId } = useParams()
-  const { user, isLoading: isUserLoading } = useCurrentUser()
+  const {
+    user,
+    isLoading: isUserLoading,
+    refetch: refetchCurrentUser,
+  } = useCurrentUser()
 
   const {
     data: listing,
@@ -571,9 +576,6 @@ export default function MarketplaceListingPage() {
         onAction={refetch}
         isActionLoading={isRefetching}
         actionLoadingLabel="불러오는 중..."
-        hasNextPage={
-          Boolean(hasNextRecipeCopiesPage) && !isRecipeCopiesNextPageError
-        }
       />
     )
   }
@@ -588,6 +590,10 @@ export default function MarketplaceListingPage() {
   }
 
   return (
-    <MarketplaceListingContent listing={listing} currentUserId={user?.id} />
+    <MarketplaceListingContent
+      listing={listing}
+      currentUserId={user?.id}
+      onPurchased={refetchCurrentUser}
+    />
   )
 }

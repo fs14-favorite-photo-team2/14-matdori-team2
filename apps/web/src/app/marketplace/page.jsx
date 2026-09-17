@@ -469,7 +469,9 @@ export default function MarketplacePage() {
       <RandomPointModal
         isOpen={isRandomPointModalOpen}
         onClose={() => setIsRandomPointModalOpen(false)}
-        onClaimed={(currentPoints) => {}}
+        onClaimed={() => {
+          refetchCurrentUser()
+        }}
       />
     </main>
   )
