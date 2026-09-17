@@ -6,6 +6,8 @@ import Modal from '@/components/common/Modal/Modal'
 import SearchBar from '@/components/common/SearchBar/SearchBar'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
+import ScrollToTopButton from '@/components/common/ScrollToTopButton/ScrollToTopButton'
+import scrollTopStyles from '@/components/common/ScrollToTopButton/ScrollToTopButton.module.css'
 import {
   DEFAULT_FILTERS,
   MY_KITCHEN_FILTER_GROUPS,
@@ -202,6 +204,11 @@ export default function RecipeSelectionModal({
       {isFetchingNextPage && (
         <p className={styles.emptyText}>레시피를 더 불러오는 중...</p>
       )}
+
+      <ScrollToTopButton
+        scrollTargetRef={modalScrollRef}
+        className={scrollTopStyles.inModal}
+      />
     </Modal>
   )
 }
