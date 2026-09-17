@@ -34,10 +34,29 @@ const DIFFICULTY_CLASS_NAMES = {
   master: styles.difficultyMaster,
 }
 
+const DEFAULT_THUMBNAIL_URL = '/images/default-recipe.png'
+
+function TradeOfferThumbnail({ src, alt, className }) {
+  const [imageSrc, setImageSrc] = useState(src || DEFAULT_THUMBNAIL_URL)
+
+  return (
+    <Image
+      src={imageSrc}
+      alt={alt}
+      fill
+      sizes="(max-width: 1023px) 50vw, 360px"
+      className={className}
+      onError={() => setImageSrc(DEFAULT_THUMBNAIL_URL)}
+    />
+  )
+}
+
 function MarketplaceListingContent({ listing, currentUserId }) {
   const isSeller = currentUserId === listing.seller.id
   const { recipe, seller } = listing
-  const thumbnailUrl = recipe.imageUrls[0] || '/images/default-recipe.png'
+  const [thumbnailSrc, setThumbnailSrc] = useState(
+    recipe.imageUrls[0] || DEFAULT_THUMBNAIL_URL,
+  )
   const difficultyOption = DIFFICULTY_OPTIONS.find(
     (option) => option.value === recipe.difficulty,
   )
@@ -298,12 +317,13 @@ function MarketplaceListingContent({ listing, currentUserId }) {
         <section className={styles.productSection}>
           <div className={styles.imageWrapper}>
             <Image
-              src={thumbnailUrl}
+              src={thumbnailSrc}
               alt={recipe.title}
-              fill //화면 꽉채우기
-              preload //우선순위
+              fill
+              preload
               sizes="(max-width: 743px) 100vw, (max-width: 1023px) 50vw, 780px"
               className={styles.thumbnail}
+              onError={() => setThumbnailSrc(DEFAULT_THUMBNAIL_URL)}
             />
           </div>
           <div className={styles.productInfo}>
@@ -402,8 +422,6 @@ function MarketplaceListingContent({ listing, currentUserId }) {
             <div className={styles.myTradeList}>
               {tradeOffers.map((tradeOffer) => {
                 const offeredRecipe = tradeOffer.offeredCopy.recipe
-                const offeredThumbnailUrl =
-                  offeredRecipe.imageUrls[0] || '/images/default-recipe.png'
                 const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
                   (option) => option.value === offeredRecipe.difficulty,
                 )
@@ -418,11 +436,9 @@ function MarketplaceListingContent({ listing, currentUserId }) {
                 return (
                   <article key={tradeOffer.id} className={styles.tradeCard}>
                     <div className={styles.tradeImageWrapper}>
-                      <Image
-                        src={offeredThumbnailUrl}
+                      <TradeOfferThumbnail
+                        src={offeredRecipe.imageUrls[0]}
                         alt={offeredRecipe.title}
-                        fill
-                        sizes="(max-width: 1023px) 50vw, 360px"
                         className={styles.tradeImage}
                       />
                     </div>
