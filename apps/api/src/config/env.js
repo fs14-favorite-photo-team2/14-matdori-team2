@@ -19,6 +19,14 @@ const missingGoogleOAuthVariables = [
   'GOOGLE_CALLBACK_URL',
 ].filter((name) => !process.env[name])
 
+const missingCloudinaryVariables = [
+  ['CLOUDINARY_CLOUD_NAME', process.env.CLOUDINARY_CLOUD_NAME],
+  ['CLOUDINARY_API_KEY', process.env.CLOUDINARY_API_KEY],
+  ['CLOUDINARY_API_SECRET', process.env.CLOUDINARY_API_SECRET],
+]
+  .filter(([, value]) => !value)
+  .map(([name]) => name)
+
 export const env = Object.freeze({
   isProduction: process.env.NODE_ENV === 'production',
   port: Number(process.env.PORT ?? 3001),
@@ -37,6 +45,12 @@ export const env = Object.freeze({
       process.env.GOOGLE_OAUTH_SUCCESS_REDIRECT ?? clientOrigins[0],
     isConfigured: missingGoogleOAuthVariables.length === 0,
     missingVariables: Object.freeze(missingGoogleOAuthVariables),
+  }),
+  cloudinary: Object.freeze({
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? '',
+    apiKey: process.env.CLOUDINARY_API_KEY ?? '',
+    apiSecret: process.env.CLOUDINARY_API_SECRET ?? '',
+    missingVariables: Object.freeze(missingCloudinaryVariables),
   }),
 })
 
@@ -63,6 +77,12 @@ export function validateServerEnv() {
   if (env.isProduction && !env.googleOAuth.isConfigured) {
     throw new Error(
       `${env.googleOAuth.missingVariables.join(', ')} 환경 변수가 필요합니다.`,
+    )
+  }
+
+  if (env.cloudinary.missingVariables.length > 0) {
+    throw new Error(
+      `${env.cloudinary.missingVariables.join(', ')} 환경 변수가 필요합니다.`,
     )
   }
 }
