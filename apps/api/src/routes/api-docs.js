@@ -4,6 +4,7 @@ import swaggerUi from 'swagger-ui-express'
 import YAML from 'yaml'
 
 import { env } from '../config/env.js'
+import { logger } from '../utils/logger.js'
 
 const apiDocsRouter = Router()
 
@@ -23,8 +24,9 @@ if (!env.isProduction) {
       }),
     )
   } catch (error) {
-    console.warn(
-      `openapi.yaml을 읽지 못해 /docs를 비활성화합니다: ${error.message}`,
+    logger.warn(
+      { err: error },
+      'API docs disabled because openapi.yaml could not be read',
     )
   }
 }
