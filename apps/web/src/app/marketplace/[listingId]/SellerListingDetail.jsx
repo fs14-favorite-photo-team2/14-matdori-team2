@@ -22,6 +22,7 @@ import {
   useRejectTradeOffer,
 } from '@/features/exchanges/useTradeOfferMutations'
 import useInfiniteScroll from '@/hooks/useInfiniteScroll'
+import { SALE_EDIT_DETAIL_ERROR_MATCHERS } from '@/constants/ApiErrorMessages'
 
 const DIFFICULTY_CLASS_NAMES = {
   easy: styles.difficultyEasy,
@@ -122,7 +123,13 @@ export default function SellerListingDetail({ listing }) {
         },
 
         onError: (error) => {
-          showToast(getApiErrorMessage(error, '판매글을 수정하지 못했습니다.'))
+          showToast(
+            getApiErrorMessage(
+              error,
+              '판매글을 수정하지 못했습니다.',
+              SALE_EDIT_DETAIL_ERROR_MATCHERS,
+            ),
+          )
         },
       },
     )
