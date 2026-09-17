@@ -24,6 +24,7 @@ import useDebouncedValue from '@/hooks/useDebouncedValue'
 import ErrorState from '@/components/common/ErrorState/ErrorState'
 import getApiErrorMessage from '@/utils/getApiErrorMessage'
 import useCurrentUser from '@/features/auth/useCurrentUser'
+import ScrollToTopButton from '@/components/common/ScrollToTopButton/ScrollToTopButton'
 import styles from './page.module.css'
 
 const DESKTOP_PAGE_SIZE = 12
@@ -371,6 +372,8 @@ export default function MarketplacePage() {
           </>
         )}
       </div>
+      <ScrollToTopButton />
+
       <LoginRequiredModal
         isOpen={isLoginRequiredModalOpen}
         onClose={() => setIsLoginRequiredModalOpen(false)}

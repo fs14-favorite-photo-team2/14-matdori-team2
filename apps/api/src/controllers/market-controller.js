@@ -25,7 +25,10 @@ export async function getMarketListingsController(request, response, next) {
 // 판매글 상세 조회
 export async function getMarketListingController(request, response, next) {
   try {
-    const listing = await getMarketListing(request.validated.params.listingId)
+    const listing = await getMarketListing(
+      request.userId,
+      request.validated.params.listingId,
+    )
 
     return sendSuccess(response, listing)
   } catch (error) {
