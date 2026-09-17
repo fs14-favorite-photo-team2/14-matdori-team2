@@ -10,6 +10,7 @@
 }
 
 .toastWrapper {
+  z-index: 200;
   position: absolute;
   top: 48px;
   left: 50%;
