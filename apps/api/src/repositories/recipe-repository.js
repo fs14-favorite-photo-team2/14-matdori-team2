@@ -8,7 +8,6 @@ export const recipeSummarySelect = {
   difficulty: true,
   category: true,
   summary: true,
-  minPrice: true,
   ingredients: true,
   creator: { select: publicUserSelect },
 }
@@ -42,6 +41,9 @@ export function countRecipesCreatedSince({ creatorId, since }) {
 
 export const recipeDetailSelect = {
   ...recipeSummarySelect,
+  creator: {
+    select: publicUserSelect,
+  },
   content: true,
   totalSupply: true,
   createdAt: true,
@@ -63,7 +65,6 @@ export function createRecipeRecord({
   title,
   imageUrls,
   ingredients,
-  minPrice,
   difficulty,
   category,
   summary,
@@ -76,7 +77,6 @@ export function createRecipeRecord({
       title,
       imageUrls,
       ingredients,
-      minPrice,
       difficulty,
       category,
       summary,
@@ -102,6 +102,8 @@ export function findRecipeDetailById(recipeId, userId) {
     },
     select: {
       ...recipeDetailSelect,
+
+      // 현재 사용자가 가진 사본 수
       _count: {
         select: {
           copies: {
@@ -110,6 +112,37 @@ export function findRecipeDetailById(recipeId, userId) {
             },
           },
         },
+      },
+
+      // 판매 또는 교환이 완료된 사본이 있는지 확인
+      copies: {
+        where: {
+          OR: [
+            {
+              purchases: {
+                some: {},
+              },
+            },
+            {
+              offeredInTrades: {
+                some: {
+                  status: 'ACCEPTED',
+                },
+              },
+            },
+            {
+              receivedInTrades: {
+                some: {
+                  status: 'ACCEPTED',
+                },
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+        },
+        take: 1,
       },
     },
   })
