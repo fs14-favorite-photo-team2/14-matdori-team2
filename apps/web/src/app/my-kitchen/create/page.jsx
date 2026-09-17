@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
+import { useQueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/queryKeys'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/common/Button/Button'
 import FormSelect from '@/components/common/FormSelect/FormSelect'
@@ -23,6 +24,7 @@ function createEmptyIngredient() {
 
 export default function CreateRecipePage() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [title, setTitle] = useState('')
   const [difficulty, setDifficulty] = useState('')
   const [category, setCategory] = useState('')
@@ -30,6 +32,7 @@ export default function CreateRecipePage() {
   const [summary, setSummary] = useState('')
   const [content, setContent] = useState('')
   const [imageFiles, setImageFiles] = useState([])
+  const [isImageProcessing, setIsImageProcessing] = useState(false)
   const [ingredients, setIngredients] = useState(() =>
     Array.from({ length: 2 }, () => createEmptyIngredient()),
   )
@@ -58,6 +61,7 @@ export default function CreateRecipePage() {
     category !== '' &&
     isSupplyValid &&
     imageFiles.length > 0 &&
+    !isImageProcessing &&
     summary.trim() !== '' &&
     content.trim() !== '' &&
     isIngredientListValid(ingredients) &&
@@ -116,10 +120,14 @@ export default function CreateRecipePage() {
         })),
       ),
     )
+    // TODO: minPrice 입력 UI 추가되면 제거 - 백엔드 테스트용 임시 고정값
+    formData.append('minPrice', '1')
     imageFiles.forEach((file) => formData.append('images', file))
 
     try {
       const { data: result } = await api.post('/recipes', formData)
+
+      queryClient.invalidateQueries({ queryKey: queryKeys.myKitchen.all })
 
       const difficultyLabel =
         DIFFICULTY_OPTIONS.find((option) => option.value === difficulty)
@@ -212,7 +220,10 @@ export default function CreateRecipePage() {
           <span className={styles.label}>
             사진 업로드(첫 번째로 업로드한 사진이 썸네일로 지정됩니다.)
           </span>
-          <ImageUploader onChange={setImageFiles} />
+          <ImageUploader
+            onChange={setImageFiles}
+            onProcessingChange={setIsImageProcessing}
+          />
         </div>
 
         <div className={styles.field}>
@@ -315,7 +326,11 @@ export default function CreateRecipePage() {
           className={styles.submitButton}
           disabled={!isFormValid || isSubmitting}
         >
-          {isSubmitting ? '생성 중...' : '생성하기'}
+          {isSubmitting
+            ? '생성 중...'
+            : isImageProcessing
+              ? '이미지 처리 중...'
+              : '생성하기'}
         </Button>
       </form>
     </div>
