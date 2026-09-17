@@ -16,6 +16,7 @@ import {
 import SearchBar from '@/components/common/SearchBar/SearchBar'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
+import ScrollToTopButton from '@/components/common/ScrollToTopButton/ScrollToTopButton'
 import {
   DIFFICULTY_OPTIONS,
   DEFAULT_FILTERS,
@@ -283,6 +284,7 @@ export default function MySalesPage() {
       )}
 
       <div ref={setSentinelRef} className={styles.sentinel} />
+      <ScrollToTopButton />
     </div>
   )
 }
