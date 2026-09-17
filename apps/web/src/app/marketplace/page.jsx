@@ -263,6 +263,15 @@ export default function MarketplacePage() {
       },
 
       onError: (error) => {
+        const status = error.response?.status
+
+        if (!status || status >= 500) {
+          setSelectedRecipe(null)
+          setIsSaleModalOpen(false)
+          router.push('/my-sales/register/failure')
+          return
+        }
+
         showToast(getApiErrorMessage(error, '판매글을 등록하지 못했습니다.'))
       },
     })
