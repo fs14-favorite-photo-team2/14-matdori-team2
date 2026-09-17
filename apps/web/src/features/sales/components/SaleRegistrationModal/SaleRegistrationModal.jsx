@@ -12,6 +12,7 @@ export default function SaleRegistrationModal({
   isOpen,
   onClose,
   onSubmit,
+  isPending = false,
   selectedRecipe,
   mode = 'create',
   initialValues,
@@ -278,9 +279,15 @@ export default function SaleRegistrationModal({
           type="button"
           variant="primary"
           onClick={handleSubmit}
-          disabled={!isFormValid}
+          disabled={!isFormValid || isPending}
         >
-          {isEditMode ? '수정하기' : '판매하기'}
+          {isPending
+            ? isEditMode
+              ? '수정 중...'
+              : '등록 중...'
+            : isEditMode
+              ? '수정하기'
+              : '판매하기'}
         </Button>
       </footer>
     </Modal>
