@@ -1,6 +1,7 @@
 'use client'
 
 import Toast from '@/components/common/Toast/Toast'
+import serviceIcon from '@/app/icon.png'
 import { logout } from '@/features/auth/api'
 import useCurrentUser, {
   CURRENT_USER_QUERY_KEY,
@@ -204,6 +205,14 @@ export default function Header() {
           href={isAuthenticated ? '/marketplace' : '/'}
           className={styles.logoLink}
         >
+          <Image
+            src={serviceIcon}
+            alt=""
+            width={60}
+            height={60}
+            className={styles.serviceIcon}
+          />
+
           <Image
             src="/logos/matdori-logo.svg"
             alt="맛도리 마켓"
