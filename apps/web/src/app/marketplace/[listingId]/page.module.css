@@ -72,6 +72,21 @@
   object-fit: cover;
 }
 
+.soldOutImage {
+  filter: brightness(0.45);
+}
+
+.soldOutBadge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  width: 24%;
+  max-width: 160px;
+  height: auto;
+  transform: translate(-50%, -50%);
+}
+
 .productInfo {
   min-width: 0;
 }

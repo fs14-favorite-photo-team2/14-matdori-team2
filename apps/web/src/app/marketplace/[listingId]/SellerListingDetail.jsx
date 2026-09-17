@@ -86,6 +86,8 @@ export default function SellerListingDetail({ listing }) {
   const imageCount = recipe.imageUrls.length
   const currentImageUrl = recipe.imageUrls[currentImageIndex]
   const hasMultipleImages = imageCount > 1
+  const isSoldOut =
+    listing.status === 'SOLD_OUT' || listing.remainingQuantity === 0
   const isExchangeAvailable = listing.listingType === 'BOTH'
 
   function handlePreviousImage() {
@@ -236,8 +238,20 @@ export default function SellerListingDetail({ listing }) {
               fill
               preload
               sizes="(max-width: 743px) 100vw, (max-width: 1023px) 50vw, 780px"
-              className={styles.thumbnail}
+              className={`${styles.thumbnail} ${
+                isSoldOut ? styles.soldOutImage : ''
+              }`}
             />
+
+            {isSoldOut && (
+              <Image
+                className={styles.soldOutBadge}
+                src="/icons/sold-out.svg"
+                alt="품절"
+                width={160}
+                height={160}
+              />
+            )}
 
             {hasMultipleImages && (
               <>

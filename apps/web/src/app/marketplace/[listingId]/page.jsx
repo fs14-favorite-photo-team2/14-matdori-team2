@@ -57,7 +57,7 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
   } = useSentTradeOffers({ status: 'PENDING' }, { enabled: !isSeller })
 
   const tradeOffers = sentTradeOffers.filter(
-    (tradeOffer) => Number(tradeOffer.listingId) === Number(listing.id),
+    (tradeOffer) => Number(tradeOffer.listing?.id) === Number(listing.id),
   )
   const tradeOfferSentinelRef = useInfiniteScroll({
     hasMore: Boolean(hasNextPage),
@@ -308,8 +308,20 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
               fill //화면 꽉채우기
               preload //우선순위
               sizes="(max-width: 743px) 100vw, (max-width: 1023px) 50vw, 780px"
-              className={styles.thumbnail}
+              className={`${styles.thumbnail} ${
+                isSoldOut ? styles.soldOutImage : ''
+              }`}
             />
+
+            {isSoldOut && (
+              <Image
+                className={styles.soldOutBadge}
+                src="/icons/sold-out.svg"
+                alt="품절"
+                width={160}
+                height={160}
+              />
+            )}
           </div>
           <div className={styles.productInfo}>
             <div className={styles.metaRow}>
