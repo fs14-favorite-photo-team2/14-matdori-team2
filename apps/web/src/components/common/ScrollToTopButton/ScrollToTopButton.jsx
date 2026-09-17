@@ -5,24 +5,36 @@ import styles from './ScrollToTopButton.module.css'
 
 const SHOW_THRESHOLD = 300
 
-export default function ScrollToTopButton() {
+export default function ScrollToTopButton({ scrollTargetRef, className }) {
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
+    const target = scrollTargetRef?.current ?? window
+
+    function getScrollTop() {
+      return scrollTargetRef?.current
+        ? scrollTargetRef.current.scrollTop
+        : window.scrollY
+    }
+
     function handleScroll() {
-      setIsVisible(window.scrollY > SHOW_THRESHOLD)
+      setIsVisible(getScrollTop() > SHOW_THRESHOLD)
     }
 
     handleScroll()
-    window.addEventListener('scroll', handleScroll)
+    target.addEventListener('scroll', handleScroll)
 
     return () => {
-      window.removeEventListener('scroll', handleScroll)
+      target.removeEventListener('scroll', handleScroll)
     }
-  }, [])
+  }, [scrollTargetRef])
 
   function handleClick() {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (scrollTargetRef?.current) {
+      scrollTargetRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
 
   if (!isVisible) return null
@@ -30,7 +42,7 @@ export default function ScrollToTopButton() {
   return (
     <button
       type="button"
-      className={styles.scrollTopButton}
+      className={`${styles.scrollTopButton} ${className ?? ''}`}
       onClick={handleClick}
       aria-label="맨 위로 이동"
     >

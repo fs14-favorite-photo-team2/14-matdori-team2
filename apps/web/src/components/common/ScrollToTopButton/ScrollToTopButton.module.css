@@ -29,6 +29,13 @@
   transform: translateY(-2px);
 }
 
+.inModal {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 10;
+}
+
 @media (max-width: 743px) {
   .scrollTopButton {
     right: 16px;
@@ -37,5 +44,9 @@
     width: 40px;
     height: 40px;
     font-size: var(--font-size-16);
+  }
+
+  .inModal {
+    bottom: 16px;
   }
 }
