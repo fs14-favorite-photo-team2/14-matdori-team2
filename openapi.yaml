@@ -1271,6 +1271,7 @@ components:
             - totalSupply
             - createdAt
             - updatedAt
+            - canEdit
           properties:
             creator: { $ref: '#/components/schemas/PublicUser' }
             content:
@@ -1290,6 +1291,11 @@ components:
               minItems: 1
               items:
                 $ref: '#/components/schemas/Ingredient'
+            canEdit:
+              type: boolean
+              description: >-
+                현재 사용자가 레시피를 수정할 수 있는지 나타냅니다.
+                작성자 본인이면서 판매 또는 교환 완료 이력이 없을 때 true입니다.
     PublicUser:
       type: object
       required: [id, nickname]

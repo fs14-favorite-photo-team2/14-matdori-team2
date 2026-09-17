@@ -33,7 +33,10 @@ export async function createRecipe(userId, input, files) {
     throw AppError.from(ERROR_CODES.INTERNAL_SERVER_ERROR)
   }
 
-  return toRecipeDetail(recipe)
+  return {
+    ...toRecipeDetail(recipe),
+    canEdit: true,
+  }
 }
 
 // id 상세조회
@@ -44,7 +47,7 @@ export async function getRecipe(userId, recipeId) {
     throw AppError.from(ERROR_CODES.RESOURCE_NOT_FOUND)
   }
 
-  const { _count, ...recipeDetail } = recipe
+  const { _count, copies: completedCopies, ...recipeDetail } = recipe
 
   const isCreator = recipe.creator.id === userId
   const ownsCopy = _count.copies > 0
@@ -53,7 +56,12 @@ export async function getRecipe(userId, recipeId) {
     throw AppError.from(ERROR_CODES.FORBIDDEN)
   }
 
-  return toRecipeDetail(recipeDetail)
+  const canEdit = isCreator && completedCopies.length === 0
+
+  return {
+    ...toRecipeDetail(recipeDetail),
+    canEdit,
+  }
 }
 
 // 수정
@@ -66,6 +74,15 @@ export async function updateRecipe(userId, recipeId, input, files = []) {
 
   if (recipe.creator.id !== userId) {
     throw AppError.from(ERROR_CODES.FORBIDDEN)
+  }
+
+  if (recipe.copies.length > 0) {
+    throw AppError.from(ERROR_CODES.CONFLICT, [
+      {
+        field: 'canEdit',
+        reason: '판매 또는 교환 이력이 있는 레시피는 수정할 수 없습니다.',
+      },
+    ])
   }
 
   const hasNewImages = files.length > 0
@@ -107,5 +124,8 @@ export async function updateRecipe(userId, recipeId, input, files = []) {
     await removeRecipeImageFiles(previousImageFilePaths)
   }
 
-  return toRecipeDetail(updatedRecipe)
+  return {
+    ...toRecipeDetail(updatedRecipe),
+    canEdit: true,
+  }
 }
