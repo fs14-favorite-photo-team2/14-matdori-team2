@@ -201,25 +201,22 @@ export default function Header() {
       )}
 
       <div className={styles.inner}>
-        <Link
-          href={isAuthenticated ? '/marketplace' : '/'}
-          className={styles.logoLink}
-        >
-          <Image
-            src={serviceIcon}
-            alt=""
-            width={60}
-            height={60}
-            className={styles.serviceIcon}
-          />
+        <div className={styles.brandArea}>
+          <Image src={serviceIcon} alt="" className={styles.serviceIcon} />
 
-          <Image
-            src="/logos/matdori-logo.svg"
-            alt="맛도리 마켓"
-            width={140}
-            height={30}
-          />
-        </Link>
+          <Link
+            href={isAuthenticated ? '/marketplace' : '/'}
+            className={styles.logoLink}
+          >
+            <Image
+              src="/logos/matdori-logo.svg"
+              alt="맛도리 마켓"
+              width={140}
+              height={30}
+              className={styles.wordmark}
+            />
+          </Link>
+        </div>
 
         <div className={styles.actions}>
           {!isLoading && !error && !isAuthenticated && (
@@ -315,17 +312,28 @@ export default function Header() {
           <Image src="/icons/menu.svg" alt="" width={24} height={24} />
         </button>
 
-        <Link
-          href={isAuthenticated ? '/marketplace' : '/'}
-          className={styles.mobileLogoLink}
-        >
+        <div className={styles.mobileBrand}>
           <Image
-            src="/logos/matdori-logo.svg"
-            alt="맛도리 마켓"
-            width={100}
-            height={22}
+            src={serviceIcon}
+            alt=""
+            width={29}
+            height={29}
+            className={styles.mobileServiceIcon}
           />
-        </Link>
+
+          <Link
+            href={isAuthenticated ? '/marketplace' : '/'}
+            className={styles.mobileLogoLink}
+          >
+            <Image
+              src="/logos/matdori-logo.svg"
+              alt="맛도리 마켓"
+              width={100}
+              height={22}
+              className={styles.mobileWordmark}
+            />
+          </Link>
+        </div>
 
         <div className={styles.mobileRight}>
           {!isLoading && !error && !isAuthenticated && (
