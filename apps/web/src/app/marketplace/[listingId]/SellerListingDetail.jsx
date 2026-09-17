@@ -32,6 +32,23 @@ const DIFFICULTY_CLASS_NAMES = {
   master: styles.difficultyMaster,
 }
 
+const DEFAULT_THUMBNAIL_URL = '/images/default-recipe.png'
+
+function TradeOfferThumbnail({ src, alt, className }) {
+  const [imageSrc, setImageSrc] = useState(src || DEFAULT_THUMBNAIL_URL)
+
+  return (
+    <Image
+      src={imageSrc}
+      alt={alt}
+      fill
+      sizes="(max-width: 1023px) 50vw, 360px"
+      className={className}
+      onError={() => setImageSrc(DEFAULT_THUMBNAIL_URL)}
+    />
+  )
+}
+
 export default function SellerListingDetail({ listing }) {
   const { recipe, seller } = listing
   const router = useRouter()
@@ -77,6 +94,7 @@ export default function SellerListingDetail({ listing }) {
     DIFFICULTY_CLASS_NAMES[difficultyOption?.tone] ?? ''
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [imageLoadFailed, setImageLoadFailed] = useState(false)
   const [isRecipeDetailOpen, setIsRecipeDetailOpen] = useState(false)
   const [rejectTargetOffer, setRejectTargetOffer] = useState(null)
   const [approveTargetOffer, setApproveTargetOffer] = useState(null)
@@ -84,19 +102,23 @@ export default function SellerListingDetail({ listing }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const imageCount = recipe.imageUrls.length
-  const currentImageUrl = recipe.imageUrls[currentImageIndex]
+  const currentImageUrl = imageLoadFailed
+    ? DEFAULT_THUMBNAIL_URL
+    : recipe.imageUrls[currentImageIndex] || DEFAULT_THUMBNAIL_URL
   const hasMultipleImages = imageCount > 1
   const isSoldOut =
     listing.status === 'SOLD_OUT' || listing.remainingQuantity === 0
   const isExchangeAvailable = listing.listingType === 'BOTH'
 
   function handlePreviousImage() {
+    setImageLoadFailed(false)
     setCurrentImageIndex(
       (currentIndex) => (currentIndex - 1 + imageCount) % imageCount,
     )
   }
 
   function handleNextImage() {
+    setImageLoadFailed(false)
     setCurrentImageIndex((currentIndex) => (currentIndex + 1) % imageCount)
   }
 
@@ -233,15 +255,16 @@ export default function SellerListingDetail({ listing }) {
         <section className={styles.productSection}>
           <div className={styles.imageWrapper}>
             <Image
-              src={currentImageUrl}
-              alt={`${recipe.title} ${currentImageIndex + 1}번째 이미지`}
-              fill
-              preload
-              sizes="(max-width: 743px) 100vw, (max-width: 1023px) 50vw, 780px"
-              className={`${styles.thumbnail} ${
-                isSoldOut ? styles.soldOutImage : ''
-              }`}
-            />
+  src={currentImageUrl}
+  alt={`${recipe.title} ${currentImageIndex + 1}번째 이미지`}
+  fill
+  preload
+  sizes="(max-width: 743px) 100vw, (max-width: 1023px) 50vw, 780px"
+  onError={() => setImageLoadFailed(true)}
+  className={`${styles.thumbnail} ${
+    isSoldOut ? styles.soldOutImage : ''
+  }`}
+/>
 
             {isSoldOut && (
               <Image
@@ -475,7 +498,6 @@ export default function SellerListingDetail({ listing }) {
                 <div className={styles.myTradeList}>
                   {tradeOffers.map((tradeOffer) => {
                     const offeredRecipe = tradeOffer.offeredCopy.recipe
-                    const offeredThumbnailUrl = offeredRecipe.imageUrls[0]
                     const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
                       (option) => option.value === offeredRecipe.difficulty,
                     )
@@ -491,11 +513,9 @@ export default function SellerListingDetail({ listing }) {
                     return (
                       <article key={tradeOffer.id} className={styles.tradeCard}>
                         <div className={styles.tradeImageWrapper}>
-                          <Image
-                            src={offeredThumbnailUrl}
+                          <TradeOfferThumbnail
+                            src={offeredRecipe.imageUrls[0]}
                             alt={offeredRecipe.title}
-                            fill
-                            sizes="(max-width: 1023px) 50vw, 360px"
                             className={styles.tradeImage}
                           />
                         </div>
