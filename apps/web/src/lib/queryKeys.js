@@ -14,6 +14,12 @@ export const queryKeys = {
     ],
   },
 
+  recipes: {
+    all: ['recipes'],
+    details: () => [...queryKeys.recipes.all, 'detail'],
+    detail: (recipeId) => [...queryKeys.recipes.details(), String(recipeId)],
+  },
+
   myKitchen: {
     all: ['my-kitchen'],
     lists: () => [...queryKeys.myKitchen.all, 'list'],

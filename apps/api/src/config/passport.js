@@ -4,11 +4,13 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import { ERROR_CODES } from '../constants/error-codes.js'
 import { AppError } from '../errors/app-error.js'
 import { authenticateWithGoogle } from '../services/auth-service.js'
+import { logger } from '../utils/logger.js'
 import { env } from './env.js'
 
 if (!env.googleOAuth.isConfigured) {
-  console.warn(
-    `Google 로그인을 비활성화합니다. 다음 환경 변수가 없습니다: ${env.googleOAuth.missingVariables.join(', ')}`,
+  logger.warn(
+    { missingVariables: env.googleOAuth.missingVariables },
+    'Google login disabled',
   )
 } else {
   passport.use(

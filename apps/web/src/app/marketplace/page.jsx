@@ -1,18 +1,19 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Button from '@/components/common/Button/Button'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import SearchBar from '@/components/common/SearchBar/SearchBar'
-import { DEFAULT_FILTERS } from '@/constants/RecipeOptions'
+import { DEFAULT_FILTERS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
 import { SORT_OPTIONS } from '@/constants/SortOptions'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Toast from '@/components/common/Toast/Toast'
+import useTimedToast from '@/hooks/useTimedToast'
+import { useCreateMarketListing } from '@/features/marketplace/useMarketListingMutations'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
-import {
-  MOCK_REGISTERED_LISTINGS_KEY,
-  MOCK_SALEABLE_RECIPES,
-} from '@/features/marketplace/mockOwnedRecipes'
+import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
+import useMyRecipeCopies from '@/features/my-kitchen/useMyRecipeCopies'
 
 import LoginRequiredModal from '@/features/auth/components/LoginRequiredModal/LoginRequiredModal'
 import RecipeSelectionModal from '@/components/common/RecipeSelectionModal/RecipeSelectionModal'
@@ -41,8 +42,15 @@ export default function MarketplacePage() {
   const [pageSize, setPageSize] = useState(null)
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false)
   const [selectedRecipe, setSelectedRecipe] = useState(null)
+  const [saleSearchInput, setSaleSearchInput] = useState('')
+  const [saleFilters, setSaleFilters] = useState({
+    difficulty: '',
+    category: '',
+  })
   const [isRandomPointModalOpen, setIsRandomPointModalOpen] = useState(false)
   const hasShownRandomPointModalRef = useRef(false)
+  const createListingMutation = useCreateMarketListing()
+  const { toastMessage, showToast } = useTimedToast()
 
   const {
     data: marketListingsData,
@@ -65,6 +73,7 @@ export default function MarketplacePage() {
   })
 
   const {
+    user,
     isAuthenticated,
     isLoading: isAuthLoading,
     isRefetching: isAuthRefetching,
@@ -73,6 +82,57 @@ export default function MarketplacePage() {
   } = useCurrentUser({
     enabled: isConfigured,
   })
+
+  const debouncedSaleKeyword = useDebouncedValue(saleSearchInput.trim(), 400)
+
+  const {
+    recipeCopies: saleRecipeCopies,
+    isPending: isSaleRecipesPending,
+    hasNextPage: hasNextSaleRecipesPage,
+    isFetchingNextPage: isFetchingNextSaleRecipesPage,
+    isFetchNextPageError: isSaleRecipesNextPageError,
+    fetchNextPage: fetchNextSaleRecipesPage,
+  } = useMyRecipeCopies({
+    limit: 10,
+    state: 'OWNED',
+    keyword: debouncedSaleKeyword,
+    difficulty: saleFilters.difficulty,
+    category: saleFilters.category,
+    enabled: isSaleModalOpen && isAuthenticated,
+  })
+
+  const saleableRecipes = useMemo(() => {
+    const recipesById = new Map()
+
+    for (const copy of saleRecipeCopies) {
+      const recipe = copy.recipe
+
+      // 구매하거나 교환으로 받은 레시피는 재판매할 수 없으므로 제외합니다.
+      if (recipe.creator?.id !== user?.id) continue
+
+      const existingRecipe = recipesById.get(recipe.id)
+
+      if (existingRecipe) {
+        existingRecipe.recipeCopyIds.push(copy.id)
+        existingRecipe.availableQuantity += 1
+        continue
+      }
+
+      recipesById.set(recipe.id, {
+        recipeId: recipe.id,
+        recipeCopyIds: [copy.id],
+        creatorId: recipe.creator.id,
+        creatorNickname: recipe.creator.nickname,
+        title: recipe.title,
+        thumbnailUrl: recipe.imageUrl,
+        difficulty: recipe.difficulty,
+        category: recipe.category,
+        availableQuantity: 1,
+      })
+    }
+
+    return Array.from(recipesById.values())
+  }, [saleRecipeCopies, user?.id])
 
   const marketListings =
     marketListingsData?.pages.flatMap((page) => page.data) ?? []
@@ -172,52 +232,50 @@ export default function MarketplacePage() {
   }
 
   function handleSaleRegistrationSubmit(saleData) {
-    const recipeToSell = selectedRecipe
+    if (!selectedRecipe || createListingMutation.isPending) return
 
-    if (!recipeToSell) return
-
-    const now = new Date().toISOString()
-
-    const newListing = {
-      id: Date.now(),
-      recipe: {
-        id: recipeToSell.recipeId,
-        title: recipeToSell.title,
-        thumbnailUrl: recipeToSell.thumbnailUrl,
-        difficulty: recipeToSell.difficulty,
-        category: recipeToSell.category,
-        summary: recipeToSell.summary ?? '',
-        minPrice: saleData.unitPrice,
-      },
-      seller: {
-        id: recipeToSell.creatorId,
-        nickname: recipeToSell.creatorNickname,
-      },
+    const requestData = {
+      recipeCopyIds: selectedRecipe.recipeCopyIds.slice(0, saleData.quantity),
       listingType: saleData.listingType,
       price: saleData.unitPrice,
-      initialQuantity: saleData.quantity,
-      remainingQuantity: saleData.quantity,
-      wantedDifficulty: saleData.desiredDifficulty,
-      wantedCategory: saleData.desiredCategory,
-      wantedDescription: saleData.exchangeDescription,
-      status: 'ON_SALE',
-      createdAt: now,
-      updatedAt: now,
     }
 
-    const savedListings = JSON.parse(
-      localStorage.getItem(MOCK_REGISTERED_LISTINGS_KEY) ?? '[]',
-    )
+    if (saleData.listingType === 'BOTH') {
+      requestData.wantedDifficulty = saleData.desiredDifficulty
+      requestData.wantedCategory = saleData.desiredCategory
+      requestData.wantedDescription = saleData.exchangeDescription
+    }
 
-    localStorage.setItem(
-      MOCK_REGISTERED_LISTINGS_KEY,
-      JSON.stringify([newListing, ...savedListings]),
-    )
+    createListingMutation.mutate(requestData, {
+      onSuccess: () => {
+        const difficultyOption = DIFFICULTY_OPTIONS.find(
+          (option) => option.value === selectedRecipe.difficulty,
+        )
 
-    setSelectedRecipe(null)
-    setIsSaleModalOpen(false)
+        const params = new URLSearchParams({
+          difficultyLabel: difficultyOption?.label ?? selectedRecipe.difficulty,
+          title: selectedRecipe.title,
+        })
 
-    router.push('/my-sales/register/success')
+        setSelectedRecipe(null)
+        setIsSaleModalOpen(false)
+
+        router.push(`/my-sales/register/success?${params.toString()}`)
+      },
+
+      onError: (error) => {
+        const status = error.response?.status
+
+        if (!status || status >= 500) {
+          setSelectedRecipe(null)
+          setIsSaleModalOpen(false)
+          router.push('/my-sales/register/failure')
+          return
+        }
+
+        showToast(getApiErrorMessage(error, '판매글을 등록하지 못했습니다.'))
+      },
+    })
   }
 
   const handleFilterChange = (groupKey, value) => {
@@ -271,6 +329,11 @@ export default function MarketplacePage() {
   }
   return (
     <main className={styles.page}>
+      {toastMessage && (
+        <div className={styles.toastWrapper}>
+          <Toast message={toastMessage} />
+        </div>
+      )}
       <div className={styles.container}>
         <header className={styles.pageHeader}>
           <h1 className={`${styles.title} font-baskin-robbins`}>
@@ -316,7 +379,10 @@ export default function MarketplacePage() {
         </section>
 
         {isPending ? (
-          <p className={styles.listState}>레시피를 불러오는 중...</p>
+          <LoadingIndicator
+            variant="page"
+            message="레시피를 불러오는 중입니다"
+          />
         ) : marketListings.length === 0 ? (
           <p className={styles.listState}>조건에 맞는 레시피가 없습니다.</p>
         ) : (
@@ -347,9 +413,7 @@ export default function MarketplacePage() {
               <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
             )}
 
-            {isFetchingNextPage && (
-              <p className={styles.nextPageState}>레시피를 더 불러오는 중...</p>
-            )}
+            {isFetchingNextPage && <LoadingIndicator variant="list" />}
 
             {isFetchNextPageError && (
               <div className={styles.nextPageError}>
@@ -382,21 +446,32 @@ export default function MarketplacePage() {
         isOpen={isSaleModalOpen}
         onClose={() => setIsSaleModalOpen(false)}
         onSelectRecipe={handleSelectRecipe}
-        recipes={MOCK_SALEABLE_RECIPES}
+        recipes={saleableRecipes}
         title="나의 레시피 판매하기"
         emptyMessage="판매 가능한 레시피가 없습니다."
+        isLoading={isSaleRecipesPending}
+        hasNextPage={
+          Boolean(hasNextSaleRecipesPage) && !isSaleRecipesNextPageError
+        }
+        isFetchingNextPage={isFetchingNextSaleRecipesPage}
+        onLoadMore={fetchNextSaleRecipesPage}
+        onSearchChange={setSaleSearchInput}
+        onFiltersChange={setSaleFilters}
       />
       <SaleRegistrationModal
         key={selectedRecipe?.recipeId ?? 'empty'}
         isOpen={selectedRecipe !== null}
         onClose={() => setSelectedRecipe(null)}
+        isPending={createListingMutation.isPending}
         selectedRecipe={selectedRecipe}
         onSubmit={handleSaleRegistrationSubmit}
       />
       <RandomPointModal
         isOpen={isRandomPointModalOpen}
         onClose={() => setIsRandomPointModalOpen(false)}
-        onClaimed={(currentPoints) => {}}
+        onClaimed={() => {
+          refetchCurrentUser()
+        }}
       />
     </main>
   )
