@@ -17,6 +17,7 @@ import SearchBar from '@/components/common/SearchBar/SearchBar'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
 import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
+import ScrollToTopButton from '@/components/common/ScrollToTopButton/ScrollToTopButton'
 import {
   DIFFICULTY_OPTIONS,
   DEFAULT_FILTERS,
@@ -286,6 +287,7 @@ export default function MySalesPage() {
       {isFetchingNext && <LoadingIndicator variant="list" />}
 
       <div ref={setSentinelRef} className={styles.sentinel} />
+      <ScrollToTopButton />
     </div>
   )
 }

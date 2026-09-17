@@ -2,7 +2,7 @@ import styles from './LoadingIndicator.module.css'
 
 const DEFAULT_MESSAGES = {
   page: '로딩중입니다',
-  list: '리스트를 불러오는 중입니다',
+  list: '리스트를 더 불러오는 중입니다',
 }
 
 export default function LoadingIndicator({
