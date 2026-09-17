@@ -305,7 +305,9 @@ export default function SellerListingDetail({ listing }) {
 
             <div className={styles.sellerInfoContent}>
               <div className={styles.recipePreview}>
-                <p className={styles.recipePreviewContent}>{recipe.content}</p>
+                <p className={styles.recipePreviewContent}>
+                  {recipe.content ?? recipe.summary}
+                </p>
 
                 <button
                   type="button"
@@ -406,7 +408,7 @@ export default function SellerListingDetail({ listing }) {
 
                     <div className={styles.recipeContentSection}>
                       <p className={styles.fullRecipeContent}>
-                        {recipe.content}
+                        {recipe.content ?? recipe.summary}
                       </p>
                     </div>
                   </div>

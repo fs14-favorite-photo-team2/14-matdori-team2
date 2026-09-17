@@ -40,7 +40,11 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
   const isSeller = currentUserId === listing.seller.id
   const { recipe, seller } = listing
   const thumbnailUrl = recipe.imageUrls[0]
-  const highlightIngredients = Array.isArray(recipe.ingredients)
+  const canViewFullRecipe = listing.canViewFullRecipe === true
+  const displayedRecipeContent = canViewFullRecipe
+    ? (recipe.content ?? recipe.summary)
+    : recipe.summary
+  const displayedIngredients = Array.isArray(recipe.ingredients)
     ? recipe.ingredients
     : []
   const difficultyOption = DIFFICULTY_OPTIONS.find(
@@ -344,21 +348,7 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
             </div>
 
             <div className={styles.summaryWrapper}>
-              <p className={styles.summary}>{recipe.summary}</p>
-
-              {highlightIngredients.length > 0 && (
-                <div className={styles.highlightIngredients}>
-                  <span className={styles.highlightIngredientsLabel}>
-                    대표 재료
-                  </span>
-
-                  <span className={styles.highlightIngredientsValue}>
-                    {highlightIngredients
-                      .map((ingredient) => ingredient.name)
-                      .join(', ')}
-                  </span>
-                </div>
-              )}
+              <p className={styles.summary}>{displayedRecipeContent}</p>
             </div>
 
             <div className={styles.priceInfo}>
@@ -374,6 +364,26 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
                 </span>
               </div>
             </div>
+
+            {displayedIngredients.length > 0 && (
+              <div className={styles.highlightIngredients}>
+                <span className={styles.highlightIngredientsLabel}>
+                  {canViewFullRecipe ? '레시피 재료' : '하이라이트 재료'}
+                </span>
+
+                <span className={styles.highlightIngredientsValue}>
+                  {displayedIngredients
+                    .map((ingredient) =>
+                      canViewFullRecipe
+                        ? [ingredient.name, ingredient.amount]
+                            .filter(Boolean)
+                            .join(' ')
+                        : ingredient.name,
+                    )
+                    .join(', ')}
+                </span>
+              </div>
+            )}
 
             <Button
               type="button"
