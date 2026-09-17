@@ -16,16 +16,79 @@ function createId() {
   return `img-${nextId}`
 }
 
-export default function ImageUploader({ onChange }) {
+function loadImageElement(url) {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image()
+    img.onload = () => resolve(img)
+    img.onerror = reject
+    img.src = url
+  })
+}
+
+function cropImageToFile(img, zoom, fileName) {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas')
+    canvas.width = OUTPUT_WIDTH
+    canvas.height = OUTPUT_HEIGHT
+
+    const ctx = canvas.getContext('2d')
+    const { naturalWidth, naturalHeight } = img
+
+    const coverScale = Math.max(
+      OUTPUT_WIDTH / naturalWidth,
+      OUTPUT_HEIGHT / naturalHeight,
+    )
+    const scale = coverScale * zoom
+
+    const drawWidth = naturalWidth * scale
+    const drawHeight = naturalHeight * scale
+    const offsetX = (OUTPUT_WIDTH - drawWidth) / 2
+    const offsetY = (OUTPUT_HEIGHT - drawHeight) / 2
+
+    ctx.clearRect(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT)
+    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight)
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          resolve(null)
+          return
+        }
+
+        resolve(
+          new File([blob], fileName || 'cropped.jpg', {
+            type: 'image/jpeg',
+          }),
+        )
+      },
+      'image/jpeg',
+      0.9,
+    )
+  })
+}
+
+export default function ImageUploader({
+  onChange,
+  onProcessingChange,
+  initialCount = 0,
+}) {
   const inputRef = useRef(null)
   const imgRefs = useRef({})
-  const canvasRef = useRef(null)
 
   const [images, setImages] = useState([])
   const [activeId, setActiveId] = useState(null)
   const [error, setError] = useState('')
+  const [processingIds, setProcessingIds] = useState(() => new Set())
 
-  const activeImage = images.find((img) => img.id === activeId) ?? null
+  useEffect(() => {
+    onProcessingChange?.(processingIds.size > 0)
+  }, [processingIds, onProcessingChange])
+
+  const effectiveActiveId = images.some((img) => img.id === activeId)
+    ? activeId
+    : (images[0]?.id ?? null)
+
+  const activeImage = images.find((img) => img.id === effectiveActiveId) ?? null
   const zoomPercent = activeImage
     ? Math.round((activeImage.zoom / MIN_ZOOM) * 100)
     : 100
@@ -40,6 +103,11 @@ export default function ImageUploader({ onChange }) {
       imagesRef.current.forEach((img) => URL.revokeObjectURL(img.previewUrl))
     }
   }, [])
+
+  useEffect(() => {
+    onChange?.(images.map((img) => img.croppedFile))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images])
 
   const ALLOWED_IMAGE_TYPES = new Set([
     'image/jpeg',
@@ -56,16 +124,12 @@ export default function ImageUploader({ onChange }) {
     return ''
   }
 
-  function emitChange(imageList) {
-    onChange?.(imageList.map((img) => img.croppedFile))
-  }
-
   function handleSelectClick() {
     if (images.length >= MAX_IMAGES) return
     inputRef.current?.click()
   }
 
-  function handleFileChange(event) {
+  async function handleFileChange(event) {
     const files = Array.from(event.target.files ?? [])
     event.target.value = ''
     if (files.length === 0) return
@@ -96,7 +160,45 @@ export default function ImageUploader({ onChange }) {
     const updated = [...images, ...newImages]
     setImages(updated)
     setActiveId(newImages[0].id)
-    emitChange(updated)
+
+    setProcessingIds((prev) => {
+      const next = new Set(prev)
+      newImages.forEach((img) => next.add(img.id))
+      return next
+    })
+
+    await Promise.all(
+      newImages.map(async (newImg) => {
+        try {
+          const imgEl = await loadImageElement(newImg.previewUrl)
+          const croppedFile = await cropImageToFile(
+            imgEl,
+            MIN_ZOOM,
+            newImg.rawFile?.name,
+          )
+          if (!croppedFile) return
+
+          setImages((prev) =>
+            prev.map((img) =>
+              img.id === newImg.id ? { ...img, croppedFile } : img,
+            ),
+          )
+        } catch (err) {
+          console.error('이미지 크롭 실패:', err)
+          setError(
+            '이미지를 처리하는 중 문제가 발생했습니다. 다시 시도해주세요.',
+          )
+          setImages((prev) => prev.filter((img) => img.id !== newImg.id))
+          URL.revokeObjectURL(newImg.previewUrl)
+        } finally {
+          setProcessingIds((prev) => {
+            const next = new Set(prev)
+            next.delete(newImg.id)
+            return next
+          })
+        }
+      }),
+    )
   }
 
   function handleSelectThumbnail(id) {
@@ -109,10 +211,13 @@ export default function ImageUploader({ onChange }) {
 
     const updated = images.filter((img) => img.id !== id)
     setImages(updated)
-    setActiveId((current) =>
-      current === id ? (updated[0]?.id ?? null) : current,
-    )
-    emitChange(updated)
+
+    setProcessingIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
   }
 
   function handleZoomChange(event) {
@@ -125,46 +230,30 @@ export default function ImageUploader({ onChange }) {
 
   function handleZoomCommit() {
     if (!activeImage) return
-    const img = imgRefs.current[activeImage.id]
-    const canvas = canvasRef.current
-    if (!img || !canvas) return
+    const imgEl = imgRefs.current[activeImage.id]
+    if (!imgEl) return
 
-    const ctx = canvas.getContext('2d')
-    canvas.width = OUTPUT_WIDTH
-    canvas.height = OUTPUT_HEIGHT
+    const id = activeImage.id
+    setProcessingIds((prev) => new Set(prev).add(id))
 
-    const { naturalWidth, naturalHeight } = img
-    const coverScale = Math.max(
-      OUTPUT_WIDTH / naturalWidth,
-      OUTPUT_HEIGHT / naturalHeight,
-    )
-    const scale = coverScale * activeImage.zoom
-
-    const drawWidth = naturalWidth * scale
-    const drawHeight = naturalHeight * scale
-    const offsetX = (OUTPUT_WIDTH - drawWidth) / 2
-    const offsetY = (OUTPUT_HEIGHT - drawHeight) / 2
-
-    ctx.clearRect(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT)
-    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight)
-
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) return
-        const croppedFile = new File(
-          [blob],
-          activeImage.rawFile?.name || 'cropped.jpg',
-          { type: 'image/jpeg' },
+    cropImageToFile(imgEl, activeImage.zoom, activeImage.rawFile?.name)
+      .then((croppedFile) => {
+        if (!croppedFile) return
+        setImages((prev) =>
+          prev.map((img) => (img.id === id ? { ...img, croppedFile } : img)),
         )
-        const updated = images.map((img) =>
-          img.id === activeImage.id ? { ...img, croppedFile } : img,
-        )
-        setImages(updated)
-        emitChange(updated)
-      },
-      'image/jpeg',
-      0.9,
-    )
+      })
+      .catch((err) => {
+        console.error('줌 크롭 실패:', err)
+        setError('사진 크기 조정 중 문제가 발생했습니다. 다시 시도해주세요.')
+      })
+      .finally(() => {
+        setProcessingIds((prev) => {
+          const next = new Set(prev)
+          next.delete(id)
+          return next
+        })
+      })
   }
 
   return (
@@ -242,7 +331,7 @@ export default function ImageUploader({ onChange }) {
           {images.map((img, index) => (
             <div
               key={img.id}
-              className={`${styles.thumbnail} ${img.id === activeId ? styles.thumbnailActive : ''}`}
+              className={`${styles.thumbnail} ${img.id === effectiveActiveId ? styles.thumbnailActive : ''}`}
               onClick={() => handleSelectThumbnail(img.id)}
             >
               <img
@@ -274,12 +363,10 @@ export default function ImageUploader({ onChange }) {
       )}
 
       <p className={styles.countText}>
-        {images.length} / {MAX_IMAGES}
+        {images.length > 0 ? images.length : initialCount} / {MAX_IMAGES}
       </p>
 
       {error && <p className={styles.errorText}>{error}</p>}
-
-      <canvas ref={canvasRef} className={styles.hiddenCanvas} />
     </div>
   )
 }

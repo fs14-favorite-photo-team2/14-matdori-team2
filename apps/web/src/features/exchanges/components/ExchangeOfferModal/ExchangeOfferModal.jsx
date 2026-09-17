@@ -6,20 +6,28 @@ import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
 import Button from '@/components/common/Button/Button'
 import styles from './ExchangeOfferModal.module.css'
 
+const MAX_DESCRIPTION_LENGTH = 500
+
 export default function ExchangeOfferModal({
   isOpen,
   onClose,
   selectedRecipe,
   onSubmit,
+  isPending = false,
 }) {
   const [description, setDescription] = useState('')
 
   if (!selectedRecipe) return null
 
   const trimmedDescription = description.trim()
-  const isFormValid = trimmedDescription !== ''
+  const isDescriptionTooLong =
+    trimmedDescription.length > MAX_DESCRIPTION_LENGTH
+
+  const isFormValid = trimmedDescription !== '' && !isDescriptionTooLong
 
   function handleClose() {
+    if (isPending) return
+
     setDescription('')
     onClose()
   }
@@ -27,7 +35,7 @@ export default function ExchangeOfferModal({
   function handleSubmit(event) {
     event.preventDefault()
 
-    if (!isFormValid) return
+    if (!isFormValid || isPending) return
 
     onSubmit({
       recipe: selectedRecipe,
@@ -74,16 +82,31 @@ export default function ExchangeOfferModal({
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="내용을 입력해 주세요"
+              aria-invalid={isDescriptionTooLong}
+              aria-describedby={
+                isDescriptionTooLong ? 'trade-description-error' : undefined
+              }
             />
+
+            {isDescriptionTooLong && (
+              <p id="trade-description-error" className={styles.errorText}>
+                교환 제시 내용은 500자 이하로 입력해 주세요.
+              </p>
+            )}
           </label>
 
           <div className={styles.footer}>
-            <Button type="button" variant="secondary" onClick={handleClose}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleClose}
+              disabled={isPending}
+            >
               취소하기
             </Button>
 
-            <Button type="submit" disabled={!isFormValid}>
-              교환하기
+            <Button type="submit" disabled={!isFormValid || isPending}>
+              {isPending ? '교환 중...' : '교환하기'}
             </Button>
           </div>
         </form>
