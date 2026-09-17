@@ -1258,7 +1258,6 @@ components:
         - difficulty
         - category
         - summary
-        - minPrice
         - ingredients
       properties:
         id: { type: integer, minimum: 1, description: 레시피 ID, example: 42 }
@@ -1281,7 +1280,6 @@ components:
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         category: { $ref: '#/components/schemas/Category' }
         summary: { type: string, minLength: 1, maxLength: 1000 }
-        minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         ingredients:
           type: array
           description: >-
@@ -1296,11 +1294,14 @@ components:
         - $ref: '#/components/schemas/RecipeSummary'
         - type: object
           required:
+            - creator
             - content
             - totalSupply
             - createdAt
             - updatedAt
+            - canEdit
           properties:
+            creator: { $ref: '#/components/schemas/PublicUser' }
             content:
               type: string
               minLength: 1
@@ -1318,6 +1319,11 @@ components:
               minItems: 1
               items:
                 $ref: '#/components/schemas/Ingredient'
+            canEdit:
+              type: boolean
+              description: >-
+                현재 사용자가 레시피를 수정할 수 있는지 나타냅니다.
+                작성자 본인이면서 판매 또는 교환 완료 이력이 없을 때 true입니다.
     PublicUser:
       type: object
       required: [id, nickname]
@@ -1337,7 +1343,6 @@ components:
         - title
         - images
         - content
-        - minPrice
         - difficulty
         - totalSupply
         - category
@@ -1346,7 +1351,6 @@ components:
       properties:
         title: { type: string, minLength: 1, maxLength: 100 }
         content: { type: string, minLength: 1, maxLength: 20000 }
-        minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         totalSupply: { type: integer, minimum: 1, maximum: 10 }
         category: { $ref: '#/components/schemas/Category' }
@@ -1374,7 +1378,6 @@ components:
       properties:
         title: { type: string, minLength: 1, maxLength: 100 }
         content: { type: string, minLength: 1, maxLength: 20000 }
-        minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         category: { $ref: '#/components/schemas/Category' }
         summary: { type: string, minLength: 1, maxLength: 1000 }
