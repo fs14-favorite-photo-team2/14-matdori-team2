@@ -6,7 +6,8 @@ import {
   findMarketListings,
   findRecipeCopiesByIds,
   createMarketListingRecord,
-  updateMarketListingById,
+  updateMarketListingRecord,
+  findMarketListingQuantityInfo,
   withdrawMarketListingRecord,
   deleteMarketListingRecord,
   findMarketListingForPurchase,
@@ -63,14 +64,25 @@ export async function getMarketListings(query) {
   }
 }
 
-export async function getMarketListing(listingId) {
+export async function getMarketListing(userId, listingId) {
   const listing = await findMarketListingById(listingId)
 
   if (!listing) {
     throw AppError.from(ERROR_CODES.RESOURCE_NOT_FOUND)
   }
 
-  return formatMarketListing(listing)
+  const formattedListing = formatMarketListing(listing)
+
+  if (listing.seller.id !== userId) {
+    return formattedListing
+  }
+
+  const quantityInfo = await findMarketListingQuantityInfo(listingId, userId)
+
+  return {
+    ...formattedListing,
+    ...quantityInfo,
+  }
 }
 
 export async function createMarketListing(userId, input) {
@@ -170,9 +182,10 @@ export async function createMarketListing(userId, input) {
 }
 
 export async function updateMarketListing(userId, listingId, input) {
+  const { remainingQuantity, ...listingInput } = input
+
   const listing = await findMarketListingById(listingId)
 
-  // 수정할 수 있는 상태 유무 검증
   if (!listing) {
     throw AppError.from(ERROR_CODES.RESOURCE_NOT_FOUND)
   }
@@ -185,12 +198,11 @@ export async function updateMarketListing(userId, listingId, input) {
     throw AppError.from(ERROR_CODES.CONFLICT)
   }
 
-  // 기존 판매글과 비교 후 수정사항만 적용
-  const nextListingType = input.listingType ?? listing.listingType
+  const nextListingType = listingInput.listingType ?? listing.listingType
 
-  const nextPrice = input.price !== undefined ? input.price : listing.price
+  const nextPrice =
+    listingInput.price !== undefined ? listingInput.price : listing.price
 
-  // 판매중상태와 가격 같이 있는지 확인
   if (
     (nextListingType === 'SALE' || nextListingType === 'BOTH') &&
     nextPrice === null
@@ -204,7 +216,7 @@ export async function updateMarketListing(userId, listingId, input) {
   }
 
   const data = {
-    ...input,
+    ...listingInput,
     listingType: nextListingType,
   }
 
@@ -220,9 +232,51 @@ export async function updateMarketListing(userId, listingId, input) {
     data.wantedDescription = null
   }
 
-  const updatedListing = await updateMarketListingById(listingId, data)
+  try {
+    const updatedListing = await updateMarketListingRecord({
+      listingId,
+      sellerId: userId,
+      expectedUpdatedAt: listing.updatedAt,
+      remainingQuantity,
+      data,
+    })
 
-  return formatMarketListing(updatedListing)
+    return formatMarketListing(updatedListing)
+  } catch (error) {
+    // repository에서 발생시킨 권한·수량·상태 오류 처리
+    if (
+      error.code === 'MARKET_LISTING_UPDATE_CONFLICT' ||
+      error.code === 'MARKET_LISTING_UPDATE_FORBIDDEN'
+    ) {
+      const errorCode =
+        error.code === 'MARKET_LISTING_UPDATE_FORBIDDEN'
+          ? ERROR_CODES.FORBIDDEN
+          : ERROR_CODES.CONFLICT
+
+      throw AppError.from(errorCode, [
+        {
+          field: error.field,
+          reason: error.message,
+        },
+      ])
+    }
+
+    // 동시에 실행된 거래와 충돌한 경우
+    if (
+      error.code === 'P2034' ||
+      (error.code === 'P2010' && ['40P01', '40001'].includes(error.meta?.code))
+    ) {
+      throw AppError.from(ERROR_CODES.CONFLICT, [
+        {
+          field: 'listingId',
+          reason:
+            '다른 거래와 요청이 겹쳤습니다. 새로고침 후 다시 시도해 주세요.',
+        },
+      ])
+    }
+
+    throw error
+  }
 }
 
 export async function withdrawMarketListing(userId, listingId) {
@@ -339,6 +393,18 @@ export async function purchaseMarketListing(userId, listingId) {
       price: listing.price,
     })
   } catch (error) {
+    if (
+      error.code === 'P2034' ||
+      (error.code === 'P2010' && ['40P01', '40001'].includes(error.meta?.code))
+    ) {
+      throw AppError.from(ERROR_CODES.CONFLICT, [
+        {
+          field: 'listingId',
+          reason:
+            '다른 거래와 요청이 겹쳤습니다. 새로고침 후 다시 시도해 주세요.',
+        },
+      ])
+    }
     if (error.code === 'INSUFFICIENT_POINTS') {
       throw AppError.from(ERROR_CODES.CONFLICT, [
         {
