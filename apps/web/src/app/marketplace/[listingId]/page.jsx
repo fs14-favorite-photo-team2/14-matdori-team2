@@ -56,19 +56,19 @@ function TradeOfferThumbnail({ src, alt, className }) {
 function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
   const isSeller = currentUserId === listing.seller.id
   const { recipe, seller } = listing
-const [thumbnailSrc, setThumbnailSrc] = useState(
-  recipe.imageUrls[0] || DEFAULT_THUMBNAIL_URL,
-)
+  const [thumbnailSrc, setThumbnailSrc] = useState(
+    recipe.imageUrls[0] || DEFAULT_THUMBNAIL_URL,
+  )
 
-const canViewFullRecipe = listing.canViewFullRecipe === true
+  const canViewFullRecipe = listing.canViewFullRecipe === true
 
-const displayedRecipeContent = canViewFullRecipe
-  ? (recipe.content ?? recipe.summary)
-  : recipe.summary
+  const displayedRecipeContent = canViewFullRecipe
+    ? (recipe.content ?? recipe.summary)
+    : recipe.summary
 
-const displayedIngredients = Array.isArray(recipe.ingredients)
-  ? recipe.ingredients
-  : []
+  const displayedIngredients = Array.isArray(recipe.ingredients)
+    ? recipe.ingredients
+    : []
   const difficultyOption = DIFFICULTY_OPTIONS.find(
     (option) => option.value === recipe.difficulty,
   )
@@ -332,16 +332,16 @@ const displayedIngredients = Array.isArray(recipe.ingredients)
         <section className={styles.productSection}>
           <div className={styles.imageWrapper}>
             <Image
-  src={thumbnailSrc}
-  alt={recipe.title}
-  fill
-  preload
-  sizes="(max-width: 743px) 100vw, (max-width: 1023px) 50vw, 780px"
-  className={`${styles.thumbnail} ${
-    isSoldOut ? styles.soldOutImage : ''
-  }`}
-  onError={() => setThumbnailSrc(DEFAULT_THUMBNAIL_URL)}
-/>
+              src={thumbnailSrc}
+              alt={recipe.title}
+              fill
+              preload
+              sizes="(max-width: 743px) 100vw, (max-width: 1023px) 50vw, 780px"
+              className={`${styles.thumbnail} ${
+                isSoldOut ? styles.soldOutImage : ''
+              }`}
+              onError={() => setThumbnailSrc(DEFAULT_THUMBNAIL_URL)}
+            />
 
             {isSoldOut && (
               <Image

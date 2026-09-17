@@ -255,16 +255,16 @@ export default function SellerListingDetail({ listing }) {
         <section className={styles.productSection}>
           <div className={styles.imageWrapper}>
             <Image
-  src={currentImageUrl}
-  alt={`${recipe.title} ${currentImageIndex + 1}번째 이미지`}
-  fill
-  preload
-  sizes="(max-width: 743px) 100vw, (max-width: 1023px) 50vw, 780px"
-  onError={() => setImageLoadFailed(true)}
-  className={`${styles.thumbnail} ${
-    isSoldOut ? styles.soldOutImage : ''
-  }`}
-/>
+              src={currentImageUrl}
+              alt={`${recipe.title} ${currentImageIndex + 1}번째 이미지`}
+              fill
+              preload
+              sizes="(max-width: 743px) 100vw, (max-width: 1023px) 50vw, 780px"
+              onError={() => setImageLoadFailed(true)}
+              className={`${styles.thumbnail} ${
+                isSoldOut ? styles.soldOutImage : ''
+              }`}
+            />
 
             {isSoldOut && (
               <Image
