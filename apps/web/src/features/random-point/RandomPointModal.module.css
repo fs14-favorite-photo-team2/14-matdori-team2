@@ -190,9 +190,8 @@
 @media (max-width: 1023px) {
   .modal {
     width: 600px;
-    min-height: 550px;
+    min-height: 0;
   }
-
   .boxRow {
     gap: 36px;
   }

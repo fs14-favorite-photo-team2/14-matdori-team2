@@ -14,6 +14,7 @@ export default function MobileMenu({
   isLoggingOut,
   onClose,
   onLogout,
+  onOpenRandomPoint,
 }) {
   const pathname = usePathname()
 
@@ -136,9 +137,13 @@ export default function MobileMenu({
 
               <div className={styles.pointsRow}>
                 <span>보유 포인트</span>
-                <span className={styles.pointsValue}>
+                <button
+                  type="button"
+                  className={styles.pointsValue}
+                  onClick={onOpenRandomPoint}
+                >
                   {formatPoints(user?.points)}
-                </span>
+                </button>
               </div>
             </>
           ) : (
