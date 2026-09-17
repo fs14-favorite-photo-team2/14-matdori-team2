@@ -1,64 +1,84 @@
 'use client'
 
+import useNotifications from '@/features/notifications/useNotifications'
+import useReadAllNotifications from '@/features/notifications/useReadAllNotifications'
+import useReadNotification from '@/features/notifications/useReadNotification'
+import useInfiniteScroll from '@/hooks/useInfiniteScroll'
 import formatRelativeTime from '@/utils/formatRelativeTime'
+import getApiErrorMessage from '@/utils/getApiErrorMessage'
 import Image from 'next/image'
-import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useRef } from 'react'
 import styles from './NotificationModal.module.css'
-
-const MOCK_NOTIFICATIONS = [
-  {
-    id: 1,
-    message: "'떡볶이 황금레시피' 레시피에 교환 제안이 도착했습니다.",
-    createdAt: new Date(Date.now() - 30 * 1000).toISOString(),
-    isRead: false,
-  },
-  {
-    id: 2,
-    message: "'김치찌개' 레시피가 모두 판매되었습니다.",
-    createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-    isRead: false,
-  },
-  {
-    id: 3,
-    message: "'제육볶음' 레시피 교환 제안이 수락되었습니다.",
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    isRead: true,
-  },
-  {
-    id: 4,
-    message: "'된장찌개' 레시피가 구매되었습니다.",
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    isRead: true,
-  },
-  {
-    id: 5,
-    message: "'순두부찌개' 레시피 교환 제안이 거절되었습니다.",
-    createdAt: new Date(Date.now() - 2 * 7 * 24 * 60 * 60 * 1000).toISOString(),
-    isRead: true,
-  },
-  {
-    id: 6,
-    message: "'똥맛카레' 레시피가 구매되었습니다.",
-    createdAt: new Date(
-      Date.now() - 2 * 30 * 24 * 60 * 60 * 1000,
-    ).toISOString(),
-    isRead: true,
-  },
-  {
-    id: 7,
-    message: "'된장찌개' 레시피 교환 제안이 거절되었습니다.",
-    createdAt: new Date(
-      Date.now() - 13 * 30 * 24 * 60 * 60 * 1000,
-    ).toISOString(),
-    isRead: true,
-  },
-]
 
 export default function NotificationModal({
   isOpen,
   onClose,
+  onReadError,
+  unreadCount = 0,
   isMobile = false,
 }) {
+  const router = useRouter()
+
+  const {
+    data,
+    isPending,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+  } = useNotifications({
+    enabled: isOpen,
+  })
+
+  const notifications = data?.pages.flatMap((page) => page.data) ?? []
+
+  const readNotificationMutation = useReadNotification()
+  const readAllNotificationsMutation = useReadAllNotifications()
+
+  const handleNotificationClick = (notification) => {
+    if (!notification.isRead) {
+      readNotificationMutation.mutate(notification.id, {
+        onError: (error) => {
+          onReadError?.(
+            getApiErrorMessage(error, '알림 읽음 처리에 실패했습니다.'),
+          )
+        },
+      })
+    }
+
+    if (!notification.listingId) return
+
+    onClose()
+    router.push(`/marketplace/${notification.listingId}`)
+  }
+
+  const handleReadAll = () => {
+    if (unreadCount === 0 || readAllNotificationsMutation.isPending) return
+
+    readAllNotificationsMutation.mutate(undefined, {
+      onError: (error) => {
+        onReadError?.(
+          getApiErrorMessage(error, '알림 모두 읽음 처리에 실패했습니다.'),
+        )
+      },
+    })
+  }
+
+  const listRef = useRef(null)
+
+  const triggerRef = useInfiniteScroll({
+    hasMore: hasNextPage,
+    isLoading: isFetchingNextPage,
+    onLoadMore: fetchNextPage,
+    rootRef: listRef,
+    enabled: isOpen && !isFetchNextPageError,
+  })
+
   useEffect(() => {
     if (!isOpen || !isMobile) return
 
@@ -78,7 +98,12 @@ export default function NotificationModal({
       aria-hidden={!isOpen}
     >
       <div className={styles.desktopHeader}>
-        <button type="button" className={styles.readAllButton}>
+        <button
+          type="button"
+          className={styles.readAllButton}
+          onClick={handleReadAll}
+          disabled={unreadCount === 0 || readAllNotificationsMutation.isPending}
+        >
           모두 읽음
         </button>
       </div>
@@ -95,26 +120,89 @@ export default function NotificationModal({
 
         <h2 className={styles.mobileTitle}>알림</h2>
 
-        <button type="button" className={styles.readAllButton}>
+        <button
+          type="button"
+          className={styles.readAllButton}
+          onClick={handleReadAll}
+          disabled={unreadCount === 0 || readAllNotificationsMutation.isPending}
+        >
           모두 읽음
         </button>
       </div>
 
-      <div className={styles.notificationList}>
-        {MOCK_NOTIFICATIONS.map((notification) => (
-          <button
-            key={notification.id}
-            type="button"
-            className={`${styles.notificationItem} ${
-              notification.isRead ? styles.read : styles.unread
-            }`}
-          >
-            <span className={styles.message}>{notification.message}</span>
-            <span className={styles.time}>
-              {formatRelativeTime(notification.createdAt)}
-            </span>
-          </button>
-        ))}
+      <div ref={listRef} className={styles.notificationList}>
+        {isPending ? (
+          <p className={styles.stateMessage}>알림을 불러오는 중...</p>
+        ) : isError && notifications.length === 0 ? (
+          <div className={styles.state}>
+            <p className={styles.stateMessage}>
+              {getApiErrorMessage(error, '알림을 불러오지 못했습니다.')}
+            </p>
+
+            <button
+              type="button"
+              className={styles.retryButton}
+              onClick={() => refetch()}
+              disabled={isRefetching}
+            >
+              {isRefetching ? '불러오는 중...' : '다시 시도'}
+            </button>
+          </div>
+        ) : notifications.length === 0 ? (
+          <p className={styles.stateMessage}>새로운 알림이 없습니다.</p>
+        ) : (
+          <>
+            {notifications.map((notification) => (
+              <button
+                key={notification.id}
+                type="button"
+                className={`${styles.notificationItem} ${
+                  notification.isRead ? styles.read : styles.unread
+                }`}
+                onClick={() => handleNotificationClick(notification)}
+                disabled={readNotificationMutation.isPending}
+              >
+                <span className={styles.message}>{notification.message}</span>
+
+                <span className={styles.time}>
+                  {formatRelativeTime(notification.createdAt)}
+                </span>
+              </button>
+            ))}
+
+            {isFetchingNextPage && (
+              <p className={styles.nextPageMessage}>알림을 더 불러오는 중...</p>
+            )}
+
+            {isFetchNextPageError && (
+              <div className={styles.nextPageState}>
+                <p className={styles.nextPageMessage}>
+                  {getApiErrorMessage(
+                    error,
+                    '다음 알림을 불러오지 못했습니다.',
+                  )}
+                </p>
+
+                <button
+                  type="button"
+                  className={styles.retryButton}
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? '불러오는 중...' : '다시 시도'}
+                </button>
+              </div>
+            )}
+
+            {hasNextPage && !isFetchNextPageError && (
+              <div
+                ref={triggerRef}
+                className={styles.scrollTrigger}
+                aria-hidden="true"
+              />
+            )}
+          </>
+        )}
       </div>
     </section>
   )

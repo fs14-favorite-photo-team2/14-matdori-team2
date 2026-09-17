@@ -5,6 +5,9 @@ import { logout } from '@/features/auth/api'
 import useCurrentUser, {
   CURRENT_USER_QUERY_KEY,
 } from '@/features/auth/useCurrentUser'
+import useUnreadNotificationCount from '@/features/notifications/useUnreadNotificationCount'
+import useTimedToast from '@/hooks/useTimedToast'
+import { queryKeys } from '@/lib/queryKeys'
 import formatPoints from '@/utils/formatPoints'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Image from 'next/image'
@@ -38,9 +41,19 @@ function getServerMobileViewportSnapshot() {
 
 export default function Header() {
   const { user, isAuthenticated, isLoading, error } = useCurrentUser()
+  const { data: unreadCount = 0 } = useUnreadNotificationCount({
+    enabled: !isLoading && !error && isAuthenticated,
+  })
+
+  const hasUnreadNotifications = unreadCount > 0
 
   const queryClient = useQueryClient()
   const router = useRouter()
+
+  const {
+    toastMessage: notificationToastMessage,
+    showToast: showNotificationToast,
+  } = useTimedToast()
 
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const profileAreaRef = useRef(null)
@@ -73,6 +86,10 @@ export default function Header() {
 
     onSuccess: () => {
       queryClient.setQueryData(CURRENT_USER_QUERY_KEY, null)
+
+      queryClient.removeQueries({
+        queryKey: queryKeys.notifications.all,
+      })
 
       setIsProfileOpen(false)
       setIsNotificationOpen(false)
@@ -170,9 +187,15 @@ export default function Header() {
 
   return (
     <header className={styles.header}>
-      {showLogoutToast && (
+      {(showLogoutToast || notificationToastMessage) && (
         <div className={styles.toastWrapper}>
-          <Toast message="로그아웃에 실패했습니다." />
+          <Toast
+            message={
+              showLogoutToast
+                ? '로그아웃에 실패했습니다.'
+                : notificationToastMessage
+            }
+          />
         </div>
       )}
 
@@ -215,7 +238,11 @@ export default function Header() {
                   onClick={handleNotificationToggle}
                 >
                   <Image
-                    src="/icons/alarm-default.svg"
+                    src={
+                      hasUnreadNotifications
+                        ? '/icons/alarm-active.svg'
+                        : '/icons/alarm-default.svg'
+                    }
                     alt=""
                     width={24}
                     height={24}
@@ -226,6 +253,8 @@ export default function Header() {
                   <NotificationModal
                     isOpen={isNotificationOpen}
                     onClose={() => setIsNotificationOpen(false)}
+                    onReadError={showNotificationToast}
+                    unreadCount={unreadCount}
                   />
                 )}
               </div>
@@ -306,7 +335,11 @@ export default function Header() {
                 onClick={handleNotificationToggle}
               >
                 <Image
-                  src="/icons/alarm-default.svg"
+                  src={
+                    hasUnreadNotifications
+                      ? '/icons/alarm-active.svg'
+                      : '/icons/alarm-default.svg'
+                  }
                   alt=""
                   width={24}
                   height={24}
@@ -317,6 +350,8 @@ export default function Header() {
                 <NotificationModal
                   isOpen={isNotificationOpen}
                   onClose={() => setIsNotificationOpen(false)}
+                  onReadError={showNotificationToast}
+                  unreadCount={unreadCount}
                   isMobile
                 />
               )}

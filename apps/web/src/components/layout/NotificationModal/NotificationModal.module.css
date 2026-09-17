@@ -40,6 +40,11 @@
   cursor: pointer;
 }
 
+.readAllButton:disabled {
+  color: var(--color-gray-400);
+  cursor: default;
+}
+
 .notificationList {
   display: flex;
   flex: 1;
@@ -61,6 +66,44 @@
 .notificationList::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background-color: var(--color-gray-400);
+}
+
+.state {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 160px;
+  padding: 24px 20px;
+}
+
+.stateMessage {
+  margin: 0;
+  padding: 32px 20px;
+  color: var(--color-gray-300);
+  font-size: var(--font-size-14);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.state .stateMessage {
+  padding: 0;
+}
+
+.retryButton {
+  padding: 6px 12px;
+  border: 1px solid var(--color-gray-400);
+  background-color: transparent;
+  color: var(--color-white);
+  font-size: var(--font-size-12);
+  cursor: pointer;
+}
+
+.retryButton:disabled {
+  color: var(--color-gray-300);
+  cursor: default;
 }
 
 .notificationItem {
@@ -100,6 +143,32 @@
   margin-top: 10px;
   color: var(--color-gray-300);
   font-size: var(--font-size-12);
+}
+
+.nextPageState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+}
+
+.nextPageMessage {
+  margin: 0;
+  padding: 12px 20px;
+  color: var(--color-gray-300);
+  font-size: var(--font-size-12);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.nextPageState .nextPageMessage {
+  padding: 0;
+}
+
+.scrollTrigger {
+  flex-shrink: 0;
+  height: 1px;
 }
 
 @media (max-width: 743px) {
