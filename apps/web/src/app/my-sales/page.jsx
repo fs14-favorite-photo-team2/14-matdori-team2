@@ -16,7 +16,9 @@ import {
 import SearchBar from '@/components/common/SearchBar/SearchBar'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
+import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
 import ScrollToTopButton from '@/components/common/ScrollToTopButton/ScrollToTopButton'
+import useInfiniteScroll from '@/hooks/useInfiniteScroll'
 import {
   DIFFICULTY_OPTIONS,
   DEFAULT_FILTERS,
@@ -133,23 +135,11 @@ export default function MySalesPage() {
     if (hasNextOffers) fetchNextOffers()
   }, [hasNextListings, hasNextOffers, fetchNextListings, fetchNextOffers])
 
-  const [sentinelRef, setSentinelRef] = useState(null)
-
-  useEffect(() => {
-    if (!sentinelRef || !hasNext) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isFetchingNext) {
-          handleLoadMore()
-        }
-      },
-      { rootMargin: '200px' },
-    )
-
-    observer.observe(sentinelRef)
-    return () => observer.disconnect()
-  }, [sentinelRef, hasNext, isFetchingNext, handleLoadMore])
+  const sentinelRef = useInfiniteScroll({
+    hasMore: hasNext,
+    isLoading: isFetchingNext,
+    onLoadMore: handleLoadMore,
+  })
 
   function handleKeywordChange(nextKeyword) {
     setKeyword(nextKeyword)
@@ -283,7 +273,9 @@ export default function MySalesPage() {
         </div>
       )}
 
-      <div ref={setSentinelRef} className={styles.sentinel} />
+      {isFetchingNext && <LoadingIndicator variant="list" />}
+
+      <div ref={sentinelRef} className={styles.sentinel} />
       <ScrollToTopButton />
     </div>
   )

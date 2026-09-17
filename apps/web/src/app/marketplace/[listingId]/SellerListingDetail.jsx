@@ -2,7 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useWithdrawMarketListing } from '@/features/marketplace/useMarketListingMutations'
+import {
+  useUpdateMarketListing,
+  useWithdrawMarketListing,
+} from '@/features/marketplace/useMarketListingMutations'
 import Image from 'next/image'
 import styles from './page.module.css'
 import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
@@ -14,11 +17,13 @@ import Toast from '@/components/common/Toast/Toast'
 import useTimedToast from '@/hooks/useTimedToast'
 import getApiErrorMessage from '@/utils/getApiErrorMessage'
 import { useListingTradeOffers } from '@/features/exchanges/useTradeOffers'
+import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
 import {
   useAcceptTradeOffer,
   useRejectTradeOffer,
 } from '@/features/exchanges/useTradeOfferMutations'
 import useInfiniteScroll from '@/hooks/useInfiniteScroll'
+import { SALE_EDIT_DETAIL_ERROR_MATCHERS } from '@/constants/ApiErrorMessages'
 
 const DIFFICULTY_CLASS_NAMES = {
   easy: styles.difficultyEasy,
@@ -31,6 +36,7 @@ export default function SellerListingDetail({ listing }) {
   const { recipe, seller } = listing
   const router = useRouter()
   const withdrawMutation = useWithdrawMarketListing()
+  const updateMutation = useUpdateMarketListing()
   const rejectTradeOfferMutation = useRejectTradeOffer()
   const acceptTradeOfferMutation = useAcceptTradeOffer()
   const { toastMessage, showToast } = useTimedToast()
@@ -93,7 +99,41 @@ export default function SellerListingDetail({ listing }) {
   }
 
   function handleEditSubmit(editData) {
-    setIsEditModalOpen(false)
+    if (updateMutation.isPending) return
+
+    const data = {
+      remainingQuantity: editData.quantity,
+      price: editData.unitPrice,
+      listingType: editData.listingType,
+    }
+
+    if (editData.listingType === 'BOTH') {
+      data.wantedDifficulty = editData.desiredDifficulty
+      data.wantedCategory = editData.desiredCategory
+      data.wantedDescription = editData.exchangeDescription
+    }
+
+    updateMutation.mutate(
+      {
+        listingId: editData.listingId,
+        data,
+      },
+      {
+        onSuccess: () => {
+          setIsEditModalOpen(false)
+        },
+
+        onError: (error) => {
+          showToast(
+            getApiErrorMessage(
+              error,
+              '판매글을 수정하지 못했습니다.',
+              SALE_EDIT_DETAIL_ERROR_MATCHERS,
+            ),
+          )
+        },
+      },
+    )
   }
 
   const wantedDifficultyOption = DIFFICULTY_OPTIONS.find(
@@ -388,9 +428,10 @@ export default function SellerListingDetail({ listing }) {
             </h2>
 
             {isTradeOffersPending ? (
-              <p className={styles.tradeListState} role="status">
-                교환 제안을 불러오는 중...
-              </p>
+              <LoadingIndicator
+                variant="page"
+                message="교환 제안을 불러오는 중입니다"
+              />
             ) : isTradeOffersError && tradeOffers.length === 0 ? (
               <div className={styles.tradeListError}>
                 <p>
@@ -503,11 +544,7 @@ export default function SellerListingDetail({ listing }) {
                   />
                 )}
 
-                {isFetchingNextPage && (
-                  <p className={styles.tradeListState} role="status">
-                    교환 제안을 더 불러오는 중...
-                  </p>
-                )}
+                {isFetchingNextPage && <LoadingIndicator variant="list" />}
 
                 {isFetchNextPageError && (
                   <div className={styles.tradeListError}>
@@ -578,6 +615,7 @@ export default function SellerListingDetail({ listing }) {
         onClose={() => setIsEditModalOpen(false)}
         onSubmit={handleEditSubmit}
         listing={listing}
+        isPending={updateMutation.isPending}
       />
     </main>
   )
