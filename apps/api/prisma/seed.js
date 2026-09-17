@@ -326,7 +326,6 @@ async function seedRecipes(users) {
         ingredients: [
           { name: '예시 재료', amount: '적당량', isHighlight: false },
         ],
-        minPrice: 1000 + (i % 10) * 500,
         difficulty,
         category,
         summary: `${CATEGORY_LABELS[category]} 카테고리의 ${title} 레시피입니다. ${DIFFICULTY_LABELS[difficulty]} 난이도로 구성되어 있습니다.`,
@@ -372,7 +371,7 @@ async function seedListings(users, recipes) {
         recipeId: recipe.id,
         listingType,
         initialQuantity: getInitialQuantity(i),
-        price: recipe.minPrice + 500 + (i % 8) * 500,
+        price: (i % 20) + 1,
         wantedDifficulty,
         wantedCategory,
         wantedDescription:
