@@ -1,12 +1,22 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import {
+  useMyMarketListings,
+  useMySentTradeOffers,
+} from '@/features/my-sales/hooks'
+import useCurrentUser from '@/features/auth/useCurrentUser'
+import {
+  normalizeOwnListing,
+  normalizeSentOffer,
+} from '@/features/my-sales/normalize'
 import SearchBar from '@/components/common/SearchBar/SearchBar'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
+import ScrollToTopButton from '@/components/common/ScrollToTopButton/ScrollToTopButton'
 import {
   DIFFICULTY_OPTIONS,
   DEFAULT_FILTERS,
@@ -14,86 +24,11 @@ import {
 } from '@/constants/RecipeOptions'
 import styles from './page.module.css'
 
-const PAGE_SIZE_DESKTOP = 12
-const PAGE_SIZE_MOBILE = 8
-const DESKTOP_BREAKPOINT = 1023
-
 const DIFFICULTY_TONE_VARS = {
   easy: 'var(--color-main)',
   normal: 'var(--color-blue)',
   hard: 'var(--color-purple)',
   master: 'var(--color-pink)',
-}
-
-// ---- GET /api/users/me/market-listings 로 교체 ----
-const RECIPE_NAMES_BY_CATEGORY = {
-  KOREAN: ['김치찌개', '된장찌개', '제육볶음', '불고기', '비빔밥'],
-  WESTERN: ['토마토 파스타', '크림 파스타', '스테이크', '리조또'],
-  JAPANESE: ['가츠동', '오코노미야키', '카레라이스'],
-  ASIAN: ['팟타이', '쌀국수', '분짜'],
-  HOME_BAKING: ['휘낭시에', '스콘', '브라우니'],
-}
-const CATEGORY_KEYS = Object.keys(RECIPE_NAMES_BY_CATEGORY)
-const DIFFICULTIES = ['EASY', 'NORMAL', 'HARD', 'MASTER']
-const OFFER_SELLER_NICKNAMES = ['프로한식러', '미쓰손', '팝스타', '요리요정']
-
-function createMockListings(count) {
-  return Array.from({ length: count }, (_, i) => {
-    const category = CATEGORY_KEYS[i % CATEGORY_KEYS.length]
-    const names = RECIPE_NAMES_BY_CATEGORY[category]
-    const difficulty = DIFFICULTIES[i % DIFFICULTIES.length]
-    const isSoldOut = i % 4 === 0
-    const isSentOffer = !isSoldOut && i % 5 === 0
-
-    const relationType = isSentOffer ? 'SENT_OFFER' : 'OWN_LISTING'
-    const listingType = 'SALE'
-    const listingStatus = isSoldOut ? 'SOLD_OUT' : 'ON_SALE'
-    const tradeOfferStatus = isSentOffer ? 'PENDING' : null
-
-    let badgeType
-    if (!isSoldOut) {
-      badgeType = isSentOffer ? 'exchangePending' : 'selling'
-    }
-
-    return {
-      id: `listing-${i}`,
-      relationType,
-      listingType,
-      listingStatus,
-      tradeOfferStatus,
-      badgeType,
-      price: 1 + (i % 20),
-      sellerNickname: isSentOffer
-        ? OFFER_SELLER_NICKNAMES[i % OFFER_SELLER_NICKNAMES.length]
-        : undefined,
-      recipe: {
-        id: `recipe-${i}`,
-        title: names[i % names.length],
-        imageUrl: `https://picsum.photos/seed/listing-${i}/800/600`,
-        difficulty,
-        category,
-      },
-      remainingQuantity: isSoldOut ? 0 : (i % 3) + 1,
-    }
-  })
-}
-// ---------------------------------------------------------
-
-function getDisplayableListings(listings) {
-  return listings.filter((listing) => {
-    if (listing.relationType === 'OWN_LISTING') {
-      return true
-    }
-
-    if (listing.relationType === 'SENT_OFFER') {
-      return (
-        listing.tradeOfferStatus === 'PENDING' &&
-        listing.listingStatus === 'ON_SALE'
-      )
-    }
-
-    return false
-  })
 }
 
 function getFilteredListings(listings, keyword, targetFilters) {
@@ -125,35 +60,50 @@ function getFilteredListings(listings, keyword, targetFilters) {
 
 export default function MySalesPage() {
   const router = useRouter()
-  const nickname = '유디'
+  const { user } = useCurrentUser()
+  const nickname = user?.nickname ?? ''
 
-  const [pageSize, setPageSize] = useState(PAGE_SIZE_DESKTOP)
-  const [listings] = useState(() => createMockListings(35))
   const [keyword, setKeyword] = useState('')
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE_DESKTOP)
 
-  const sentinelRef = useRef(null)
+  // ---- 내가 등록한 판매글  ----
+  const {
+    data: listingsPages,
+    fetchNextPage: fetchNextListings,
+    hasNextPage: hasNextListings,
+    isFetchingNextPage: isFetchingNextListings,
+  } = useMyMarketListings({
+    keyword,
+    difficulty: filters.difficulty,
+    category: filters.category,
+  })
 
-  useEffect(() => {
-    function applySize() {
-      const isMobile = window.innerWidth <= DESKTOP_BREAKPOINT
-      const nextSize = isMobile ? PAGE_SIZE_MOBILE : PAGE_SIZE_DESKTOP
-      setPageSize(nextSize)
-      setVisibleCount(nextSize)
-    }
+  // ---- 내가 보낸 교환 제안 ----
+  const {
+    data: offersPages,
+    fetchNextPage: fetchNextOffers,
+    hasNextPage: hasNextOffers,
+    isFetchingNextPage: isFetchingNextOffers,
+  } = useMySentTradeOffers({ status: 'PENDING' })
 
-    applySize()
-    window.addEventListener('resize', applySize)
-    return () => window.removeEventListener('resize', applySize)
-  }, [])
-
-  const displayableListings = useMemo(
-    () => getDisplayableListings(listings),
-    [listings],
+  const myListings = useMemo(
+    () => listingsPages?.pages.flatMap((page) => page.data) ?? [],
+    [listingsPages],
   )
+
+  const sentOffers = useMemo(
+    () => offersPages?.pages.flatMap((page) => page.data) ?? [],
+    [offersPages],
+  )
+
+  const displayableListings = useMemo(() => {
+    const ownListings = myListings.map(normalizeOwnListing)
+    const offerListings = sentOffers.map(normalizeSentOffer).filter(Boolean)
+
+    return [...ownListings, ...offerListings]
+  }, [myListings, sentOffers])
 
   const difficultyCounts = useMemo(() => {
     return DIFFICULTY_OPTIONS.map((option) => ({
@@ -175,34 +125,38 @@ export default function MySalesPage() {
     [displayableListings, keyword, draftFilters],
   )
 
-  const visibleListings = filteredListings.slice(0, visibleCount)
-  const hasNext = visibleCount < filteredListings.length
+  const hasNext = hasNextListings || hasNextOffers
+  const isFetchingNext = isFetchingNextListings || isFetchingNextOffers
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextListings) fetchNextListings()
+    if (hasNextOffers) fetchNextOffers()
+  }, [hasNextListings, hasNextOffers, fetchNextListings, fetchNextOffers])
+
+  const [sentinelRef, setSentinelRef] = useState(null)
 
   useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel || !hasNext) return
+    if (!sentinelRef || !hasNext) return
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
-          setVisibleCount((prev) => prev + pageSize)
+        if (entries[0].isIntersecting && !isFetchingNext) {
+          handleLoadMore()
         }
       },
       { rootMargin: '200px' },
     )
 
-    observer.observe(sentinel)
+    observer.observe(sentinelRef)
     return () => observer.disconnect()
-  }, [hasNext, pageSize])
+  }, [sentinelRef, hasNext, isFetchingNext, handleLoadMore])
 
   function handleKeywordChange(nextKeyword) {
     setKeyword(nextKeyword)
-    setVisibleCount(pageSize)
   }
 
   function handleFilterChange(key, value) {
     setFilters((prev) => ({ ...prev, [key]: value }))
-    setVisibleCount(pageSize)
   }
 
   function handleDraftFilterChange(key, value) {
@@ -227,7 +181,6 @@ export default function MySalesPage() {
 
   function handleApply(nextFilters) {
     setFilters(nextFilters)
-    setVisibleCount(pageSize)
     setIsMobileOpen(false)
   }
 
@@ -300,11 +253,11 @@ export default function MySalesPage() {
         </div>
       </div>
 
-      {visibleListings.length === 0 ? (
+      {filteredListings.length === 0 ? (
         <p className={styles.emptyText}>조건에 맞는 레시피가 없어요.</p>
       ) : (
         <div className={styles.grid}>
-          {visibleListings.map((listing) => (
+          {filteredListings.map((listing) => (
             <Link
               key={listing.id}
               href={`/marketplace/${listing.id}`}
@@ -330,7 +283,8 @@ export default function MySalesPage() {
         </div>
       )}
 
-      <div ref={sentinelRef} className={styles.sentinel} />
+      <div ref={setSentinelRef} className={styles.sentinel} />
+      <ScrollToTopButton />
     </div>
   )
 }

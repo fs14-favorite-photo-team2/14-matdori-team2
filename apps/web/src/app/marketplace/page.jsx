@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Button from '@/components/common/Button/Button'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import SearchBar from '@/components/common/SearchBar/SearchBar'
@@ -17,12 +17,14 @@ import {
 import LoginRequiredModal from '@/features/auth/components/LoginRequiredModal/LoginRequiredModal'
 import RecipeSelectionModal from '@/components/common/RecipeSelectionModal/RecipeSelectionModal'
 import SaleRegistrationModal from '@/features/sales/components/SaleRegistrationModal/SaleRegistrationModal'
+import RandomPointModal from '@/features/random-point/RandomPointModal'
 import useMarketListings from '@/features/marketplace/useMarketListings'
 import useInfiniteScroll from '@/hooks/useInfiniteScroll'
 import useDebouncedValue from '@/hooks/useDebouncedValue'
 import ErrorState from '@/components/common/ErrorState/ErrorState'
 import getApiErrorMessage from '@/utils/getApiErrorMessage'
 import useCurrentUser from '@/features/auth/useCurrentUser'
+import ScrollToTopButton from '@/components/common/ScrollToTopButton/ScrollToTopButton'
 import styles from './page.module.css'
 
 const DESKTOP_PAGE_SIZE = 12
@@ -39,6 +41,9 @@ export default function MarketplacePage() {
   const [pageSize, setPageSize] = useState(null)
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false)
   const [selectedRecipe, setSelectedRecipe] = useState(null)
+  const [isRandomPointModalOpen, setIsRandomPointModalOpen] = useState(false)
+  const hasShownRandomPointModalRef = useRef(false)
+
   const {
     data: marketListingsData,
     error,
@@ -71,7 +76,6 @@ export default function MarketplacePage() {
 
   const marketListings =
     marketListingsData?.pages.flatMap((page) => page.data) ?? []
-
   const loadMoreRef = useInfiniteScroll({
     enabled: isConfigured && !isFetchNextPageError,
     hasMore: Boolean(hasNextPage),
@@ -97,6 +101,16 @@ export default function MarketplacePage() {
       tabletMediaQuery.removeEventListener('change', handleScreenChange)
     }
   }, [])
+
+  // 로그인 상태가 확인되면 한 번만 랜덤 포인트 모달을 띄웁니다.
+  useEffect(() => {
+    if (isAuthLoading || isAuthRefetching) return
+    if (!isAuthenticated) return
+    if (hasShownRandomPointModalRef.current) return
+
+    hasShownRandomPointModalRef.current = true
+    setIsRandomPointModalOpen(true)
+  }, [isAuthenticated, isAuthLoading, isAuthRefetching])
 
   const [isLoginRequiredModalOpen, setIsLoginRequiredModalOpen] =
     useState(false)
@@ -358,6 +372,8 @@ export default function MarketplacePage() {
           </>
         )}
       </div>
+      <ScrollToTopButton />
+
       <LoginRequiredModal
         isOpen={isLoginRequiredModalOpen}
         onClose={() => setIsLoginRequiredModalOpen(false)}
@@ -376,6 +392,11 @@ export default function MarketplacePage() {
         onClose={() => setSelectedRecipe(null)}
         selectedRecipe={selectedRecipe}
         onSubmit={handleSaleRegistrationSubmit}
+      />
+      <RandomPointModal
+        isOpen={isRandomPointModalOpen}
+        onClose={() => setIsRandomPointModalOpen(false)}
+        onClaimed={(currentPoints) => {}}
       />
     </main>
   )
