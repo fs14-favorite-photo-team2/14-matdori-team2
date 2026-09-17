@@ -287,6 +287,26 @@
   border-radius: 999px;
 }
 
+.highlightIngredients {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  color: var(--color-gray-200);
+  font-size: var(--font-size-14);
+  line-height: 1.5;
+}
+
+.highlightIngredientsLabel {
+  flex-shrink: 0;
+  color: var(--color-main);
+  font-weight: var(--font-weight-bold);
+}
+
+.highlightIngredientsValue {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
 .priceInfo {
   display: flex;
   flex-direction: column;

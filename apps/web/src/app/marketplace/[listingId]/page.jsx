@@ -40,6 +40,9 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
   const isSeller = currentUserId === listing.seller.id
   const { recipe, seller } = listing
   const thumbnailUrl = recipe.imageUrls[0]
+  const highlightIngredients = Array.isArray(recipe.ingredients)
+    ? recipe.ingredients
+    : []
   const difficultyOption = DIFFICULTY_OPTIONS.find(
     (option) => option.value === recipe.difficulty,
   )
@@ -342,6 +345,20 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
 
             <div className={styles.summaryWrapper}>
               <p className={styles.summary}>{recipe.summary}</p>
+
+              {highlightIngredients.length > 0 && (
+                <div className={styles.highlightIngredients}>
+                  <span className={styles.highlightIngredientsLabel}>
+                    대표 재료
+                  </span>
+
+                  <span className={styles.highlightIngredientsValue}>
+                    {highlightIngredients
+                      .map((ingredient) => ingredient.name)
+                      .join(', ')}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className={styles.priceInfo}>
