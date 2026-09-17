@@ -1,5 +1,4 @@
 import express from 'express'
-import { fileURLToPath } from 'node:url'
 
 import { env } from './config/env.js'
 import passport from './config/passport.js'
@@ -13,12 +12,11 @@ import helmetMiddleware from './middlewares/helmet.js'
 import httpLoggerMiddleware from './middlewares/http-logger.js'
 import { notFoundHandler } from './middlewares/not-found.js'
 import { apiRateLimit } from './middlewares/rate-limit.js'
+import serveUploads from './middlewares/serve-uploads.js'
 import sessionMiddleware from './middlewares/session.js'
 import { verifyOrigin } from './middlewares/verify-origin.js'
 import apiDocsRouter from './routes/api-docs.js'
 import apiRouter from './routes/index.js'
-
-const uploadsDirectory = fileURLToPath(new URL('../uploads/', import.meta.url))
 
 const app = express()
 
@@ -33,7 +31,7 @@ app.use(express.json())
 app.use(sessionMiddleware)
 app.use(passport.initialize())
 
-app.use('/uploads', express.static(uploadsDirectory))
+app.use('/uploads', serveUploads)
 
 app.get('/health', getHealthController)
 app.get('/ready', getReadyController)

@@ -23,6 +23,8 @@ const clientOrigins = (process.env.CLIENT_ORIGIN ?? 'http://localhost:3000')
   .map((origin) => origin.trim())
   .filter(Boolean)
 
+const apiOrigin = process.env.API_ORIGIN ?? 'http://localhost:3001'
+
 const missingGoogleOAuthVariables = [
   'GOOGLE_CLIENT_ID',
   'GOOGLE_CLIENT_SECRET',
@@ -36,6 +38,7 @@ export const env = Object.freeze({
   trustProxy: Number(process.env.TRUST_PROXY || 1),
   databaseUrl: process.env.DATABASE_URL,
   clientOrigins: Object.freeze(clientOrigins),
+  apiOrigin,
   session: Object.freeze({
     cookieName: process.env.SESSION_COOKIE_NAME ?? 'session',
     secret: process.env.SESSION_SECRET,
@@ -69,6 +72,26 @@ export function validateServerEnv() {
     throw new Error('DATABASE_URL 환경 변수가 필요합니다.')
   }
 
+  const invalidClientOrigin = env.clientOrigins.find(
+    (origin) => !isOrigin(origin),
+  )
+
+  if (invalidClientOrigin) {
+    throw new Error(
+      `CLIENT_ORIGIN의 '${invalidClientOrigin}'은 경로나 끝의 '/' 없는 http(s) origin이어야 합니다.`,
+    )
+  }
+
+  if (env.isProduction && !process.env.API_ORIGIN) {
+    throw new Error('API_ORIGIN 환경 변수가 필요합니다.')
+  }
+
+  if (!isOrigin(env.apiOrigin)) {
+    throw new Error(
+      "API_ORIGIN은 경로나 끝의 '/' 없는 http(s) origin이어야 합니다.",
+    )
+  }
+
   if (!Number.isFinite(env.session.ttlSeconds) || env.session.ttlSeconds <= 0) {
     throw new Error('SESSION_TTL_SECONDS는 양수여야 합니다.')
   }
@@ -84,5 +107,18 @@ export function validateServerEnv() {
     throw new Error(
       `${env.googleOAuth.missingVariables.join(', ')} 환경 변수가 필요합니다.`,
     )
+  }
+}
+
+function isOrigin(value) {
+  try {
+    const url = new URL(value)
+
+    return (
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      value === url.origin
+    )
+  } catch {
+    return false
   }
 }
