@@ -10,7 +10,7 @@ export function sendSuccess(response, data, options = {}) {
 }
 
 export function sendError(response, status, code, message, details) {
-  const error = { code, message }
+  const error = { code, message, requestId: response.req.id }
 
   if (details !== undefined) {
     error.details = details

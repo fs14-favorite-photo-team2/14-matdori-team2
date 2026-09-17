@@ -1,0 +1,215 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.label {
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-bold);
+}
+
+.input {
+  width: 100%;
+  height: 50px;
+  padding: 0 20px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 2px;
+  background-color: var(--color-black);
+  color: var(--color-white);
+  font-size: var(--font-size-16);
+}
+
+.currentImages {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.currentImage {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--color-gray-300);
+  border-radius: 2px;
+}
+
+.currentImageContent {
+  object-fit: cover;
+}
+
+.thumbnailBadge {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  padding: 3px 6px;
+  background-color: var(--color-main);
+  color: var(--color-black);
+  font-size: var(--font-size-10);
+  font-weight: var(--font-weight-bold);
+}
+
+.imageGuide {
+  color: var(--color-gray-300);
+  font-size: var(--font-size-12);
+  line-height: 1.5;
+}
+
+.hintBox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--color-white);
+  font-size: var(--font-size-12);
+}
+
+.ingredientRow {
+  position: relative;
+  margin-bottom: 8px;
+  padding: 16px;
+  border: 1px solid var(--color-gray-400);
+  border-radius: 4px;
+}
+
+.ingredientRowGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    'highlight amountLabel'
+    'nameInput amountInput';
+  gap: 8px 16px;
+}
+
+.areaHighlight {
+  grid-area: highlight;
+}
+
+.areaAmountLabel {
+  grid-area: amountLabel;
+}
+
+.areaNameInput {
+  grid-area: nameInput;
+}
+
+.areaAmountInput {
+  grid-area: amountInput;
+}
+
+.highlightButton {
+  width: fit-content;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-white);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-bold);
+  text-align: left;
+  cursor: pointer;
+}
+
+.removeIngredientButton {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--color-gray-200);
+  font-size: var(--font-size-20);
+  cursor: pointer;
+}
+
+.removeIngredientButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.addIngredientButton {
+  width: 100%;
+  height: 50px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 2px;
+  background-color: var(--color-gray-400);
+  color: var(--color-white);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 16px 20px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 2px;
+  background-color: var(--color-black);
+  color: var(--color-white);
+  font-family: inherit;
+  font-size: var(--font-size-16);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.contentTextarea {
+  min-height: 200px;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.actionButton {
+  width: 100%;
+}
+
+@media (max-width: 743px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+
+  .currentImages {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ingredientRowGrid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'highlight'
+      'nameInput'
+      'amountLabel'
+      'amountInput';
+  }
+
+  .actions {
+    gap: 8px;
+  }
+
+  .textarea {
+    font-size: var(--font-size-14);
+  }
+}

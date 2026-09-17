@@ -14,6 +14,7 @@ import {
   requireGoogleOAuthConfigured,
   startGoogleOAuth,
 } from '../middlewares/google-oauth.js'
+import { loginRateLimit, signupRateLimit } from '../middlewares/rate-limit.js'
 import { requireAuthentication } from '../middlewares/require-authentication.js'
 import { validateRequest } from '../middlewares/validate-request.js'
 import {
@@ -24,8 +25,18 @@ import {
 
 const authRouter = Router()
 
-authRouter.post('/signup', validateRequest(signupRequest), signupController)
-authRouter.post('/login', validateRequest(loginRequest), loginController)
+authRouter.post(
+  '/signup',
+  signupRateLimit,
+  validateRequest(signupRequest),
+  signupController,
+)
+authRouter.post(
+  '/login',
+  loginRateLimit,
+  validateRequest(loginRequest),
+  loginController,
+)
 authRouter.post(
   '/logout',
   requireAuthentication,

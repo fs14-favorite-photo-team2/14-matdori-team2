@@ -16,7 +16,7 @@ function SellRegisterSuccessContent() {
       descriptionInfo={`[${difficultyLabel} | ${recipeTitle}]`}
       descriptionMessage="판매 등록에 성공했습니다!"
       buttonLabel="나의 판매 레시피에서 확인하기"
-      redirectTo="/my-kitchen/sales"
+      redirectTo="/my-sales"
       redirectPageName="나의 판매 레시피"
     />
   )
