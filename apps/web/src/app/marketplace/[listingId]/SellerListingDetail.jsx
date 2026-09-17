@@ -2,7 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useWithdrawMarketListing } from '@/features/marketplace/useMarketListingMutations'
+import {
+  useUpdateMarketListing,
+  useWithdrawMarketListing,
+} from '@/features/marketplace/useMarketListingMutations'
 import Image from 'next/image'
 import styles from './page.module.css'
 import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
@@ -31,6 +34,7 @@ export default function SellerListingDetail({ listing }) {
   const { recipe, seller } = listing
   const router = useRouter()
   const withdrawMutation = useWithdrawMarketListing()
+  const updateMutation = useUpdateMarketListing()
   const rejectTradeOfferMutation = useRejectTradeOffer()
   const acceptTradeOfferMutation = useAcceptTradeOffer()
   const { toastMessage, showToast } = useTimedToast()
@@ -93,7 +97,35 @@ export default function SellerListingDetail({ listing }) {
   }
 
   function handleEditSubmit(editData) {
-    setIsEditModalOpen(false)
+    if (updateMutation.isPending) return
+
+    const data = {
+      remainingQuantity: editData.quantity,
+      price: editData.unitPrice,
+      listingType: editData.listingType,
+    }
+
+    if (editData.listingType === 'BOTH') {
+      data.wantedDifficulty = editData.desiredDifficulty
+      data.wantedCategory = editData.desiredCategory
+      data.wantedDescription = editData.exchangeDescription
+    }
+
+    updateMutation.mutate(
+      {
+        listingId: editData.listingId,
+        data,
+      },
+      {
+        onSuccess: () => {
+          setIsEditModalOpen(false)
+        },
+
+        onError: (error) => {
+          showToast(getApiErrorMessage(error, '판매글을 수정하지 못했습니다.'))
+        },
+      },
+    )
   }
 
   const wantedDifficultyOption = DIFFICULTY_OPTIONS.find(
@@ -578,6 +610,7 @@ export default function SellerListingDetail({ listing }) {
         onClose={() => setIsEditModalOpen(false)}
         onSubmit={handleEditSubmit}
         listing={listing}
+        isPending={updateMutation.isPending}
       />
     </main>
   )
