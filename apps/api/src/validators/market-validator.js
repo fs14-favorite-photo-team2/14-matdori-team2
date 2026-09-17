@@ -158,6 +158,7 @@ const updateMarketListingBody = refine(
     wantedDifficulty: optional(enums(DIFFICULTIES)),
     wantedCategory: optional(enums(CATEGORIES)),
     wantedDescription: optional(size(string(), 0, 500)),
+    remainingQuantity: optional(max(min(integer(), 1), 10)),
   }),
   'update market listing',
   (value) =>

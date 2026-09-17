@@ -10,6 +10,7 @@ import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
 import { fetchMyRecipeCopies } from '@/features/my-kitchen/api/recipeCopies'
 import { queryKeys } from '@/lib/queryKeys'
 import useCurrentUser from '@/features/auth/useCurrentUser'
+import ScrollToTopButton from '@/components/common/ScrollToTopButton/ScrollToTopButton'
 import {
   DIFFICULTY_OPTIONS,
   DEFAULT_FILTERS,
@@ -246,6 +247,7 @@ export default function MyKitchenPage() {
       )}
 
       <div ref={sentinelRef} className={styles.sentinel} />
+      <ScrollToTopButton />
     </div>
   )
 }
