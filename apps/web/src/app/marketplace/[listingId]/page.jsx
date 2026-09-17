@@ -26,6 +26,7 @@ import {
 } from '@/features/exchanges/useTradeOfferMutations'
 import useDebouncedValue from '@/hooks/useDebouncedValue'
 import useInfiniteScroll from '@/hooks/useInfiniteScroll'
+import { PURCHASE_DETAIL_ERROR_MATCHERS } from '@/constants/ApiErrorMessages'
 import styles from './page.module.css'
 
 const DIFFICULTY_CLASS_NAMES = {
@@ -190,7 +191,9 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
           return
         }
 
-        showToast(getApiErrorMessage(error))
+        showToast(
+          getApiErrorMessage(error, undefined, PURCHASE_DETAIL_ERROR_MATCHERS),
+        )
       },
     })
   }
