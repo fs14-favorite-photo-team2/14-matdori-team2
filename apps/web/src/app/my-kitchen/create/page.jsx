@@ -120,8 +120,6 @@ export default function CreateRecipePage() {
         })),
       ),
     )
-    // TODO: minPrice 입력 UI 추가되면 제거 - 백엔드 테스트용 임시 고정값
-    formData.append('minPrice', '1')
     imageFiles.forEach((file) => formData.append('images', file))
 
     try {
