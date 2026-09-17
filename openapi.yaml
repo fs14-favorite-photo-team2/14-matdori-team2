@@ -1226,6 +1226,7 @@ components:
       required:
         - id
         - title
+        - creator
         - imageUrl
         - imageUrls
         - difficulty
@@ -1235,6 +1236,7 @@ components:
       properties:
         id: { type: integer, minimum: 1, description: 레시피 ID, example: 42 }
         title: { type: string, minLength: 1, maxLength: 100 }
+        creator: { $ref: '#/components/schemas/PublicUser' }
         imageUrl:
           {
             type: string,
@@ -1507,7 +1509,7 @@ components:
       type: object
       required:
         - id
-        - listingId
+        - listing
         - proposer
         - offeredCopy
         - status
@@ -1516,8 +1518,7 @@ components:
       properties:
         id:
           { type: integer, minimum: 1, description: 교환 제안 ID, example: 205 }
-        listingId:
-          { type: integer, minimum: 1, description: 판매글 ID, example: 101 }
+        listing: { $ref: '#/components/schemas/ListingSummary' }
         proposer: { $ref: '#/components/schemas/PublicUser' }
         offeredCopy: { $ref: '#/components/schemas/RecipeCopy' }
         receivedCopyId:

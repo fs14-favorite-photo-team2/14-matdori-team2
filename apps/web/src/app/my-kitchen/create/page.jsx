@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
+import { useQueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/queryKeys'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/common/Button/Button'
 import FormSelect from '@/components/common/FormSelect/FormSelect'
 import ImageUploader from '@/components/common/ImageUploader/ImageUploader'
+import api from '@/lib/api'
 import { DIFFICULTY_OPTIONS, CATEGORY_OPTIONS } from '@/constants/RecipeOptions'
 import styles from './page.module.css'
 
@@ -22,6 +24,7 @@ function createEmptyIngredient() {
 
 export default function CreateRecipePage() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [title, setTitle] = useState('')
   const [difficulty, setDifficulty] = useState('')
   const [category, setCategory] = useState('')
@@ -29,6 +32,7 @@ export default function CreateRecipePage() {
   const [summary, setSummary] = useState('')
   const [content, setContent] = useState('')
   const [imageFiles, setImageFiles] = useState([])
+  const [isImageProcessing, setIsImageProcessing] = useState(false)
   const [ingredients, setIngredients] = useState(() =>
     Array.from({ length: 2 }, () => createEmptyIngredient()),
   )
@@ -57,6 +61,7 @@ export default function CreateRecipePage() {
     category !== '' &&
     isSupplyValid &&
     imageFiles.length > 0 &&
+    !isImageProcessing &&
     summary.trim() !== '' &&
     content.trim() !== '' &&
     isIngredientListValid(ingredients) &&
@@ -91,10 +96,6 @@ export default function CreateRecipePage() {
     )
   }
 
-  function handleBack() {
-    router.back()
-  }
-
   async function handleSubmit(event) {
     event.preventDefault()
     if (!isFormValid) return
@@ -102,33 +103,31 @@ export default function CreateRecipePage() {
     setIsSubmitting(true)
     setSubmitError('')
 
-    const payload = {
-      title,
-      imageUrls: [],
-      difficulty,
-      category,
-      summary,
-      content,
-      totalSupply: Number(totalSupply),
-      ingredients: ingredients.map(({ name, amount, isHighlight }) => ({
-        name,
-        amount,
-        isHighlight,
-      })),
-    }
+    const formData = new FormData()
+    formData.append('title', title)
+    formData.append('content', content)
+    formData.append('summary', summary)
+    formData.append('totalSupply', String(totalSupply))
+    formData.append('difficulty', difficulty)
+    formData.append('category', category)
+    formData.append(
+      'ingredients',
+      JSON.stringify(
+        ingredients.map(({ name, amount, isHighlight }) => ({
+          name,
+          amount,
+          isHighlight,
+        })),
+      ),
+    )
+    // TODO: minPrice 입력 UI 추가되면 제거 - 백엔드 테스트용 임시 고정값
+    formData.append('minPrice', '1')
+    imageFiles.forEach((file) => formData.append('images', file))
 
     try {
-      const response = await fetch('/api/recipes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      const result = await response.json()
+      const { data: result } = await api.post('/recipes', formData)
 
-      if (!result.success) {
-        setSubmitError(result.error?.message ?? '레시피 생성에 실패했어요.')
-        return
-      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.myKitchen.all })
 
       const difficultyLabel =
         DIFFICULTY_OPTIONS.find((option) => option.value === difficulty)
@@ -141,7 +140,10 @@ export default function CreateRecipePage() {
       router.push(`/my-kitchen/create/success?${params.toString()}`)
     } catch (error) {
       console.error('레시피 생성 실패', error)
-      setSubmitError('네트워크 오류가 발생했어요. 다시 시도해 주세요.')
+      const message =
+        error?.response?.data?.error?.message ??
+        '네트워크 오류가 발생했어요. 다시 시도해 주세요.'
+      setSubmitError(message)
     } finally {
       setIsSubmitting(false)
     }
@@ -150,15 +152,6 @@ export default function CreateRecipePage() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <button
-          type="button"
-          className={styles.backButton}
-          onClick={handleBack}
-          aria-label="뒤로가기"
-        >
-          <Image src="/icons/left.svg" alt="" width={24} height={24} />
-        </button>
-
         <h1 className={`${styles.pageTitle} font-baskin-robbins`}>
           레시피 생성
         </h1>
@@ -227,7 +220,10 @@ export default function CreateRecipePage() {
           <span className={styles.label}>
             사진 업로드(첫 번째로 업로드한 사진이 썸네일로 지정됩니다.)
           </span>
-          <ImageUploader onChange={setImageFiles} />
+          <ImageUploader
+            onChange={setImageFiles}
+            onProcessingChange={setIsImageProcessing}
+          />
         </div>
 
         <div className={styles.field}>
@@ -330,7 +326,11 @@ export default function CreateRecipePage() {
           className={styles.submitButton}
           disabled={!isFormValid || isSubmitting}
         >
-          {isSubmitting ? '생성 중...' : '생성하기'}
+          {isSubmitting
+            ? '생성 중...'
+            : isImageProcessing
+              ? '이미지 처리 중...'
+              : '생성하기'}
         </Button>
       </form>
     </div>

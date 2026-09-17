@@ -9,6 +9,7 @@ export const recipeSummarySelect = {
   category: true,
   summary: true,
   ingredients: true,
+  creator: { select: publicUserSelect },
 }
 
 export function toRecipeSummary({ imageUrls, ingredients, ...recipe }) {
