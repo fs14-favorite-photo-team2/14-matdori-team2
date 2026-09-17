@@ -1,20 +1,31 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { usePurchaseMarketListing } from '@/features/marketplace/useMarketListingMutations'
 import ActionConfirmModal from '@/components/common/ActionConfirmModal/ActionConfirmModal'
+import Toast from '@/components/common/Toast/Toast'
+import useTimedToast from '@/hooks/useTimedToast'
 import Image from 'next/image'
 import Button from '@/components/common/Button/Button'
 import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
-import {
-  MOCK_CURRENT_USER,
-  MOCK_LISTING_DETAIL,
-} from '@/features/marketplace/mockListingDetail'
 import RecipeSelectionModal from '@/components/common/RecipeSelectionModal/RecipeSelectionModal'
 import ExchangeOfferModal from '@/features/exchanges/components/ExchangeOfferModal/ExchangeOfferModal'
-import { MOCK_EXCHANGEABLE_RECIPES } from '@/features/marketplace/mockOwnedRecipes'
 import SellerListingDetail from './SellerListingDetail'
 import MobileHeader from '@/components/layout/Header/MobileHeader/MobileHeader'
+import ErrorState from '@/components/common/ErrorState/ErrorState'
+import useCurrentUser from '@/features/auth/useCurrentUser'
+import useMarketListing from '@/features/marketplace/useMarketListing'
+import getApiErrorMessage from '@/utils/getApiErrorMessage'
+import useMyRecipeCopies from '@/features/my-kitchen/useMyRecipeCopies'
+import { useSentTradeOffers } from '@/features/exchanges/useTradeOffers'
+import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
+import {
+  useCancelTradeOffer,
+  useCreateTradeOffer,
+} from '@/features/exchanges/useTradeOfferMutations'
+import useDebouncedValue from '@/hooks/useDebouncedValue'
+import useInfiniteScroll from '@/hooks/useInfiniteScroll'
 import styles from './page.module.css'
 
 const DIFFICULTY_CLASS_NAMES = {
@@ -24,21 +35,106 @@ const DIFFICULTY_CLASS_NAMES = {
   master: styles.difficultyMaster,
 }
 
-export default function MarketplaceListingPage() {
-  const listing = MOCK_LISTING_DETAIL
-  const isSeller = MOCK_CURRENT_USER.id === listing.sellerId
-  const { recipe, seller, myTradeOffers } = listing
+function MarketplaceListingContent({ listing, currentUserId }) {
+  const isSeller = currentUserId === listing.seller.id
+  const { recipe, seller } = listing
   const thumbnailUrl = recipe.imageUrls[0]
   const difficultyOption = DIFFICULTY_OPTIONS.find(
     (option) => option.value === recipe.difficulty,
   )
 
   const router = useRouter()
+  const purchaseMutation = usePurchaseMarketListing()
+  const cancelTradeOfferMutation = useCancelTradeOffer()
+  const createTradeOfferMutation = useCreateTradeOffer()
+
+  const {
+    tradeOffers: sentTradeOffers,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useSentTradeOffers({ status: 'PENDING' }, { enabled: !isSeller })
+
+  const tradeOffers = sentTradeOffers.filter(
+    (tradeOffer) => Number(tradeOffer.listingId) === Number(listing.id),
+  )
+  const tradeOfferSentinelRef = useInfiniteScroll({
+    hasMore: Boolean(hasNextPage),
+    isLoading: isFetchingNextPage,
+    onLoadMore: fetchNextPage,
+    enabled: !isSeller,
+  })
+  const { toastMessage, showToast } = useTimedToast()
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
-  const [tradeOffers, setTradeOffers] = useState(myTradeOffers)
   const [cancelTargetOffer, setCancelTargetOffer] = useState(null)
   const [isExchangeSelectionOpen, setIsExchangeSelectionOpen] = useState(false)
   const [selectedExchangeRecipe, setSelectedExchangeRecipe] = useState(null)
+  const [exchangeSearchInput, setExchangeSearchInput] = useState('')
+  const [exchangeFilters, setExchangeFilters] = useState({
+    difficulty: '',
+    category: '',
+  })
+
+  const debouncedExchangeKeyword = useDebouncedValue(
+    exchangeSearchInput.trim(),
+    400,
+  )
+
+  const {
+    recipeCopies,
+    error: recipeCopiesError,
+    isPending: isRecipeCopiesPending,
+    isError: isRecipeCopiesError,
+    hasNextPage: hasNextRecipeCopiesPage,
+    isFetchingNextPage: isFetchingNextRecipeCopiesPage,
+    isFetchNextPageError: isRecipeCopiesNextPageError,
+    fetchNextPage: fetchNextRecipeCopiesPage,
+  } = useMyRecipeCopies({
+    limit: 10,
+    state: 'OWNED',
+    keyword: debouncedExchangeKeyword,
+    difficulty: exchangeFilters.difficulty,
+    category: exchangeFilters.category,
+    enabled: !isSeller && isExchangeSelectionOpen,
+  })
+
+  useEffect(() => {
+    if (!isRecipeCopiesError) return
+
+    showToast(
+      getApiErrorMessage(
+        recipeCopiesError,
+        '교환 가능한 레시피를 불러오지 못했습니다.',
+      ),
+    )
+  }, [isRecipeCopiesError, recipeCopiesError, showToast])
+
+  const exchangeableRecipes = useMemo(() => {
+    const recipesById = new Map()
+
+    for (const copy of recipeCopies) {
+      const recipeId = copy.recipe.id
+      const existingRecipe = recipesById.get(recipeId)
+
+      if (existingRecipe) {
+        existingRecipe.availableQuantity += 1
+        continue
+      }
+
+      recipesById.set(recipeId, {
+        recipeId,
+        offeredCopyId: copy.id,
+        creatorNickname: copy.recipe.creator?.nickname,
+        title: copy.recipe.title,
+        thumbnailUrl: copy.recipe.imageUrl,
+        difficulty: copy.recipe.difficulty,
+        category: copy.recipe.category,
+        availableQuantity: 1,
+      })
+    }
+
+    return Array.from(recipesById.values())
+  }, [recipeCopies])
 
   // 구매 수량 UI가 연결되면 해당 상태값으로 교체
   const purchaseQuantity = 1
@@ -67,17 +163,35 @@ export default function MarketplaceListingPage() {
     DIFFICULTY_CLASS_NAMES[wantedDifficultyOption?.tone] ?? ''
 
   function handlePurchaseConfirm() {
-    setIsPurchaseModalOpen(false)
+    if (purchaseMutation.isPending) return
 
-    const params = new URLSearchParams({
-      difficultyLabel: difficultyOption?.label ?? recipe.difficulty,
-      title: recipe.title,
-      quantity: String(purchaseQuantity),
+    purchaseMutation.mutate(listing.id, {
+      onSuccess: () => {
+        setIsPurchaseModalOpen(false)
+
+        const params = new URLSearchParams({
+          difficultyLabel: difficultyOption?.label ?? recipe.difficulty,
+          title: recipe.title,
+          quantity: String(purchaseQuantity),
+        })
+
+        router.push(
+          `/marketplace/${listing.id}/purchase/success?${params.toString()}`,
+        )
+      },
+
+      onError: (error) => {
+        const status = error.response?.status
+
+        if (!status || status >= 500) {
+          setIsPurchaseModalOpen(false)
+          router.push(`/marketplace/${listing.id}/purchase/failure`)
+          return
+        }
+
+        showToast(getApiErrorMessage(error))
+      },
     })
-
-    router.push(
-      `/marketplace/${listing.id}/purchase/success?${params.toString()}`,
-    )
   }
 
   if (isSeller) {
@@ -91,14 +205,22 @@ export default function MarketplaceListingPage() {
   )
 
   function handleCancelTradeOffer() {
-    if (!cancelTargetOffer) return
+    if (!cancelTargetOffer || cancelTradeOfferMutation.isPending) return
 
-    // TODO: 교환 제시 취소 API 연결 후 목록 재조회
-    setTradeOffers((currentOffers) =>
-      currentOffers.filter((offer) => offer.id !== cancelTargetOffer.id),
+    cancelTradeOfferMutation.mutate(
+      {
+        tradeOfferId: cancelTargetOffer.id,
+        listingId: listing.id,
+      },
+      {
+        onSuccess: () => {
+          setCancelTargetOffer(null)
+        },
+        onError: (error) => {
+          showToast(getApiErrorMessage(error))
+        },
+      },
     )
-
-    setCancelTargetOffer(null)
   }
 
   function handleCloseExchangeSelection() {
@@ -114,28 +236,58 @@ export default function MarketplaceListingPage() {
     setSelectedExchangeRecipe(null)
   }
 
-  function handleExchangeSubmit({ recipe: offeredRecipe }) {
-    // TODO: 교환 제시 API 요청이 성공한 뒤 성공 페이지로 이동
-    const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
-      (option) => option.value === offeredRecipe.difficulty,
-    )
+  function handleExchangeSubmit({ recipe: offeredRecipe, description }) {
+    if (createTradeOfferMutation.isPending) return
 
-    const params = new URLSearchParams({
-      difficultyLabel:
-        offeredDifficultyOption?.label ?? offeredRecipe.difficulty,
-      title: offeredRecipe.title,
-    })
+    createTradeOfferMutation.mutate(
+      {
+        listingId: listing.id,
+        offeredCopyId: offeredRecipe.offeredCopyId,
+        message: description,
+      },
+      {
+        onSuccess: () => {
+          const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
+            (option) => option.value === offeredRecipe.difficulty,
+          )
 
-    setSelectedExchangeRecipe(null)
-    setIsExchangeSelectionOpen(false)
+          const params = new URLSearchParams({
+            difficultyLabel:
+              offeredDifficultyOption?.label ?? offeredRecipe.difficulty,
+            title: offeredRecipe.title,
+          })
 
-    router.push(
-      `/marketplace/${listing.id}/exchange/success?${params.toString()}`,
+          setSelectedExchangeRecipe(null)
+          setIsExchangeSelectionOpen(false)
+
+          router.push(
+            `/marketplace/${listing.id}/exchange/success?${params.toString()}`,
+          )
+        },
+
+        onError: (error) => {
+          const status = error.response?.status
+
+          if (!status || status >= 500) {
+            setSelectedExchangeRecipe(null)
+            setIsExchangeSelectionOpen(false)
+            router.push(`/marketplace/${listing.id}/exchange/failure`)
+            return
+          }
+
+          showToast(getApiErrorMessage(error))
+        },
+      },
     )
   }
 
   return (
     <main className={styles.page}>
+      {toastMessage && (
+        <div className={styles.toastWrapper}>
+          <Toast message={toastMessage} />
+        </div>
+      )}
       <div className={styles.container}>
         <MobileHeader title="마켓플레이스" backHref="/marketplace" />
 
@@ -302,7 +454,7 @@ export default function MarketplaceListingPage() {
                     </div>
 
                     <p className={styles.tradeDescription}>
-                      {tradeOffer.description}
+                      {tradeOffer.message}
                     </p>
 
                     <Button
@@ -319,6 +471,8 @@ export default function MarketplaceListingPage() {
             </div>
           </section>
         )}
+        {isFetchingNextPage && <LoadingIndicator variant="list" />}
+        <div ref={tradeOfferSentinelRef} className={styles.sentinel} />
       </div>
       <ActionConfirmModal
         isOpen={isPurchaseModalOpen}
@@ -327,6 +481,7 @@ export default function MarketplaceListingPage() {
         title="레시피 구매"
         description={`[${difficultyOption?.label ?? recipe.difficulty} | ${recipe.title}] ${purchaseQuantity}장을 구매하시겠습니까?`}
         confirmLabel="구매하기"
+        isPending={purchaseMutation.isPending}
       />
 
       <ActionConfirmModal
@@ -334,6 +489,7 @@ export default function MarketplaceListingPage() {
         onClose={() => setCancelTargetOffer(null)}
         onConfirm={handleCancelTradeOffer}
         title="교환 제시 취소"
+        isPending={cancelTradeOfferMutation.isPending}
         description={
           cancelTargetRecipe
             ? `[${cancelTargetDifficultyOption?.label ?? cancelTargetRecipe.difficulty} | ${cancelTargetRecipe.title}] 교환 제시를 취소하시겠습니까?`
@@ -346,9 +502,17 @@ export default function MarketplaceListingPage() {
         isOpen={isExchangeSelectionOpen && selectedExchangeRecipe === null}
         onClose={handleCloseExchangeSelection}
         onSelectRecipe={handleSelectExchangeRecipe}
-        recipes={MOCK_EXCHANGEABLE_RECIPES}
+        recipes={exchangeableRecipes}
         title="레시피 교환하기"
         emptyMessage="교환 가능한 레시피가 없습니다."
+        isLoading={isRecipeCopiesPending}
+        hasNextPage={
+          Boolean(hasNextRecipeCopiesPage) && !isRecipeCopiesNextPageError
+        }
+        isFetchingNextPage={isFetchingNextRecipeCopiesPage}
+        onLoadMore={fetchNextRecipeCopiesPage}
+        onSearchChange={setExchangeSearchInput}
+        onFiltersChange={setExchangeFilters}
       />
 
       <ExchangeOfferModal
@@ -357,7 +521,70 @@ export default function MarketplaceListingPage() {
         onClose={handleCloseExchangeOffer}
         selectedRecipe={selectedExchangeRecipe}
         onSubmit={handleExchangeSubmit}
+        isPending={createTradeOfferMutation.isPending}
       />
     </main>
+  )
+}
+
+export default function MarketplaceListingPage() {
+  const { listingId } = useParams()
+  const { user, isLoading: isUserLoading } = useCurrentUser()
+
+  const {
+    data: listing,
+    error,
+    isConfigured,
+    isPending,
+    isError,
+    isRefetching,
+    refetch,
+  } = useMarketListing(listingId)
+
+  if (!isConfigured) {
+    return (
+      <ErrorState
+        title="API 연결 정보가 없습니다."
+        message="NEXT_PUBLIC_API_URL 환경변수를 확인해 주세요."
+      />
+    )
+  }
+
+  if (isPending || isUserLoading) {
+    return (
+      <ErrorState
+        title="레시피 정보를 불러오는 중입니다."
+        message="잠시만 기다려 주세요."
+      />
+    )
+  }
+
+  if (isError) {
+    return (
+      <ErrorState
+        title="레시피 정보를 불러오지 못했습니다."
+        message={getApiErrorMessage(error)}
+        actionLabel="다시 시도"
+        onAction={refetch}
+        isActionLoading={isRefetching}
+        actionLoadingLabel="불러오는 중..."
+        hasNextPage={
+          Boolean(hasNextRecipeCopiesPage) && !isRecipeCopiesNextPageError
+        }
+      />
+    )
+  }
+
+  if (!listing) {
+    return (
+      <ErrorState
+        title="레시피 정보를 찾을 수 없습니다."
+        message="삭제됐거나 존재하지 않는 판매글입니다."
+      />
+    )
+  }
+
+  return (
+    <MarketplaceListingContent listing={listing} currentUserId={user?.id} />
   )
 }

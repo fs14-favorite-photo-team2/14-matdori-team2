@@ -1,10 +1,14 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
+import useInfiniteScroll from '@/hooks/useInfiniteScroll'
 import Modal from '@/components/common/Modal/Modal'
 import SearchBar from '@/components/common/SearchBar/SearchBar'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
+import ScrollToTopButton from '@/components/common/ScrollToTopButton/ScrollToTopButton'
+import scrollTopStyles from '@/components/common/ScrollToTopButton/ScrollToTopButton.module.css'
+import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
 import {
   DEFAULT_FILTERS,
   MY_KITCHEN_FILTER_GROUPS,
@@ -39,6 +43,12 @@ export default function RecipeSelectionModal({
   recipes = [],
   title,
   emptyMessage,
+  isLoading = false,
+  hasNextPage = false,
+  isFetchingNextPage = false,
+  onLoadMore,
+  onSearchChange,
+  onFiltersChange,
 }) {
   const [searchInput, setSearchInput] = useState('')
   const [filters, setFilters] = useState({ ...DEFAULT_FILTERS })
@@ -46,8 +56,6 @@ export default function RecipeSelectionModal({
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const modalScrollRef = useRef(null)
-  const loadMoreRef = useRef(null)
-
   const filteredRecipes = getFilteredRecipes(recipes, searchInput, filters)
 
   const draftFilteredRecipes = getFilteredRecipes(
@@ -57,39 +65,31 @@ export default function RecipeSelectionModal({
   )
 
   const visibleRecipes = filteredRecipes.slice(0, visibleCount)
-  const hasMoreRecipes = visibleCount < filteredRecipes.length
+  const hasMoreVisibleRecipes = visibleCount < filteredRecipes.length
+  const hasMoreRecipes = hasMoreVisibleRecipes || hasNextPage
 
-  useEffect(() => {
-    const loadMoreElement = loadMoreRef.current
+  const loadMoreRef = useInfiniteScroll({
+    enabled: isOpen,
+    hasMore: hasMoreRecipes,
+    isLoading: isFetchingNextPage,
+    rootRef: modalScrollRef,
+    rootMargin: '100px',
+    onLoadMore: () => {
+      if (hasMoreVisibleRecipes) {
+        setVisibleCount((currentCount) =>
+          Math.min(currentCount + PAGE_SIZE, filteredRecipes.length),
+        )
+        return
+      }
 
-    if (!isOpen || !loadMoreElement || !hasMoreRecipes) {
-      return undefined
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisibleCount((currentCount) =>
-            Math.min(currentCount + PAGE_SIZE, filteredRecipes.length),
-          )
-        }
-      }, // 제일아래 카드의 100px 위에를 추가 렌더링 기준 지점으로 삼음
-      {
-        root: modalScrollRef.current,
-        rootMargin: '100px',
-      },
-    )
-
-    observer.observe(loadMoreElement)
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [filteredRecipes.length, hasMoreRecipes, isOpen])
+      onLoadMore?.()
+    },
+  })
 
   function handleSearchInputChange(value) {
     setSearchInput(value)
     setVisibleCount(PAGE_SIZE)
+    onSearchChange?.(value)
   }
 
   function handleOpenMobileFilter() {
@@ -101,6 +101,7 @@ export default function RecipeSelectionModal({
     setFilters(nextFilter)
     setVisibleCount(PAGE_SIZE)
     setIsMobileFilterOpen(false)
+    onFiltersChange?.(nextFilter)
   }
 
   function handleResetFilter() {
@@ -108,10 +109,17 @@ export default function RecipeSelectionModal({
   }
 
   function handleFilterChange(key, value) {
-    setFilters((currentFilters) => ({
-      ...currentFilters,
-      [key]: value,
-    }))
+    setFilters((currentFilters) => {
+      const nextFilters = {
+        ...currentFilters,
+        [key]: value,
+      }
+
+      onFiltersChange?.(nextFilters)
+
+      return nextFilters
+    })
+
     setVisibleCount(PAGE_SIZE)
   }
 
@@ -164,7 +172,9 @@ export default function RecipeSelectionModal({
         </div>
       </section>
 
-      {visibleRecipes.length === 0 ? (
+      {isLoading && visibleRecipes.length === 0 ? (
+        <LoadingIndicator variant="page" message="레시피를 불러오는 중입니다" />
+      ) : visibleRecipes.length === 0 ? (
         <p className={styles.emptyText}>{emptyMessage}</p>
       ) : (
         <section className={styles.recipeGrid}>
@@ -192,6 +202,12 @@ export default function RecipeSelectionModal({
       {hasMoreRecipes && (
         <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
       )}
+      {isFetchingNextPage && <LoadingIndicator variant="list" />}
+
+      <ScrollToTopButton
+        scrollTargetRef={modalScrollRef}
+        className={scrollTopStyles.inModal}
+      />
     </Modal>
   )
 }

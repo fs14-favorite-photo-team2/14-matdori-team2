@@ -97,7 +97,6 @@ model Recipe {
   title       String
   imageUrls   String[]
   ingredients Json
-  minPrice    Int
   difficulty  Difficulty
   category    Category
   summary     String

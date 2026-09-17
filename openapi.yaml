@@ -586,6 +586,11 @@ paths:
     get:
       tags: [마켓플레이스]
       summary: 판매글 상세 정보 조회
+      description: >-
+        판매글 상세 정보를 조회합니다. 요청자가 판매자 본인인 경우
+        판매 수량 수정을 위한 soldQuantity, exchangedQuantity,
+        completedQuantity, availableAdditionalQuantity, maximumQuantity를
+        추가로 반환합니다.
       operationId: getMarketListing
       parameters:
         - $ref: '#/components/parameters/ListingId'
@@ -600,6 +605,27 @@ paths:
     patch:
       tags: [마켓플레이스]
       summary: 판매 중인 판매글 수정
+      description: |
+        판매자가 자신의 판매 중인 판매글 정보를 수정합니다.
+        요청에 포함된 필드만 수정합니다.
+
+        수정 가능한 항목:
+        - 남은 판매 수량
+        - 장당 가격
+        - 거래 방식
+        - 교환 희망 난이도
+        - 교환 희망 카테고리
+        - 교환 희망 설명
+
+        remainingQuantity는 수정 후 판매글에 LISTED 상태로
+        남겨둘 사본 수입니다. 이미 판매되거나 교환 완료된 수량은
+        포함하지 않습니다.
+
+        remainingQuantity 변경 시:
+        - 최소 1개 이상이어야 합니다.
+        - 판매글 상세 응답의 maximumQuantity를 초과할 수 없습니다.
+        - 0개로 변경하려면 판매글 내리기 API를 사용해야 합니다.
+        - 유효한 범위를 벗어나면 409 Conflict를 반환합니다.
       operationId: updateMarketListing
       parameters:
         - $ref: '#/components/parameters/ListingId'
@@ -1226,16 +1252,17 @@ components:
       required:
         - id
         - title
+        - creator
         - imageUrl
         - imageUrls
         - difficulty
         - category
         - summary
-        - minPrice
         - ingredients
       properties:
         id: { type: integer, minimum: 1, description: 레시피 ID, example: 42 }
         title: { type: string, minLength: 1, maxLength: 100 }
+        creator: { $ref: '#/components/schemas/PublicUser' }
         imageUrl:
           {
             type: string,
@@ -1253,7 +1280,6 @@ components:
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         category: { $ref: '#/components/schemas/Category' }
         summary: { type: string, minLength: 1, maxLength: 1000 }
-        minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         ingredients:
           type: array
           description: >-
@@ -1273,6 +1299,7 @@ components:
             - totalSupply
             - createdAt
             - updatedAt
+            - canEdit
           properties:
             creator: { $ref: '#/components/schemas/PublicUser' }
             content:
@@ -1292,6 +1319,11 @@ components:
               minItems: 1
               items:
                 $ref: '#/components/schemas/Ingredient'
+            canEdit:
+              type: boolean
+              description: >-
+                현재 사용자가 레시피를 수정할 수 있는지 나타냅니다.
+                작성자 본인이면서 판매 또는 교환 완료 이력이 없을 때 true입니다.
     PublicUser:
       type: object
       required: [id, nickname]
@@ -1311,7 +1343,6 @@ components:
         - title
         - images
         - content
-        - minPrice
         - difficulty
         - totalSupply
         - category
@@ -1320,7 +1351,6 @@ components:
       properties:
         title: { type: string, minLength: 1, maxLength: 100 }
         content: { type: string, minLength: 1, maxLength: 20000 }
-        minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         totalSupply: { type: integer, minimum: 1, maximum: 10 }
         category: { $ref: '#/components/schemas/Category' }
@@ -1348,7 +1378,6 @@ components:
       properties:
         title: { type: string, minLength: 1, maxLength: 100 }
         content: { type: string, minLength: 1, maxLength: 20000 }
-        minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         category: { $ref: '#/components/schemas/Category' }
         summary: { type: string, minLength: 1, maxLength: 1000 }
@@ -1419,11 +1448,27 @@ components:
       additionalProperties: false
       minProperties: 1
       properties:
-        price: { type: integer, minimum: 0, maximum: 100000000 }
-        listingType: { $ref: '#/components/schemas/ListingType' }
-        wantedDifficulty: { $ref: '#/components/schemas/Difficulty' }
-        wantedCategory: { $ref: '#/components/schemas/Category' }
-        wantedDescription: { type: string, maxLength: 500 }
+        price:
+          type: integer
+          minimum: 0
+          maximum: 100000000
+        listingType:
+          $ref: '#/components/schemas/ListingType'
+        wantedDifficulty:
+          $ref: '#/components/schemas/Difficulty'
+        wantedCategory:
+          $ref: '#/components/schemas/Category'
+        wantedDescription:
+          type: string
+          maxLength: 500
+        remainingQuantity:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: >-
+            수정 후 판매글에 LISTED 상태로 남겨둘 사본 수입니다.
+            이미 판매되거나 교환된 수량은 포함하지 않습니다.
+            판매글 상세 응답의 maximumQuantity 이하로 입력해야 합니다.
     ListingSummary:
       type: object
       required:
@@ -1454,6 +1499,42 @@ components:
             type: integer,
             minimum: 0,
             description: 아직 LISTED 상태로 남은 사본 개수,
+          }
+        soldQuantity:
+          {
+            type: integer,
+            minimum: 0,
+            description: 이 판매글에서 포인트로 판매 완료된 사본 수,
+          }
+
+        exchangedQuantity:
+          {
+            type: integer,
+            minimum: 0,
+            description: 이 판매글에서 교환 완료된 사본 수,
+          }
+
+        completedQuantity:
+          {
+            type: integer,
+            minimum: 0,
+            description: 판매 완료 수와 교환 완료 수의 합계,
+          }
+
+        availableAdditionalQuantity:
+          {
+            type: integer,
+            minimum: 0,
+            description: 판매자가 현재 판매글에 추가할 수 있는 보유 사본 수,
+          }
+
+        maximumQuantity:
+          {
+            type: integer,
+            minimum: 0,
+            maximum: 10,
+            description: 거래 완료 수량과 판매자의 보유 사본을 반영하여 계산한
+              변경 가능한 최대 remainingQuantity,
           }
         wantedDifficulty:
           {
