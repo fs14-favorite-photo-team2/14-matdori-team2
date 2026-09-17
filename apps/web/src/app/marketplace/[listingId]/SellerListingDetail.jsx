@@ -14,6 +14,7 @@ import Toast from '@/components/common/Toast/Toast'
 import useTimedToast from '@/hooks/useTimedToast'
 import getApiErrorMessage from '@/utils/getApiErrorMessage'
 import { useListingTradeOffers } from '@/features/exchanges/useTradeOffers'
+import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
 import {
   useAcceptTradeOffer,
   useRejectTradeOffer,
@@ -388,9 +389,10 @@ export default function SellerListingDetail({ listing }) {
             </h2>
 
             {isTradeOffersPending ? (
-              <p className={styles.tradeListState} role="status">
-                교환 제안을 불러오는 중...
-              </p>
+              <LoadingIndicator
+                variant="page"
+                message="교환 제안을 불러오는 중입니다"
+              />
             ) : isTradeOffersError && tradeOffers.length === 0 ? (
               <div className={styles.tradeListError}>
                 <p>
@@ -503,11 +505,7 @@ export default function SellerListingDetail({ listing }) {
                   />
                 )}
 
-                {isFetchingNextPage && (
-                  <p className={styles.tradeListState} role="status">
-                    교환 제안을 더 불러오는 중...
-                  </p>
-                )}
+                {isFetchingNextPage && <LoadingIndicator variant="list" />}
 
                 {isFetchNextPageError && (
                   <div className={styles.tradeListError}>

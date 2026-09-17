@@ -19,6 +19,7 @@ import useMarketListing from '@/features/marketplace/useMarketListing'
 import getApiErrorMessage from '@/utils/getApiErrorMessage'
 import useMyRecipeCopies from '@/features/my-kitchen/useMyRecipeCopies'
 import { useSentTradeOffers } from '@/features/exchanges/useTradeOffers'
+import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
 import {
   useCancelTradeOffer,
   useCreateTradeOffer,
@@ -470,6 +471,7 @@ function MarketplaceListingContent({ listing, currentUserId }) {
             </div>
           </section>
         )}
+        {isFetchingNextPage && <LoadingIndicator variant="list" />}
         <div ref={tradeOfferSentinelRef} className={styles.sentinel} />
       </div>
       <ActionConfirmModal
