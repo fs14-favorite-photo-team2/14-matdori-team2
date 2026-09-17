@@ -1,9 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState, useCallback } from 'react'
-import Image from 'next/image'
+import { useMemo, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import {
   useMyMarketListings,
   useMySentTradeOffers,
@@ -61,7 +59,6 @@ function getFilteredListings(listings, keyword, targetFilters) {
 }
 
 export default function MySalesPage() {
-  const router = useRouter()
   const { user } = useCurrentUser()
   const nickname = user?.nickname ?? ''
 
@@ -174,22 +171,9 @@ export default function MySalesPage() {
     setIsMobileOpen(false)
   }
 
-  function handleBack() {
-    router.back()
-  }
-
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <button
-          type="button"
-          className={styles.backButton}
-          onClick={handleBack}
-          aria-label="뒤로가기"
-        >
-          <Image src="/icons/left.svg" alt="" width={24} height={24} />
-        </button>
-
         <h1 className={`${styles.pageTitle} font-baskin-robbins`}>
           나의 판매 레시피
         </h1>
