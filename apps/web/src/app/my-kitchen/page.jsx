@@ -228,14 +228,20 @@ export default function MyKitchenPage() {
       ) : (
         <div className={styles.grid}>
           {groupedRecipes.map((item) => (
-            <RecipeCard
+            <Link
               key={item.id}
-              thumbnailUrl={item.recipe.imageUrl}
-              title={item.recipe.title}
-              difficulty={item.recipe.difficulty}
-              category={item.recipe.category}
-              remainingQuantity={item.quantity}
-            />
+              href={`/my-kitchen/${item.id}`}
+              className={styles.cardLink}
+            >
+              <RecipeCard
+                key={item.id}
+                thumbnailUrl={item.recipe.imageUrl}
+                title={item.recipe.title}
+                difficulty={item.recipe.difficulty}
+                category={item.recipe.category}
+                remainingQuantity={item.quantity}
+              />
+            </Link>
           ))}
         </div>
       )}
