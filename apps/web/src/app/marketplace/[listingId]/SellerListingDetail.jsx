@@ -78,7 +78,8 @@ export default function SellerListingDetail({ listing }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const imageCount = recipe.imageUrls.length
-  const currentImageUrl = recipe.imageUrls[currentImageIndex]
+  const currentImageUrl =
+    recipe.imageUrls[currentImageIndex] || '/images/default-recipe.png'
   const hasMultipleImages = imageCount > 1
   const isExchangeAvailable = listing.listingType === 'BOTH'
 
@@ -418,7 +419,8 @@ export default function SellerListingDetail({ listing }) {
                 <div className={styles.myTradeList}>
                   {tradeOffers.map((tradeOffer) => {
                     const offeredRecipe = tradeOffer.offeredCopy.recipe
-                    const offeredThumbnailUrl = offeredRecipe.imageUrls[0]
+                    const offeredThumbnailUrl =
+                      offeredRecipe.imageUrls[0] || '/images/default-recipe.png'
                     const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
                       (option) => option.value === offeredRecipe.difficulty,
                     )

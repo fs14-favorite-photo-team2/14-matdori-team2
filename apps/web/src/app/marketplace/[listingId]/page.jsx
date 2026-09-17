@@ -37,7 +37,7 @@ const DIFFICULTY_CLASS_NAMES = {
 function MarketplaceListingContent({ listing, currentUserId }) {
   const isSeller = currentUserId === listing.seller.id
   const { recipe, seller } = listing
-  const thumbnailUrl = recipe.imageUrls[0]
+  const thumbnailUrl = recipe.imageUrls[0] || '/images/default-recipe.png'
   const difficultyOption = DIFFICULTY_OPTIONS.find(
     (option) => option.value === recipe.difficulty,
   )
@@ -402,7 +402,8 @@ function MarketplaceListingContent({ listing, currentUserId }) {
             <div className={styles.myTradeList}>
               {tradeOffers.map((tradeOffer) => {
                 const offeredRecipe = tradeOffer.offeredCopy.recipe
-                const offeredThumbnailUrl = offeredRecipe.imageUrls[0]
+                const offeredThumbnailUrl =
+                  offeredRecipe.imageUrls[0] || '/images/default-recipe.png'
                 const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
                   (option) => option.value === offeredRecipe.difficulty,
                 )
