@@ -12,6 +12,7 @@ import Toast from '@/components/common/Toast/Toast'
 import useTimedToast from '@/hooks/useTimedToast'
 import { useCreateMarketListing } from '@/features/marketplace/useMarketListingMutations'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
+import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
 import useMyRecipeCopies from '@/features/my-kitchen/useMyRecipeCopies'
 
 import LoginRequiredModal from '@/features/auth/components/LoginRequiredModal/LoginRequiredModal'
@@ -378,7 +379,10 @@ export default function MarketplacePage() {
         </section>
 
         {isPending ? (
-          <p className={styles.listState}>레시피를 불러오는 중...</p>
+          <LoadingIndicator
+            variant="page"
+            message="레시피를 불러오는 중입니다"
+          />
         ) : marketListings.length === 0 ? (
           <p className={styles.listState}>조건에 맞는 레시피가 없습니다.</p>
         ) : (
@@ -409,9 +413,7 @@ export default function MarketplacePage() {
               <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
             )}
 
-            {isFetchingNextPage && (
-              <p className={styles.nextPageState}>레시피를 더 불러오는 중...</p>
-            )}
+            {isFetchingNextPage && <LoadingIndicator variant="list" />}
 
             {isFetchNextPageError && (
               <div className={styles.nextPageError}>

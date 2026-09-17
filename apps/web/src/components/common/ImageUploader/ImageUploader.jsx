@@ -30,9 +30,10 @@ function cropImageToFile(img, zoom, fileName) {
     const canvas = document.createElement('canvas')
     canvas.width = OUTPUT_WIDTH
     canvas.height = OUTPUT_HEIGHT
-    const ctx = canvas.getContext('2d')
 
+    const ctx = canvas.getContext('2d')
     const { naturalWidth, naturalHeight } = img
+
     const coverScale = Math.max(
       OUTPUT_WIDTH / naturalWidth,
       OUTPUT_HEIGHT / naturalHeight,
@@ -53,8 +54,11 @@ function cropImageToFile(img, zoom, fileName) {
           resolve(null)
           return
         }
+
         resolve(
-          new File([blob], fileName || 'cropped.jpg', { type: 'image/jpeg' }),
+          new File([blob], fileName || 'cropped.jpg', {
+            type: 'image/jpeg',
+          }),
         )
       },
       'image/jpeg',
@@ -63,7 +67,11 @@ function cropImageToFile(img, zoom, fileName) {
   })
 }
 
-export default function ImageUploader({ onChange, onProcessingChange }) {
+export default function ImageUploader({
+  onChange,
+  onProcessingChange,
+  initialCount = 0,
+}) {
   const inputRef = useRef(null)
   const imgRefs = useRef({})
 
@@ -355,7 +363,7 @@ export default function ImageUploader({ onChange, onProcessingChange }) {
       )}
 
       <p className={styles.countText}>
-        {images.length} / {MAX_IMAGES}
+        {images.length > 0 ? images.length : initialCount} / {MAX_IMAGES}
       </p>
 
       {error && <p className={styles.errorText}>{error}</p>}
