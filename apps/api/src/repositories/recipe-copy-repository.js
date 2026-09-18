@@ -28,15 +28,25 @@ export function findRecipeCopyById(id) {
   })
 }
 
+function ownedCopiesFilter(ownerId, query) {
+  return {
+    ownerId,
+    ...(query.state ? { state: query.state } : {}),
+    ...recipeFilter(query),
+  }
+}
+
+export function countRecipesByOwner(ownerId, query) {
+  return prisma.recipe.count({
+    where: { copies: { some: ownedCopiesFilter(ownerId, query) } },
+  })
+}
+
 export function findRecipeCopiesByOwner(ownerId, query) {
-  const { state, sort, cursor, limit } = query
+  const { sort, cursor, limit } = query
 
   return findCursorPage(prisma.recipeCopy, {
-    where: {
-      ownerId,
-      ...(state ? { state } : {}),
-      ...recipeFilter(query),
-    },
+    where: ownedCopiesFilter(ownerId, query),
     select: recipeCopySelect,
     orderBy: RECIPE_COPY_ORDER_BY[sort],
     cursor,
