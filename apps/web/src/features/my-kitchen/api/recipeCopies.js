@@ -8,9 +8,19 @@ export async function fetchMyRecipeCopies({
   category,
   state,
   sort,
+  createdByMe,
 } = {}) {
   const { data } = await api.get('/users/me/recipe-copies', {
-    params: { cursor, limit, keyword, difficulty, category, state, sort },
+    params: {
+      cursor,
+      limit,
+      keyword,
+      difficulty,
+      category,
+      state,
+      sort,
+      createdByMe,
+    },
   })
 
   return data
