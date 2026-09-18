@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Button from '@/components/common/Button/Button'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import SearchBar from '@/components/common/SearchBar/SearchBar'
@@ -18,7 +18,6 @@ import useMyRecipeCopies from '@/features/my-kitchen/useMyRecipeCopies'
 import LoginRequiredModal from '@/features/auth/components/LoginRequiredModal/LoginRequiredModal'
 import RecipeSelectionModal from '@/components/common/RecipeSelectionModal/RecipeSelectionModal'
 import SaleRegistrationModal from '@/features/sales/components/SaleRegistrationModal/SaleRegistrationModal'
-import RandomPointModal from '@/features/random-point/RandomPointModal'
 import useMarketListings from '@/features/marketplace/useMarketListings'
 import useInfiniteScroll from '@/hooks/useInfiniteScroll'
 import useDebouncedValue from '@/hooks/useDebouncedValue'
@@ -47,8 +46,6 @@ export default function MarketplacePage() {
     difficulty: '',
     category: '',
   })
-  const [isRandomPointModalOpen, setIsRandomPointModalOpen] = useState(false)
-  const hasShownRandomPointModalRef = useRef(false)
   const createListingMutation = useCreateMarketListing()
   const { toastMessage, showToast } = useTimedToast()
 
@@ -161,16 +158,6 @@ export default function MarketplacePage() {
       tabletMediaQuery.removeEventListener('change', handleScreenChange)
     }
   }, [])
-
-  // 로그인 상태가 확인되면 한 번만 랜덤 포인트 모달을 띄웁니다.
-  useEffect(() => {
-    if (isAuthLoading || isAuthRefetching) return
-    if (!isAuthenticated) return
-    if (hasShownRandomPointModalRef.current) return
-
-    hasShownRandomPointModalRef.current = true
-    setIsRandomPointModalOpen(true)
-  }, [isAuthenticated, isAuthLoading, isAuthRefetching])
 
   const [isLoginRequiredModalOpen, setIsLoginRequiredModalOpen] =
     useState(false)
@@ -465,13 +452,6 @@ export default function MarketplacePage() {
         isPending={createListingMutation.isPending}
         selectedRecipe={selectedRecipe}
         onSubmit={handleSaleRegistrationSubmit}
-      />
-      <RandomPointModal
-        isOpen={isRandomPointModalOpen}
-        onClose={() => setIsRandomPointModalOpen(false)}
-        onClaimed={() => {
-          refetchCurrentUser()
-        }}
       />
     </main>
   )
