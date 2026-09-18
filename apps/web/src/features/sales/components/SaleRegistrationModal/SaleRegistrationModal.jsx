@@ -235,7 +235,7 @@ export default function SaleRegistrationModal({
         </div>
 
         <div className={styles.exchangeSelectGrid}>
-          <label className={styles.exchangeField}>
+          <div className={styles.exchangeField}>
             <span>난이도</span>
 
             <FormSelect
@@ -244,9 +244,9 @@ export default function SaleRegistrationModal({
               onChange={setDesiredDifficulty}
               placeholder="난이도를 선택해 주세요"
             />
-          </label>
+          </div>
 
-          <label className={styles.exchangeField}>
+          <div className={styles.exchangeField}>
             <span>카테고리</span>
 
             <FormSelect
@@ -255,7 +255,7 @@ export default function SaleRegistrationModal({
               onChange={setDesiredCategory}
               placeholder="카테고리를 선택해 주세요"
             />
-          </label>
+          </div>
         </div>
 
         <label className={styles.exchangeField}>

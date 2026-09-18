@@ -17,6 +17,7 @@
   width: 168px;
   height: 60px;
   margin-top: 40px;
+  white-space: nowrap;
 }
 
 @media (max-width: 743px) {
@@ -29,7 +30,7 @@
   }
 
   .confirmButton {
-    width: 100px;
+    width: 132px;
     height: 46px;
     margin-top: 32px;
   }

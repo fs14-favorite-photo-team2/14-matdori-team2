@@ -3,6 +3,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  width: max-content;
   max-width: calc(100vw - 40px);
   min-height: 60px;
   padding: 18px 28px;
@@ -19,6 +20,8 @@
 
 .message {
   line-height: 1.5;
+  text-align: center;
+  word-break: keep-all;
 }
 
 @media (max-width: 743px) {
