@@ -1,5 +1,5 @@
 import { prisma } from '../db/prisma.js'
-import { recipeSummarySelect } from './recipe-repository.js'
+import { recipeDetailSelect, recipeSummarySelect } from './recipe-repository.js'
 import { cancelPendingTradeOffers } from './trade-offer-repository.js'
 
 // 공통으로 불러올 필드 부분
@@ -30,6 +30,32 @@ const marketListingSelect = {
       },
     },
   },
+}
+
+function getMarketListingDetailSelect(currentUserId) {
+  return {
+    ...marketListingSelect,
+
+    recipe: {
+      select: {
+        ...recipeDetailSelect,
+
+        ...(currentUserId
+          ? {
+              copies: {
+                where: {
+                  ownerId: currentUserId,
+                },
+                select: {
+                  id: true,
+                },
+                take: 1,
+              },
+            }
+          : {}),
+      },
+    },
+  }
 }
 
 // 판매중인 전체 레시피 리스트 가져오기
@@ -135,6 +161,17 @@ export function findMarketListingById(listingId) {
       deletedAt: null,
     },
     select: marketListingSelect,
+  })
+}
+
+// 상세조회 전용
+export function findMarketListingDetailById(listingId, currentUserId) {
+  return prisma.marketListing.findUnique({
+    where: {
+      id: listingId,
+      deletedAt: null,
+    },
+    select: getMarketListingDetailSelect(currentUserId),
   })
 }
 
