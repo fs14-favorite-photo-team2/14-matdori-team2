@@ -623,7 +623,7 @@ export function updateMarketListingRecord({
   )
 }
 
-// 판매글 내리기 + 판매글에 달린 사본 복구
+// 판매글 삭제 + 판매글에 달린 사본 복구
 export function withdrawMarketListingRecord(listingId) {
   return prisma.$transaction(async (transaction) => {
     const listing = await transaction.marketListing.update({
@@ -634,6 +634,7 @@ export function withdrawMarketListingRecord(listingId) {
       },
       data: {
         status: 'WITHDRAWN',
+        deletedAt: new Date(),
       },
     })
 
