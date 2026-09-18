@@ -53,7 +53,9 @@ export const myListingsRequest = request({
 export const myTradeOffersRequest = request({
   query: object({
     ...cursorQuery,
+    ...recipeQuery,
     status: tradeOfferStatus,
+    listingStatus,
     sort: sort(CREATED_AT_SORTS),
   }),
 })
