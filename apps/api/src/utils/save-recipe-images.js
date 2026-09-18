@@ -1,38 +1,51 @@
 import { randomUUID } from 'node:crypto'
-import { mkdir, unlink } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
-import { basename, join } from 'node:path'
 
 import sharp from 'sharp'
 
+import cloudinary from '../config/cloudinary.js'
 import { ERROR_CODES } from '../constants/error-codes.js'
 import { AppError } from '../errors/app-error.js'
-
-const RECIPE_IMAGE_URL_PREFIX = '/uploads/recipes/'
-const RECIPE_IMAGE_DIRECTORY = fileURLToPath(
-  new URL('../../uploads/recipes/', import.meta.url),
-)
-
-const API_ORIGIN = process.env.API_ORIGIN ?? 'http://localhost:3001'
 
 const MAX_IMAGE_WIDTH = 1600
 const MAX_IMAGE_HEIGHT = 1600
 const WEBP_QUALITY = 82
 
-export async function saveRecipeImages(files) {
-  await mkdir(RECIPE_IMAGE_DIRECTORY, { recursive: true })
+function uploadRecipeImage(buffer, publicId) {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: 'image',
+        public_id: publicId,
+        asset_folder: 'matdori/recipes',
+        format: 'webp',
+        overwrite: false,
+      },
+      (error, result) => {
+        if (error) {
+          reject(error)
+          return
+        }
 
+        resolve(result)
+      },
+    )
+
+    uploadStream.end(buffer)
+  })
+}
+
+export async function saveRecipeImages(files) {
   const savedImages = []
 
   try {
     // 순차 처리하여 업로드 순서와 반환 순서를 동일하게 유지
     for (const file of files) {
-      const filename = `${randomUUID()}.webp`
-      const filePath = `${RECIPE_IMAGE_DIRECTORY}${filename}`
+      const publicId = `matdori/recipes/${randomUUID()}`
 
-      await sharp(file.buffer)
+      const imageBuffer = await sharp(file.buffer)
         // EXIF 방향 정보를 기준으로 이미지 방향 보정
         .rotate()
+
         // 원본 비율을 유지하며 최대 크기 안으로 축소
         .resize({
           width: MAX_IMAGE_WIDTH,
@@ -40,29 +53,29 @@ export async function saveRecipeImages(files) {
           fit: 'inside',
           withoutEnlargement: true,
         })
-        // JPEG, PNG, HEIC, HEIF 등을 WebP로 화면에서 바로 보일 수 있게 변환
+
+        // 업로드된 이미지를 WebP로 변환
         .webp({
           quality: WEBP_QUALITY,
         })
-        .toFile(filePath)
 
-      const imageUrl = new URL(
-        `${RECIPE_IMAGE_URL_PREFIX}${filename}`,
-        API_ORIGIN,
-      ).toString()
+        // 서버 파일로 저장하지 않고 메모리 Buffer로 반환
+        .toBuffer()
+
+      const uploadedImage = await uploadRecipeImage(imageBuffer, publicId)
 
       savedImages.push({
-        imageUrl,
-        filePath,
+        imageUrl: uploadedImage.secure_url,
+        publicId: uploadedImage.public_id,
       })
     }
 
     return {
       imageUrls: savedImages.map((image) => image.imageUrl),
-      filePaths: savedImages.map((image) => image.filePath),
+      publicIds: savedImages.map((image) => image.publicId),
     }
   } catch {
-    await removeRecipeImageFiles(savedImages.map((image) => image.filePath))
+    await removeRecipeImages(savedImages.map((image) => image.publicId))
 
     throw AppError.from(ERROR_CODES.VALIDATION_ERROR, [
       {
@@ -74,31 +87,14 @@ export async function saveRecipeImages(files) {
   }
 }
 
-export async function removeRecipeImageFiles(filePaths) {
-  await Promise.allSettled(filePaths.map((filePath) => unlink(filePath)))
-}
+export async function removeRecipeImages(publicIds) {
+  const validPublicIds = publicIds.filter(Boolean)
 
-export function getRecipeImageFilePaths(imageUrls) {
-  return imageUrls.flatMap((imageUrl) => {
-    try {
-      const { pathname } = new URL(imageUrl)
-
-      if (!pathname.startsWith(RECIPE_IMAGE_URL_PREFIX)) {
-        return []
-      }
-
-      const filename = basename(pathname)
-
-      if (
-        pathname !== `${RECIPE_IMAGE_URL_PREFIX}${filename}` ||
-        !filename.endsWith('.webp')
-      ) {
-        return []
-      }
-
-      return [join(RECIPE_IMAGE_DIRECTORY, filename)]
-    } catch {
-      return []
-    }
-  })
+  await Promise.allSettled(
+    validPublicIds.map((publicId) =>
+      cloudinary.uploader.destroy(publicId, {
+        resource_type: 'image',
+      }),
+    ),
+  )
 }

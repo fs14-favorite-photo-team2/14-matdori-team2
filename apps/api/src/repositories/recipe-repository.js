@@ -8,8 +8,8 @@ export const recipeSummarySelect = {
   difficulty: true,
   category: true,
   summary: true,
-  minPrice: true,
   ingredients: true,
+  creator: { select: publicUserSelect },
 }
 
 export function toRecipeSummary({ imageUrls, ingredients, ...recipe }) {
@@ -64,8 +64,8 @@ export function createRecipeRecord({
   creatorId,
   title,
   imageUrls,
+  imagePublicIds,
   ingredients,
-  minPrice,
   difficulty,
   category,
   summary,
@@ -77,8 +77,8 @@ export function createRecipeRecord({
       creatorId,
       title,
       imageUrls,
+      imagePublicIds,
       ingredients,
-      minPrice,
       difficulty,
       category,
       summary,
@@ -104,6 +104,8 @@ export function findRecipeDetailById(recipeId, userId) {
     },
     select: {
       ...recipeDetailSelect,
+
+      // 현재 사용자가 가진 사본 수
       _count: {
         select: {
           copies: {
@@ -112,6 +114,37 @@ export function findRecipeDetailById(recipeId, userId) {
             },
           },
         },
+      },
+
+      // 판매 또는 교환이 완료된 사본이 있는지 확인
+      copies: {
+        where: {
+          OR: [
+            {
+              purchases: {
+                some: {},
+              },
+            },
+            {
+              offeredInTrades: {
+                some: {
+                  status: 'ACCEPTED',
+                },
+              },
+            },
+            {
+              receivedInTrades: {
+                some: {
+                  status: 'ACCEPTED',
+                },
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+        },
+        take: 1,
       },
     },
   })
@@ -125,5 +158,18 @@ export function updateRecipeRecord(recipeId, data) {
     },
     data,
     select: recipeDetailSelect,
+  })
+}
+
+// 스토리지에서 이미지검색
+export function findRecipeImageStorageById(recipeId) {
+  return prisma.recipe.findUnique({
+    where: {
+      id: recipeId,
+    },
+
+    select: {
+      imagePublicIds: true,
+    },
   })
 }

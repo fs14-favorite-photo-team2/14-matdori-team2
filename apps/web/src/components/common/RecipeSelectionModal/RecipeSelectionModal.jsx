@@ -6,6 +6,9 @@ import Modal from '@/components/common/Modal/Modal'
 import SearchBar from '@/components/common/SearchBar/SearchBar'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
+import ScrollToTopButton from '@/components/common/ScrollToTopButton/ScrollToTopButton'
+import scrollTopStyles from '@/components/common/ScrollToTopButton/ScrollToTopButton.module.css'
+import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
 import {
   DEFAULT_FILTERS,
   MY_KITCHEN_FILTER_GROUPS,
@@ -170,7 +173,7 @@ export default function RecipeSelectionModal({
       </section>
 
       {isLoading && visibleRecipes.length === 0 ? (
-        <p className={styles.emptyText}>레시피를 불러오는 중...</p>
+        <LoadingIndicator variant="page" message="레시피를 불러오는 중입니다" />
       ) : visibleRecipes.length === 0 ? (
         <p className={styles.emptyText}>{emptyMessage}</p>
       ) : (
@@ -199,9 +202,12 @@ export default function RecipeSelectionModal({
       {hasMoreRecipes && (
         <div ref={loadMoreRef} className={styles.loadMoreTrigger} />
       )}
-      {isFetchingNextPage && (
-        <p className={styles.emptyText}>레시피를 더 불러오는 중...</p>
-      )}
+      {isFetchingNextPage && <LoadingIndicator variant="list" />}
+
+      <ScrollToTopButton
+        scrollTargetRef={modalScrollRef}
+        className={scrollTopStyles.inModal}
+      />
     </Modal>
   )
 }

@@ -1,9 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState, useCallback } from 'react'
-import Image from 'next/image'
+import { useMemo, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import {
   useMyMarketListings,
   useMySentTradeOffers,
@@ -16,6 +14,9 @@ import {
 import SearchBar from '@/components/common/SearchBar/SearchBar'
 import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
+import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
+import ScrollToTopButton from '@/components/common/ScrollToTopButton/ScrollToTopButton'
+import useInfiniteScroll from '@/hooks/useInfiniteScroll'
 import {
   DIFFICULTY_OPTIONS,
   DEFAULT_FILTERS,
@@ -58,7 +59,6 @@ function getFilteredListings(listings, keyword, targetFilters) {
 }
 
 export default function MySalesPage() {
-  const router = useRouter()
   const { user } = useCurrentUser()
   const nickname = user?.nickname ?? ''
 
@@ -132,23 +132,11 @@ export default function MySalesPage() {
     if (hasNextOffers) fetchNextOffers()
   }, [hasNextListings, hasNextOffers, fetchNextListings, fetchNextOffers])
 
-  const [sentinelRef, setSentinelRef] = useState(null)
-
-  useEffect(() => {
-    if (!sentinelRef || !hasNext) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isFetchingNext) {
-          handleLoadMore()
-        }
-      },
-      { rootMargin: '200px' },
-    )
-
-    observer.observe(sentinelRef)
-    return () => observer.disconnect()
-  }, [sentinelRef, hasNext, isFetchingNext, handleLoadMore])
+  const sentinelRef = useInfiniteScroll({
+    hasMore: hasNext,
+    isLoading: isFetchingNext,
+    onLoadMore: handleLoadMore,
+  })
 
   function handleKeywordChange(nextKeyword) {
     setKeyword(nextKeyword)
@@ -183,22 +171,9 @@ export default function MySalesPage() {
     setIsMobileOpen(false)
   }
 
-  function handleBack() {
-    router.back()
-  }
-
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <button
-          type="button"
-          className={styles.backButton}
-          onClick={handleBack}
-          aria-label="뒤로가기"
-        >
-          <Image src="/icons/left.svg" alt="" width={24} height={24} />
-        </button>
-
         <h1 className={`${styles.pageTitle} font-baskin-robbins`}>
           나의 판매 레시피
         </h1>
@@ -259,7 +234,7 @@ export default function MySalesPage() {
           {filteredListings.map((listing) => (
             <Link
               key={listing.id}
-              href={`/marketplace/${listing.id}`}
+              href={`/marketplace/${listing.listingId}`}
               className={styles.cardLink}
             >
               <RecipeCard
@@ -282,7 +257,10 @@ export default function MySalesPage() {
         </div>
       )}
 
-      <div ref={setSentinelRef} className={styles.sentinel} />
+      {isFetchingNext && <LoadingIndicator variant="list" />}
+
+      <div ref={sentinelRef} className={styles.sentinel} />
+      <ScrollToTopButton />
     </div>
   )
 }

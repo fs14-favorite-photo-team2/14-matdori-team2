@@ -2,7 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useWithdrawMarketListing } from '@/features/marketplace/useMarketListingMutations'
+import {
+  useUpdateMarketListing,
+  useWithdrawMarketListing,
+} from '@/features/marketplace/useMarketListingMutations'
 import Image from 'next/image'
 import styles from './page.module.css'
 import { CATEGORY_OPTIONS, DIFFICULTY_OPTIONS } from '@/constants/RecipeOptions'
@@ -14,11 +17,13 @@ import Toast from '@/components/common/Toast/Toast'
 import useTimedToast from '@/hooks/useTimedToast'
 import getApiErrorMessage from '@/utils/getApiErrorMessage'
 import { useListingTradeOffers } from '@/features/exchanges/useTradeOffers'
+import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
 import {
   useAcceptTradeOffer,
   useRejectTradeOffer,
 } from '@/features/exchanges/useTradeOfferMutations'
 import useInfiniteScroll from '@/hooks/useInfiniteScroll'
+import { SALE_EDIT_DETAIL_ERROR_MATCHERS } from '@/constants/ApiErrorMessages'
 
 const DIFFICULTY_CLASS_NAMES = {
   easy: styles.difficultyEasy,
@@ -27,10 +32,28 @@ const DIFFICULTY_CLASS_NAMES = {
   master: styles.difficultyMaster,
 }
 
+const DEFAULT_THUMBNAIL_URL = '/images/default-recipe.png'
+
+function TradeOfferThumbnail({ src, alt, className }) {
+  const [imageSrc, setImageSrc] = useState(src || DEFAULT_THUMBNAIL_URL)
+
+  return (
+    <Image
+      src={imageSrc}
+      alt={alt}
+      fill
+      sizes="(max-width: 1023px) 50vw, 360px"
+      className={className}
+      onError={() => setImageSrc(DEFAULT_THUMBNAIL_URL)}
+    />
+  )
+}
+
 export default function SellerListingDetail({ listing }) {
   const { recipe, seller } = listing
   const router = useRouter()
   const withdrawMutation = useWithdrawMarketListing()
+  const updateMutation = useUpdateMarketListing()
   const rejectTradeOfferMutation = useRejectTradeOffer()
   const acceptTradeOfferMutation = useAcceptTradeOffer()
   const { toastMessage, showToast } = useTimedToast()
@@ -71,6 +94,7 @@ export default function SellerListingDetail({ listing }) {
     DIFFICULTY_CLASS_NAMES[difficultyOption?.tone] ?? ''
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [imageLoadFailed, setImageLoadFailed] = useState(false)
   const [isRecipeDetailOpen, setIsRecipeDetailOpen] = useState(false)
   const [rejectTargetOffer, setRejectTargetOffer] = useState(null)
   const [approveTargetOffer, setApproveTargetOffer] = useState(null)
@@ -78,22 +102,62 @@ export default function SellerListingDetail({ listing }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const imageCount = recipe.imageUrls.length
-  const currentImageUrl = recipe.imageUrls[currentImageIndex]
+  const currentImageUrl = imageLoadFailed
+    ? DEFAULT_THUMBNAIL_URL
+    : recipe.imageUrls[currentImageIndex] || DEFAULT_THUMBNAIL_URL
   const hasMultipleImages = imageCount > 1
+  const isSoldOut =
+    listing.status === 'SOLD_OUT' || listing.remainingQuantity === 0
   const isExchangeAvailable = listing.listingType === 'BOTH'
 
   function handlePreviousImage() {
+    setImageLoadFailed(false)
     setCurrentImageIndex(
       (currentIndex) => (currentIndex - 1 + imageCount) % imageCount,
     )
   }
 
   function handleNextImage() {
+    setImageLoadFailed(false)
     setCurrentImageIndex((currentIndex) => (currentIndex + 1) % imageCount)
   }
 
   function handleEditSubmit(editData) {
-    setIsEditModalOpen(false)
+    if (updateMutation.isPending) return
+
+    const data = {
+      remainingQuantity: editData.quantity,
+      price: editData.unitPrice,
+      listingType: editData.listingType,
+    }
+
+    if (editData.listingType === 'BOTH') {
+      data.wantedDifficulty = editData.desiredDifficulty
+      data.wantedCategory = editData.desiredCategory
+      data.wantedDescription = editData.exchangeDescription
+    }
+
+    updateMutation.mutate(
+      {
+        listingId: editData.listingId,
+        data,
+      },
+      {
+        onSuccess: () => {
+          setIsEditModalOpen(false)
+        },
+
+        onError: (error) => {
+          showToast(
+            getApiErrorMessage(
+              error,
+              '판매글을 수정하지 못했습니다.',
+              SALE_EDIT_DETAIL_ERROR_MATCHERS,
+            ),
+          )
+        },
+      },
+    )
   }
 
   const wantedDifficultyOption = DIFFICULTY_OPTIONS.find(
@@ -196,8 +260,21 @@ export default function SellerListingDetail({ listing }) {
               fill
               preload
               sizes="(max-width: 743px) 100vw, (max-width: 1023px) 50vw, 780px"
-              className={styles.thumbnail}
+              onError={() => setImageLoadFailed(true)}
+              className={`${styles.thumbnail} ${
+                isSoldOut ? styles.soldOutImage : ''
+              }`}
             />
+
+            {isSoldOut && (
+              <Image
+                className={styles.soldOutBadge}
+                src="/icons/sold-out.svg"
+                alt="품절"
+                width={160}
+                height={160}
+              />
+            )}
 
             {hasMultipleImages && (
               <>
@@ -251,7 +328,9 @@ export default function SellerListingDetail({ listing }) {
 
             <div className={styles.sellerInfoContent}>
               <div className={styles.recipePreview}>
-                <p className={styles.recipePreviewContent}>{recipe.content}</p>
+                <p className={styles.recipePreviewContent}>
+                  {recipe.content ?? recipe.summary}
+                </p>
 
                 <button
                   type="button"
@@ -352,7 +431,7 @@ export default function SellerListingDetail({ listing }) {
 
                     <div className={styles.recipeContentSection}>
                       <p className={styles.fullRecipeContent}>
-                        {recipe.content}
+                        {recipe.content ?? recipe.summary}
                       </p>
                     </div>
                   </div>
@@ -388,9 +467,10 @@ export default function SellerListingDetail({ listing }) {
             </h2>
 
             {isTradeOffersPending ? (
-              <p className={styles.tradeListState} role="status">
-                교환 제안을 불러오는 중...
-              </p>
+              <LoadingIndicator
+                variant="page"
+                message="교환 제안을 불러오는 중입니다"
+              />
             ) : isTradeOffersError && tradeOffers.length === 0 ? (
               <div className={styles.tradeListError}>
                 <p>
@@ -418,7 +498,6 @@ export default function SellerListingDetail({ listing }) {
                 <div className={styles.myTradeList}>
                   {tradeOffers.map((tradeOffer) => {
                     const offeredRecipe = tradeOffer.offeredCopy.recipe
-                    const offeredThumbnailUrl = offeredRecipe.imageUrls[0]
                     const offeredDifficultyOption = DIFFICULTY_OPTIONS.find(
                       (option) => option.value === offeredRecipe.difficulty,
                     )
@@ -434,11 +513,9 @@ export default function SellerListingDetail({ listing }) {
                     return (
                       <article key={tradeOffer.id} className={styles.tradeCard}>
                         <div className={styles.tradeImageWrapper}>
-                          <Image
-                            src={offeredThumbnailUrl}
+                          <TradeOfferThumbnail
+                            src={offeredRecipe.imageUrls[0]}
                             alt={offeredRecipe.title}
-                            fill
-                            sizes="(max-width: 1023px) 50vw, 360px"
                             className={styles.tradeImage}
                           />
                         </div>
@@ -503,11 +580,7 @@ export default function SellerListingDetail({ listing }) {
                   />
                 )}
 
-                {isFetchingNextPage && (
-                  <p className={styles.tradeListState} role="status">
-                    교환 제안을 더 불러오는 중...
-                  </p>
-                )}
+                {isFetchingNextPage && <LoadingIndicator variant="list" />}
 
                 {isFetchNextPageError && (
                   <div className={styles.tradeListError}>
@@ -578,6 +651,7 @@ export default function SellerListingDetail({ listing }) {
         onClose={() => setIsEditModalOpen(false)}
         onSubmit={handleEditSubmit}
         listing={listing}
+        isPending={updateMutation.isPending}
       />
     </main>
   )

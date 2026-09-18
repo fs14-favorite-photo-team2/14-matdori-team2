@@ -67,6 +67,8 @@ Copy-Item apps/web/.env.example apps/web/.env.local
 | ------------------------------- | ------------------------------------------------ | ------------------------------------------ |
 | `PORT`                          | `3001`                                           | Express 서버 포트                          |
 | `NODE_ENV`                      | `development`                                    | 실행 환경 (`production` 등)                |
+| `LOG_LEVEL`                     | `info`                                           | 최소 로그 레벨                             |
+| `TRUST_PROXY`                   | `1`                                              | 클라이언트 IP 판별 시 신뢰할 프록시 수     |
 | `CLIENT_ORIGIN`                 | `http://localhost:3000`                          | CORS 허용 origin. 여러 개는 쉼표로 구분    |
 | `SESSION_COOKIE_NAME`           | `session`                                        | HttpOnly 로그인 세션 쿠키 이름             |
 | `SESSION_SECRET`                | `replace-with-at-least-32-random...`             | 세션 ID 서명용 비밀값(최소 32바이트 필수)  |
@@ -151,6 +153,41 @@ npm run dev:api
 | API Docs     | `http://localhost:3001/docs`   |
 
 `/health`는 서버 프로세스의 생존 여부를 확인하고, `/ready`는 데이터베이스 연결을 포함한 요청 처리 준비 여부를 확인합니다. API 문서는 개발 환경에서만 제공되며, `NODE_ENV=production`에서는 `/docs` 경로가 등록되지 않습니다. API 명세는 프로젝트 루트의 `openapi.yaml`에서 관리합니다.
+
+`/api`의 모든 경로에는 클라이언트 IP 기준 분당 300회의 공통 요청 제한이 적용됩니다.
+로그인은 IP 기준 15분당 실패 30회로 제한하며 `401`을 반환한 요청만 실패로 셉니다.
+회원가입은 IP 기준 시간당 성공 30회,
+랜덤 상자 보상 요청은 사용자 ID 기준 분당 10회의 추가 제한을 적용합니다.
+제한을 초과하면 `429 TOO_MANY_REQUESTS`와 재시도까지 남은 초를 담은 `Retry-After` 헤더를 반환합니다.
+`/health`, `/ready`, `/docs`와 CORS 사전 요청은 공통 제한에서 제외됩니다.
+요청 횟수는 서버 프로세스의 메모리에 저장되어 재시작하면 초기화됩니다.
+서버 프로세스를 여러 개 실행할 때는 일관된 제한을 위해 공유 저장소가 필요합니다.
+
+클라이언트 IP는 `X-Forwarded-For` 헤더에서 `TRUST_PROXY`에 설정한 프록시 수만큼 신뢰해 판별합니다.
+값이 실제 프록시 구성보다 작으면 모든 사용자가 프록시 IP 하나로 묶이고, 크면 클라이언트가 IP를 위조할 수 있습니다.
+배포 후 요청의 IP가 실제 접속 IP와 다르면 코드 변경 없이 `TRUST_PROXY` 값만 조정합니다.
+
+다른 사이트가 로그인 세션으로 요청을 보내지 못하도록 `GET`, `HEAD`, `OPTIONS` 외의 `/api` 요청은 `Origin` 헤더를 확인합니다.
+`Origin`이 `CLIENT_ORIGIN` 또는 API 서버 자신의 origin과 다르면 `403 FORBIDDEN`을 반환합니다.
+
+Helmet 보안 헤더는 모든 환경에 적용합니다. 로컬 HTTP 개발을 위해
+HTTPS 전환 지시와 HSTS 헤더는 `NODE_ENV=production`에서만 활성화합니다.
+
+### API 로그
+
+API 로그는 Pino를 사용합니다. 개발 환경에서는 `pino-pretty`로 읽기 쉽게 출력하고,
+`NODE_ENV=production`에서는 표준 출력으로 JSON 로그를 남깁니다.
+`LOG_LEVEL`로 최소 로그 레벨을 설정할 수 있으며 기본값은 `info`입니다.
+`fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent` 외의 값이면 서버가 시작되지 않습니다.
+
+요청 로그는 `pino-http`로 남기며 요청 ID, HTTP 메서드, 쿼리 문자열을 제외한 경로,
+응답 상태 코드, 처리 시간(`responseTime`)과 로그인한 사용자 ID를 기록합니다.
+요청 헤더와 쿼리 문자열은 쿠키나 OAuth 인가 코드가 남지 않도록 기록하지 않습니다.
+응답의 `Request-ID` 헤더 값으로 `req.id`를 검색하면 해당 요청의 로그를 찾을 수 있습니다.
+
+5xx 응답은 처리되지 않은 오류와 함께 `error`, 나머지 요청은 `info` 레벨로 기록합니다.
+`/health`, `/ready` 요청은 5xx 응답일 때만 기록합니다.
+응답이 끝나기 전에 연결이 끊기면 `request aborted` 메시지로 기록합니다.
 
 ## 주요 명령어
 

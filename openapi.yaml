@@ -11,6 +11,17 @@ info:
     포인트, 재고 또는 소유권을 변경하는 작업은 일부만 반영되지 않도록 함께
     처리합니다. 별도 명시가 없는 한 JSON
     요청 본문에 정의되지 않은 필드가 포함되면 요청을 거부합니다.
+
+    `/api`의 모든 경로는 클라이언트 IP 기준 분당 300회로 요청을 제한합니다.
+    로그인은 IP 기준 15분당 실패 30회로 제한하며 `401`을 반환한 요청만 실패로 셉니다.
+    회원가입은 IP 기준 시간당 성공 30회,
+    랜덤 상자 보상 요청은 사용자 ID 기준 분당 10회의 추가 제한이 적용됩니다.
+    제한을 초과하면 `429 TOO_MANY_REQUESTS`와 재시도까지 남은 초를 나타내는
+    `Retry-After` 응답 헤더를 반환합니다. `/health`, `/ready`, `/docs`와
+    CORS 사전 요청은 API 요청 제한에 포함되지 않습니다.
+
+    `GET`, `HEAD`, `OPTIONS` 외의 요청은 `Origin` 헤더가 허용된 프론트엔드 origin과
+    다르면 `403 FORBIDDEN`을 반환합니다.
 servers:
   - url: /api
     description: 현재 API 서버
@@ -105,6 +116,7 @@ paths:
                           message: 이미 가입된 이메일입니다.,
                         },
                     }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /auth/login:
     post:
       tags: [인증]
@@ -132,6 +144,11 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '429':
+          description: 로그인 실패 또는 API 요청이 너무 많아 잠시 후 다시 시도해야 함
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
   /auth/logout:
     post:
       tags: [인증]
@@ -144,6 +161,7 @@ paths:
             Set-Cookie: { $ref: '#/components/headers/ClearedSessionCookie' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '400': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /auth/{provider}:
     get:
       tags: [인증]
@@ -167,6 +185,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /auth/{provider}/callback:
     get:
       tags: [인증]
@@ -201,6 +220,7 @@ paths:
             `NICKNAME_GENERATION_FAILED` 중 하나입니다.
           headers:
             Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /auth/{provider}/failure:
     get:
       tags: [인증]
@@ -214,6 +234,7 @@ paths:
           description: >-
             OAuth 제공자가 인증을 거부했을 때
             `oauthError=OAUTH_FAILED`를 붙여 프론트엔드 로그인 페이지로 리디렉션
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /users/me:
     get:
@@ -237,6 +258,7 @@ paths:
                       data: { $ref: '#/components/schemas/CurrentUser' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
     patch:
       tags: [사용자]
       summary: 현재 사용자 정보 수정
@@ -260,6 +282,7 @@ paths:
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /users/me/recipe-copies:
     get:
       tags: [사용자]
@@ -296,6 +319,7 @@ paths:
               schema: { $ref: '#/components/schemas/MyRecipeCursorResponse' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /users/me/market-listings:
     get:
       tags: [사용자]
@@ -332,6 +356,7 @@ paths:
               schema: { $ref: '#/components/schemas/ListingCursorResponse' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /users/me/trade-offers:
     get:
       tags: [사용자]
@@ -360,6 +385,7 @@ paths:
               schema: { $ref: '#/components/schemas/TradeOfferCursorResponse' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /users/me/received-trade-offers:
     get:
       tags: [사용자]
@@ -388,6 +414,7 @@ paths:
               schema: { $ref: '#/components/schemas/TradeOfferCursorResponse' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /users/me/purchases:
     get:
       tags: [사용자]
@@ -416,6 +443,7 @@ paths:
               schema: { $ref: '#/components/schemas/PurchaseCursorResponse' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /users/me/sales:
     get:
       tags: [사용자]
@@ -444,6 +472,7 @@ paths:
               schema: { $ref: '#/components/schemas/PurchaseCursorResponse' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /recipes:
     post:
@@ -468,6 +497,7 @@ paths:
                       data: { $ref: '#/components/schemas/RecipeDetail' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
         '500': { $ref: '#/components/responses/InternalServerError' }
   /recipes/{recipeId}:
     get:
@@ -494,6 +524,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
     patch:
       tags: [레시피]
       summary: 레시피 정보 수정
@@ -521,6 +552,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /market-listings:
     get:
@@ -560,6 +592,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ListingCursorResponse' }
         '400': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
     post:
       tags: [마켓플레이스]
       summary: 직접 생성한 레시피 사본을 판매 또는 교환용으로 등록
@@ -582,10 +615,16 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /market-listings/{listingId}:
     get:
       tags: [마켓플레이스]
       summary: 판매글 상세 정보 조회
+      description: >-
+        판매글 상세 정보를 조회합니다. 요청자가 판매자 본인인 경우
+        판매 수량 수정을 위한 soldQuantity, exchangedQuantity,
+        completedQuantity, availableAdditionalQuantity, maximumQuantity를
+        추가로 반환합니다.
       operationId: getMarketListing
       parameters:
         - $ref: '#/components/parameters/ListingId'
@@ -597,9 +636,31 @@ paths:
               schema: { $ref: '#/components/schemas/ListingResponse' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
     patch:
       tags: [마켓플레이스]
       summary: 판매 중인 판매글 수정
+      description: |
+        판매자가 자신의 판매 중인 판매글 정보를 수정합니다.
+        요청에 포함된 필드만 수정합니다.
+
+        수정 가능한 항목:
+        - 남은 판매 수량
+        - 장당 가격
+        - 거래 방식
+        - 교환 희망 난이도
+        - 교환 희망 카테고리
+        - 교환 희망 설명
+
+        remainingQuantity는 수정 후 판매글에 LISTED 상태로
+        남겨둘 사본 수입니다. 이미 판매되거나 교환 완료된 수량은
+        포함하지 않습니다.
+
+        remainingQuantity 변경 시:
+        - 최소 1개 이상이어야 합니다.
+        - 판매글 상세 응답의 maximumQuantity를 초과할 수 없습니다.
+        - 0개로 변경하려면 판매글 내리기 API를 사용해야 합니다.
+        - 유효한 범위를 벗어나면 409 Conflict를 반환합니다.
       operationId: updateMarketListing
       parameters:
         - $ref: '#/components/parameters/ListingId'
@@ -619,6 +680,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
     delete:
       tags: [마켓플레이스]
       summary: 판매글 판매 종료
@@ -632,6 +694,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /market-listings/{listingId}/withdraw:
     post:
       tags: [마켓플레이스]
@@ -651,6 +714,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /market-listings/{listingId}/purchases:
     post:
       tags: [마켓플레이스]
@@ -675,6 +739,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /market-listings/{listingId}/trade-offers:
     post:
       tags: [교환 제안]
@@ -713,6 +778,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
     get:
       tags: [교환 제안]
       summary: 판매글에 접수된 교환 제안 조회
@@ -741,6 +807,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /trade-offers/{tradeOfferId}/accept:
     post:
@@ -761,6 +828,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /trade-offers/{tradeOfferId}/reject:
     post:
       tags: [교환 제안]
@@ -779,6 +847,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /trade-offers/{tradeOfferId}:
     delete:
       tags: [교환 제안]
@@ -793,6 +862,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /notifications:
     get:
@@ -817,6 +887,7 @@ paths:
                 { $ref: '#/components/schemas/NotificationCursorResponse' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /notifications/unread-count:
     get:
       tags: [알림]
@@ -838,6 +909,7 @@ paths:
                         properties:
                           unreadCount: { type: integer, minimum: 0 }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /notifications/{notificationId}/read:
     patch:
       tags: [알림]
@@ -859,6 +931,7 @@ paths:
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
   /notifications/read-all:
     patch:
       tags: [알림]
@@ -880,6 +953,7 @@ paths:
                         properties:
                           updatedCount: { type: integer, minimum: 0 }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
 
   /random-box:
     get:
@@ -894,6 +968,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/RandomBoxResponse' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
     post:
       tags: [랜덤 상자]
       summary: 랜덤 포인트 보상 획득
@@ -909,7 +984,9 @@ paths:
               schema: { $ref: '#/components/schemas/RandomBoxClaimResponse' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429':
-          description: 오늘 이미 뽑아서 다음 초기화 시각이 지나지 않음
+          description: >-
+            오늘 이미 뽑아서 다음 초기화 시각이 지나지 않았거나(`RANDOM_BOX_NOT_READY`),
+            요청이 너무 많습니다(`TOO_MANY_REQUESTS`).
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -1047,6 +1124,15 @@ components:
               details:
                 - { field: email, reason: 올바른 이메일 형식이 아닙니다. }
                 - { field: null, reason: 비밀번호 확인이 일치하지 않습니다. }
+    TooManyRequests:
+      description: 요청이 너무 많아 잠시 후 다시 시도해야 함
+      headers:
+        Retry-After:
+          description: 요청 제한이 초기화될 때까지 남은 초
+          schema: { type: integer, minimum: 0 }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
     InternalServerError:
       description: 서버 또는 데이터베이스가 요청을 처리할 수 없음
       content:
@@ -1066,6 +1152,7 @@ components:
         - NICKNAME_ALREADY_EXISTS
         - MONTHLY_RECIPE_LIMIT_REACHED
         - RANDOM_BOX_NOT_READY
+        - TOO_MANY_REQUESTS
         - AUTHENTICATION_REQUIRED
         - INVALID_CREDENTIALS
         - GOOGLE_ACCOUNT_ONLY
@@ -1089,10 +1176,14 @@ components:
         error:
           type: object
           additionalProperties: false
-          required: [code, message]
+          required: [code, message, requestId]
           properties:
             code: { $ref: '#/components/schemas/ErrorCode' }
             message: { type: string }
+            requestId:
+              type: string
+              format: uuid
+              description: Request-ID 응답 헤더와 같은 값으로, 서버 로그에서 요청을 찾을 때 사용합니다.
             details:
               type: array
               items:
@@ -1226,16 +1317,17 @@ components:
       required:
         - id
         - title
+        - creator
         - imageUrl
         - imageUrls
         - difficulty
         - category
         - summary
-        - minPrice
         - ingredients
       properties:
         id: { type: integer, minimum: 1, description: 레시피 ID, example: 42 }
         title: { type: string, minLength: 1, maxLength: 100 }
+        creator: { $ref: '#/components/schemas/PublicUser' }
         imageUrl:
           {
             type: string,
@@ -1253,7 +1345,6 @@ components:
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         category: { $ref: '#/components/schemas/Category' }
         summary: { type: string, minLength: 1, maxLength: 1000 }
-        minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         ingredients:
           type: array
           description: >-
@@ -1273,6 +1364,7 @@ components:
             - totalSupply
             - createdAt
             - updatedAt
+            - canEdit
           properties:
             creator: { $ref: '#/components/schemas/PublicUser' }
             content:
@@ -1292,6 +1384,11 @@ components:
               minItems: 1
               items:
                 $ref: '#/components/schemas/Ingredient'
+            canEdit:
+              type: boolean
+              description: >-
+                현재 사용자가 레시피를 수정할 수 있는지 나타냅니다.
+                작성자 본인이면서 판매 또는 교환 완료 이력이 없을 때 true입니다.
     PublicUser:
       type: object
       required: [id, nickname]
@@ -1311,7 +1408,6 @@ components:
         - title
         - images
         - content
-        - minPrice
         - difficulty
         - totalSupply
         - category
@@ -1320,7 +1416,6 @@ components:
       properties:
         title: { type: string, minLength: 1, maxLength: 100 }
         content: { type: string, minLength: 1, maxLength: 20000 }
-        minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         totalSupply: { type: integer, minimum: 1, maximum: 10 }
         category: { $ref: '#/components/schemas/Category' }
@@ -1348,7 +1443,6 @@ components:
       properties:
         title: { type: string, minLength: 1, maxLength: 100 }
         content: { type: string, minLength: 1, maxLength: 20000 }
-        minPrice: { type: integer, minimum: 0, maximum: 100000000 }
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         category: { $ref: '#/components/schemas/Category' }
         summary: { type: string, minLength: 1, maxLength: 1000 }
@@ -1419,11 +1513,27 @@ components:
       additionalProperties: false
       minProperties: 1
       properties:
-        price: { type: integer, minimum: 0, maximum: 100000000 }
-        listingType: { $ref: '#/components/schemas/ListingType' }
-        wantedDifficulty: { $ref: '#/components/schemas/Difficulty' }
-        wantedCategory: { $ref: '#/components/schemas/Category' }
-        wantedDescription: { type: string, maxLength: 500 }
+        price:
+          type: integer
+          minimum: 0
+          maximum: 100000000
+        listingType:
+          $ref: '#/components/schemas/ListingType'
+        wantedDifficulty:
+          $ref: '#/components/schemas/Difficulty'
+        wantedCategory:
+          $ref: '#/components/schemas/Category'
+        wantedDescription:
+          type: string
+          maxLength: 500
+        remainingQuantity:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: >-
+            수정 후 판매글에 LISTED 상태로 남겨둘 사본 수입니다.
+            이미 판매되거나 교환된 수량은 포함하지 않습니다.
+            판매글 상세 응답의 maximumQuantity 이하로 입력해야 합니다.
     ListingSummary:
       type: object
       required:
@@ -1454,6 +1564,42 @@ components:
             type: integer,
             minimum: 0,
             description: 아직 LISTED 상태로 남은 사본 개수,
+          }
+        soldQuantity:
+          {
+            type: integer,
+            minimum: 0,
+            description: 이 판매글에서 포인트로 판매 완료된 사본 수,
+          }
+
+        exchangedQuantity:
+          {
+            type: integer,
+            minimum: 0,
+            description: 이 판매글에서 교환 완료된 사본 수,
+          }
+
+        completedQuantity:
+          {
+            type: integer,
+            minimum: 0,
+            description: 판매 완료 수와 교환 완료 수의 합계,
+          }
+
+        availableAdditionalQuantity:
+          {
+            type: integer,
+            minimum: 0,
+            description: 판매자가 현재 판매글에 추가할 수 있는 보유 사본 수,
+          }
+
+        maximumQuantity:
+          {
+            type: integer,
+            minimum: 0,
+            maximum: 10,
+            description: 거래 완료 수량과 판매자의 보유 사본을 반영하여 계산한
+              변경 가능한 최대 remainingQuantity,
           }
         wantedDifficulty:
           {

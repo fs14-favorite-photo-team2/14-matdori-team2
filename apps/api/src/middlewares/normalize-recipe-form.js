@@ -5,10 +5,6 @@ export function normalizeRecipeForm(request, _response, next) {
   try {
     const body = { ...request.body }
 
-    if (body.minPrice !== undefined) {
-      body.minPrice = Number(body.minPrice)
-    }
-
     if (body.totalSupply !== undefined) {
       body.totalSupply = Number(body.totalSupply)
     }

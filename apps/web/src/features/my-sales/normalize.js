@@ -1,6 +1,7 @@
 export function normalizeOwnListing(listing) {
   return {
     id: `listing-${listing.id}`,
+    listingId: listing.id,
     relationType: 'OWN_LISTING',
     listingType: listing.listingType,
     listingStatus: listing.status,
@@ -13,13 +14,16 @@ export function normalizeOwnListing(listing) {
 
 export function normalizeSentOffer(offer) {
   const { listing } = offer
+
   if (!listing) return null
 
   return {
     id: `offer-${offer.id}`,
+    listingId: listing.id,
     relationType: 'SENT_OFFER',
     tradeOfferStatus: offer.status,
     listingStatus: listing.status,
+    badgeType: 'exchangePending',
     sellerNickname: listing.seller?.nickname,
     recipe: listing.recipe,
     remainingQuantity: listing.remainingQuantity,
