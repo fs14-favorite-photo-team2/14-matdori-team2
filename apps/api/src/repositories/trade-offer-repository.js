@@ -195,7 +195,7 @@ export async function cancelPendingTradeOffers(tx, listing) {
   }
 }
 
-async function markListingAsSoldOut(tx, listing) {
+export async function markListingAsSoldOut(tx, listing) {
   await tx.marketListing.update({
     where: { id: listing.id },
     data: { status: ListingStatus.SOLD_OUT },
