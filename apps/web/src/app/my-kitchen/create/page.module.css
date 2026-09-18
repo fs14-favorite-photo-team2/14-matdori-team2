@@ -217,5 +217,8 @@
   .removeIngredientButton {
     top: 12px;
     right: 12px;
+    width: 24px;
+    height: 24px;
+    font-size: var(--font-size-14);
   }
 }

@@ -17,10 +17,22 @@
   padding: 0 24px;
 }
 
-.logoLink {
+.brandArea {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  gap: 8px;
+}
+
+.logoLink {
+  display: flex;
+  align-items: center;
+}
+
+.serviceIcon {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
 }
 
 .actions {
@@ -37,9 +49,13 @@
 }
 
 .points {
+  padding: 0;
+  border: none;
+  background-color: transparent;
   color: var(--color-gray-200);
   font-size: var(--font-size-14);
   font-weight: var(--font-weight-bold);
+  cursor: pointer;
 }
 
 .notificationArea {
@@ -109,9 +125,14 @@
 }
 
 @media (max-width: 1023px) {
-  .logoLink img {
+  .wordmark {
     width: 112px;
     height: auto;
+  }
+
+  .serviceIcon {
+    width: 50px;
+    height: 50px;
   }
 }
 
@@ -129,17 +150,29 @@
     padding: 0 20px;
   }
 
-  .mobileLogoLink {
+  .mobileBrand {
     position: absolute;
     left: 50%;
     display: flex;
     align-items: center;
+    gap: 6px;
     transform: translateX(-50%);
   }
 
-  .mobileLogoLink img {
+  .mobileLogoLink {
+    display: flex;
+    align-items: center;
+  }
+
+  .mobileWordmark {
     width: 84px;
     height: auto;
+  }
+
+  .mobileServiceIcon {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
   }
 
   .mobileRight {
