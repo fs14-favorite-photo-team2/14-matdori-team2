@@ -1,11 +1,13 @@
 'use client'
 
 import Toast from '@/components/common/Toast/Toast'
+import serviceIcon from '@/app/icon.png'
 import { logout } from '@/features/auth/api'
 import useCurrentUser, {
   CURRENT_USER_QUERY_KEY,
 } from '@/features/auth/useCurrentUser'
 import useUnreadNotificationCount from '@/features/notifications/useUnreadNotificationCount'
+import RandomPointModal from '@/features/random-point/RandomPointModal'
 import useTimedToast from '@/hooks/useTimedToast'
 import { queryKeys } from '@/lib/queryKeys'
 import formatPoints from '@/utils/formatPoints'
@@ -40,7 +42,13 @@ function getServerMobileViewportSnapshot() {
 }
 
 export default function Header() {
-  const { user, isAuthenticated, isLoading, error } = useCurrentUser()
+  const {
+    user,
+    isAuthenticated,
+    isLoading,
+    error,
+    refetch: refetchCurrentUser,
+  } = useCurrentUser()
   const { data: unreadCount = 0 } = useUnreadNotificationCount({
     enabled: !isLoading && !error && isAuthenticated,
   })
@@ -72,6 +80,8 @@ export default function Header() {
   const [showLogoutToast, setShowLogoutToast] = useState(false)
   const logoutToastTimerRef = useRef(null)
 
+  const [isRandomPointOpen, setIsRandomPointOpen] = useState(false)
+
   const logoutMutation = useMutation({
     mutationFn: logout,
 
@@ -94,6 +104,7 @@ export default function Header() {
       setIsProfileOpen(false)
       setIsNotificationOpen(false)
       setIsMobileMenuOpen(false)
+      setIsRandomPointOpen(false)
 
       router.replace('/')
     },
@@ -169,6 +180,13 @@ export default function Header() {
     setIsMobileMenuOpen(true)
   }
 
+  const handleRandomPointOpen = () => {
+    setIsProfileOpen(false)
+    setIsNotificationOpen(false)
+    setIsMobileMenuOpen(false)
+    setIsRandomPointOpen(true)
+  }
+
   useEffect(() => {
     const mobileMediaQuery = window.matchMedia(MOBILE_MEDIA_QUERY)
 
@@ -200,17 +218,22 @@ export default function Header() {
       )}
 
       <div className={styles.inner}>
-        <Link
-          href={isAuthenticated ? '/marketplace' : '/'}
-          className={styles.logoLink}
-        >
-          <Image
-            src="/logos/matdori-logo.svg"
-            alt="맛도리 마켓"
-            width={140}
-            height={30}
-          />
-        </Link>
+        <div className={styles.brandArea}>
+          <Image src={serviceIcon} alt="" className={styles.serviceIcon} />
+
+          <Link
+            href={isAuthenticated ? '/marketplace' : '/'}
+            className={styles.logoLink}
+          >
+            <Image
+              src="/logos/matdori-logo.svg"
+              alt="맛도리 마켓"
+              width={140}
+              height={30}
+              className={styles.wordmark}
+            />
+          </Link>
+        </div>
 
         <div className={styles.actions}>
           {!isLoading && !error && !isAuthenticated && (
@@ -222,9 +245,15 @@ export default function Header() {
 
           {!isLoading && !error && isAuthenticated && (
             <>
-              <span className={styles.points}>
+              <button
+                type="button"
+                className={styles.points}
+                onClick={handleRandomPointOpen}
+                aria-haspopup="dialog"
+                aria-expanded={isRandomPointOpen}
+              >
                 {formatPoints(user?.points)}
-              </span>
+              </button>
 
               <div
                 className={styles.notificationArea}
@@ -306,17 +335,28 @@ export default function Header() {
           <Image src="/icons/menu.svg" alt="" width={24} height={24} />
         </button>
 
-        <Link
-          href={isAuthenticated ? '/marketplace' : '/'}
-          className={styles.mobileLogoLink}
-        >
+        <div className={styles.mobileBrand}>
           <Image
-            src="/logos/matdori-logo.svg"
-            alt="맛도리 마켓"
-            width={100}
-            height={22}
+            src={serviceIcon}
+            alt=""
+            width={29}
+            height={29}
+            className={styles.mobileServiceIcon}
           />
-        </Link>
+
+          <Link
+            href={isAuthenticated ? '/marketplace' : '/'}
+            className={styles.mobileLogoLink}
+          >
+            <Image
+              src="/logos/matdori-logo.svg"
+              alt="맛도리 마켓"
+              width={100}
+              height={22}
+              className={styles.mobileWordmark}
+            />
+          </Link>
+        </div>
 
         <div className={styles.mobileRight}>
           {!isLoading && !error && !isAuthenticated && (
@@ -367,7 +407,15 @@ export default function Header() {
         isLoggingOut={logoutMutation.isPending}
         onClose={() => setIsMobileMenuOpen(false)}
         onLogout={handleLogout}
+        onOpenRandomPoint={handleRandomPointOpen}
       />
+      {isAuthenticated && (
+        <RandomPointModal
+          isOpen={isRandomPointOpen}
+          onClose={() => setIsRandomPointOpen(false)}
+          onClaimed={() => refetchCurrentUser()}
+        />
+      )}
     </header>
   )
 }

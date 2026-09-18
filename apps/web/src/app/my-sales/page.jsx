@@ -250,7 +250,7 @@ export default function MySalesPage() {
           {filteredListings.map((listing) => (
             <Link
               key={listing.id}
-              href={`/marketplace/${listing.id}`}
+              href={`/marketplace/${listing.listingId}`}
               className={styles.cardLink}
             >
               <RecipeCard
