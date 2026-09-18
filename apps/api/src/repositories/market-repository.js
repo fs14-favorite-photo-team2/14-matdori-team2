@@ -58,10 +58,8 @@ function getMarketListingDetailSelect(currentUserId) {
   }
 }
 
-// 판매중인 전체 레시피 리스트 가져오기
-export function findMarketListings({
-  cursor,
-  limit,
+// 검색 필터 조건
+function getMarketListingsWhere({
   keyword,
   difficulty,
   category,
@@ -69,7 +67,6 @@ export function findMarketListings({
   listingType,
   minPrice,
   maxPrice,
-  sort,
 }) {
   const where = {
     deletedAt: null,
@@ -81,7 +78,7 @@ export function findMarketListings({
           : 'ON_SALE',
   }
 
-  // 텍스트 검색 시 타이틀이나 한 줄 설명에서 해당 글자 있으면 가져오기
+  // 텍스트 검색 시 제목이나 한 줄 설명에서 검색
   if (keyword) {
     where.recipe = {
       OR: [
@@ -101,7 +98,7 @@ export function findMarketListings({
     }
   }
 
-  // 난이도 필터 (and)
+  // 난이도 필터
   if (difficulty) {
     where.recipe = {
       ...where.recipe,
@@ -109,7 +106,7 @@ export function findMarketListings({
     }
   }
 
-  // 카테고리 필터 (and)
+  // 카테고리 필터
   if (category) {
     where.recipe = {
       ...where.recipe,
@@ -117,12 +114,12 @@ export function findMarketListings({
     }
   }
 
-  // 판매 상태 필터 (and)
+  // 판매 방식 필터
   if (listingType) {
     where.listingType = listingType
   }
 
-  // 가격
+  // 가격 필터
   if (minPrice !== undefined || maxPrice !== undefined) {
     where.price = {
       ...(minPrice !== undefined && { gte: minPrice }),
@@ -130,7 +127,15 @@ export function findMarketListings({
     }
   }
 
-  // 정렬기준
+  return where
+}
+
+// 판매 중인 전체 판매글 목록 조회
+export function findMarketListings(query) {
+  const { cursor, limit, sort } = query
+
+  const where = getMarketListingsWhere(query)
+
   const orderBy = {
     newest: [{ createdAt: 'desc' }, { id: 'desc' }],
     oldest: [{ createdAt: 'asc' }, { id: 'asc' }],
@@ -138,7 +143,6 @@ export function findMarketListings({
     price_desc: [{ price: 'desc' }, { id: 'desc' }],
   }
 
-  // 이때까지 거른 것들 반환
   return prisma.marketListing.findMany({
     where,
     select: marketListingSelect,
@@ -150,6 +154,13 @@ export function findMarketListings({
       },
       skip: 1,
     }),
+  })
+}
+
+// 현재 필터 조건에 해당하는 전체 판매글 수 조회
+export function countMarketListings(query) {
+  return prisma.marketListing.count({
+    where: getMarketListingsWhere(query),
   })
 }
 
