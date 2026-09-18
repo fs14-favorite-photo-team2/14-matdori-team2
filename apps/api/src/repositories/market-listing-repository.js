@@ -1,5 +1,5 @@
 import { prisma } from '../db/prisma.js'
-import { CopyState } from '../generated/prisma/enums.ts'
+import { CopyState, ListingStatus } from '../generated/prisma/enums.ts'
 import { CREATED_AT_ORDER_BY } from '../utils/sort-orders.js'
 import { findCursorPage } from './cursor-page.js'
 import {
@@ -54,7 +54,7 @@ export function findListingsBySeller(sellerId, query) {
       sellerId,
       deletedAt: null,
       ...(listingType ? { listingType } : {}),
-      ...(status ? { status } : {}),
+      status: status ?? { not: ListingStatus.WITHDRAWN },
       ...recipeFilter(query),
     },
     select: listingSummarySelect,
