@@ -4,19 +4,19 @@ import {
   createRecipeRecord,
   toRecipeDetail,
   findRecipeDetailById,
+  findRecipeImageStorageById,
   updateRecipeRecord,
 } from '../repositories/recipe-repository.js'
 import {
-  getRecipeImageFilePaths,
-  removeRecipeImageFiles,
+  removeRecipeImages,
   saveRecipeImages,
 } from '../utils/save-recipe-images.js'
 
 export async function createRecipe(userId, input, files) {
   // 월간 생성 제한 정책이 확정되면 이 위치에서 검사 (ex. 월 10회 생성, 5분 내 10회 이상 생성 제한 등)
 
-  // 이미지부터 저장 (db용, 서버파일관리용)
-  const { imageUrls, filePaths } = await saveRecipeImages(files)
+  // 이미지를 Cloudinary에 저장하고 URL/publicId 반환
+  const { imageUrls, publicIds } = await saveRecipeImages(files)
 
   let recipe
 
@@ -25,10 +25,11 @@ export async function createRecipe(userId, input, files) {
       creatorId: userId,
       ...input,
       imageUrls,
+      imagePublicIds: publicIds,
     })
   } catch {
-    // DB 생성에 실패하면 이미 저장된 이미지 파일 제거
-    await removeRecipeImageFiles(filePaths)
+    // DB 생성 실패 시 방금 업로드한 Cloudinary 이미지 롤백
+    await removeRecipeImages(publicIds)
 
     throw AppError.from(ERROR_CODES.INTERNAL_SERVER_ERROR)
   }
@@ -98,8 +99,15 @@ export async function updateRecipe(userId, recipeId, input, files = []) {
   }
 
   let savedImages = null
+  let previousImagePublicIds = []
 
   if (hasNewImages) {
+    // 기존 Cloudinary 이미지 publicId 보관
+    const previousImageStorage = await findRecipeImageStorageById(recipeId)
+
+    previousImagePublicIds = previousImageStorage?.imagePublicIds ?? []
+
+    // 새 이미지 Cloudinary 업로드
     savedImages = await saveRecipeImages(files)
   }
 
@@ -108,20 +116,24 @@ export async function updateRecipe(userId, recipeId, input, files = []) {
   try {
     updatedRecipe = await updateRecipeRecord(recipeId, {
       ...input,
-      ...(savedImages ? { imageUrls: savedImages.imageUrls } : {}),
+      ...(savedImages
+        ? {
+            imageUrls: savedImages.imageUrls,
+            imagePublicIds: savedImages.publicIds,
+          }
+        : {}),
     })
   } catch {
     if (savedImages) {
-      await removeRecipeImageFiles(savedImages.filePaths)
+      await removeRecipeImages(savedImages.publicIds)
     }
 
     throw AppError.from(ERROR_CODES.INTERNAL_SERVER_ERROR)
   }
 
   if (savedImages) {
-    const previousImageFilePaths = getRecipeImageFilePaths(recipe.imageUrls)
-
-    await removeRecipeImageFiles(previousImageFilePaths)
+    // DB 수정이 성공한 후에만 이전 Cloudinary 이미지 삭제
+    await removeRecipeImages(previousImagePublicIds)
   }
 
   return {

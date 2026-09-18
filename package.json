@@ -48,5 +48,8 @@
     "./*.{js,cjs,mjs}": "prettier --write",
     ".husky/*.{js,cjs,mjs}": "prettier --write",
     "*.{css,json,md,yml,yaml,prisma}": "prettier --write --ignore-unknown"
+  },
+  "dependencies": {
+    "cloudinary": "^2.11.0"
   }
 }

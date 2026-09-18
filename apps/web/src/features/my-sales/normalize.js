@@ -1,6 +1,7 @@
 export function normalizeOwnListing(listing) {
   return {
     id: `listing-${listing.id}`,
+    listingId: listing.id,
     relationType: 'OWN_LISTING',
     listingType: listing.listingType,
     listingStatus: listing.status,
@@ -18,6 +19,7 @@ export function normalizeSentOffer(offer) {
 
   return {
     id: `offer-${offer.id}`,
+    listingId: listing.id,
     relationType: 'SENT_OFFER',
     tradeOfferStatus: offer.status,
     listingStatus: listing.status,
