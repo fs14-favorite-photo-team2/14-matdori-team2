@@ -1,4 +1,5 @@
 import { prisma } from '../db/prisma.js'
+import { NotificationType } from '../generated/prisma/enums.ts'
 import { CREATED_AT_ORDER_BY } from '../utils/sort-orders.js'
 import { findCursorPage } from './cursor-page.js'
 
@@ -36,4 +37,17 @@ export function findPurchasesByBuyer(buyerId, query) {
 
 export function findPurchasesBySeller(sellerId, query) {
   return findPurchases({ sellerId }, query)
+}
+
+export function notifyPurchase(tx, { listing, purchase }) {
+  return tx.notification.create({
+    data: {
+      userId: listing.sellerId,
+      type: NotificationType.PURCHASED,
+      actorId: purchase.buyerId,
+      recipeId: listing.recipeId,
+      listingId: listing.id,
+      purchaseId: purchase.id,
+    },
+  })
 }

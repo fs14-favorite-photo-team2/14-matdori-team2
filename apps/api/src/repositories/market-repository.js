@@ -1,6 +1,10 @@
 import { prisma } from '../db/prisma.js'
+import { notifyPurchase } from './purchase-repository.js'
 import { recipeDetailSelect, recipeSummarySelect } from './recipe-repository.js'
-import { cancelPendingTradeOffers } from './trade-offer-repository.js'
+import {
+  cancelPendingTradeOffers,
+  markListingAsSoldOut,
+} from './trade-offer-repository.js'
 
 // 공통으로 불러올 필드 부분
 const marketListingSelect = {
@@ -818,6 +822,10 @@ export function purchaseMarketListingRecord({
       },
     })
 
+    const listing = { id: listingId, sellerId, recipeId }
+
+    await notifyPurchase(transaction, { listing, purchase })
+
     // 현재 판매글에 남은 사본 수 확인
     const remainingQuantity = await transaction.recipeCopy.count({
       where: {
@@ -828,14 +836,7 @@ export function purchaseMarketListingRecord({
 
     // 마지막 사본이 판매된 경우 품절 처리
     if (remainingQuantity === 0) {
-      await transaction.marketListing.update({
-        where: {
-          id: listingId,
-        },
-        data: {
-          status: 'SOLD_OUT',
-        },
-      })
+      await markListingAsSoldOut(transaction, listing)
     }
 
     // 차감 후 구매자 잔여 포인트 조회

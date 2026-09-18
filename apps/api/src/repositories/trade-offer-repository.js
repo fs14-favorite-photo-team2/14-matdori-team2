@@ -13,6 +13,7 @@ import {
   toListingSummary,
 } from './market-listing-repository.js'
 import { recipeCopySelect, toRecipeCopy } from './recipe-copy-repository.js'
+import { recipeFilter } from './recipe-repository.js'
 import { publicUserSelect } from './user-repository.js'
 
 export const tradeOfferSelect = {
@@ -35,8 +36,19 @@ export function toTradeOffer({ listing, offeredCopy, ...tradeOffer }) {
   }
 }
 
-function tradeOffersFilter(where, { status }) {
-  return { ...where, ...(status ? { status } : {}) }
+function tradeOffersFilter(where, query) {
+  const { status, listingStatus } = query
+  const listing = {
+    ...where.listing,
+    ...(listingStatus ? { status: listingStatus } : {}),
+    ...recipeFilter(query),
+  }
+
+  return {
+    ...where,
+    ...(status ? { status } : {}),
+    ...(Object.keys(listing).length > 0 ? { listing } : {}),
+  }
 }
 
 function findTradeOffers(where, query) {
@@ -195,7 +207,7 @@ export async function cancelPendingTradeOffers(tx, listing) {
   }
 }
 
-async function markListingAsSoldOut(tx, listing) {
+export async function markListingAsSoldOut(tx, listing) {
   await tx.marketListing.update({
     where: { id: listing.id },
     data: { status: ListingStatus.SOLD_OUT },
