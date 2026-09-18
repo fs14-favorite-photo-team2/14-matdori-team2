@@ -18,8 +18,11 @@ const baskinRobbins = localFont({
 })
 
 export const metadata = {
-  title: 'Matdori Market',
-  description: 'Find and share delicious recipes.',
+  title: {
+    default: '맛도리 마켓',
+    template: '%s | 맛도리 마켓',
+  },
+  description: '나만의 레시피를 만들고 거래하는 맛도리 마켓',
 }
 
 export default function RootLayout({ children }) {
