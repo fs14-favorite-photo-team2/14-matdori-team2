@@ -29,7 +29,7 @@
 }
 
 .pageTitle {
-  font-size: var(--font-size-62);
+  font-size: var(--font-size-48);
 }
 
 .summarySection {
@@ -107,6 +107,10 @@
 }
 
 @media (max-width: 1023px) {
+  .pageTitle {
+    font-size: var(--font-size-40);
+  }
+
   .grid {
     grid-template-columns: repeat(2, 1fr);
   }

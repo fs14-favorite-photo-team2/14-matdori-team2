@@ -64,6 +64,7 @@ export function createRecipeRecord({
   creatorId,
   title,
   imageUrls,
+  imagePublicIds,
   ingredients,
   difficulty,
   category,
@@ -76,6 +77,7 @@ export function createRecipeRecord({
       creatorId,
       title,
       imageUrls,
+      imagePublicIds,
       ingredients,
       difficulty,
       category,
@@ -156,5 +158,18 @@ export function updateRecipeRecord(recipeId, data) {
     },
     data,
     select: recipeDetailSelect,
+  })
+}
+
+// 스토리지에서 이미지검색
+export function findRecipeImageStorageById(recipeId) {
+  return prisma.recipe.findUnique({
+    where: {
+      id: recipeId,
+    },
+
+    select: {
+      imagePublicIds: true,
+    },
   })
 }
