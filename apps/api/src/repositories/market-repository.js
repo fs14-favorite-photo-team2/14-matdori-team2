@@ -82,23 +82,13 @@ function getMarketListingsWhere({
           : 'ON_SALE',
   }
 
-  // 텍스트 검색 시 제목이나 한 줄 설명에서 검색
+  // 텍스트 검색 시 레시피 제목에서 검색
   if (keyword) {
     where.recipe = {
-      OR: [
-        {
-          title: {
-            contains: keyword,
-            mode: 'insensitive',
-          },
-        },
-        {
-          summary: {
-            contains: keyword,
-            mode: 'insensitive',
-          },
-        },
-      ],
+      title: {
+        contains: keyword,
+        mode: 'insensitive',
+      },
     }
   }
 
