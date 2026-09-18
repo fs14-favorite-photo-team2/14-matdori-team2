@@ -2,6 +2,7 @@ import { ERROR_CODES } from '../constants/error-codes.js'
 import { PRISMA_ERROR_CODES } from '../constants/prisma-error-codes.js'
 import { AppError } from '../errors/app-error.js'
 import {
+  countListingsBySeller,
   findListingsBySeller,
   toListingSummary,
 } from '../repositories/market-listing-repository.js'
@@ -10,11 +11,14 @@ import {
   findPurchasesBySeller,
 } from '../repositories/purchase-repository.js'
 import {
+  countRecipesByOwner,
   findRecipeCopiesByOwner,
   toRecipeCopy,
 } from '../repositories/recipe-copy-repository.js'
 import { countRecipesCreatedSince } from '../repositories/recipe-repository.js'
 import {
+  countTradeOffersByProposer,
+  countTradeOffersBySeller,
   findTradeOffersByProposer,
   findTradeOffersBySeller,
   toTradeOffer,
@@ -68,27 +72,47 @@ export async function updateCurrentUser(userId, { nickname }) {
 }
 
 export async function getMyRecipeCopies(userId, query) {
-  const copies = await findRecipeCopiesByOwner(userId, query)
+  const [copies, totalRecipeCount] = await Promise.all([
+    findRecipeCopiesByOwner(userId, query),
+    countRecipesByOwner(userId, query),
+  ])
+  const page = toCursorPage(copies, query.limit, toRecipeCopy)
+  page.meta.totalRecipeCount = totalRecipeCount
 
-  return toCursorPage(copies, query.limit, toRecipeCopy)
+  return page
 }
 
 export async function getMyListings(userId, query) {
-  const listings = await findListingsBySeller(userId, query)
+  const [listings, totalCount] = await Promise.all([
+    findListingsBySeller(userId, query),
+    countListingsBySeller(userId, query),
+  ])
+  const page = toCursorPage(listings, query.limit, toListingSummary)
+  page.meta.totalCount = totalCount
 
-  return toCursorPage(listings, query.limit, toListingSummary)
+  return page
 }
 
 export async function getMySentTradeOffers(userId, query) {
-  const tradeOffers = await findTradeOffersByProposer(userId, query)
+  const [tradeOffers, totalCount] = await Promise.all([
+    findTradeOffersByProposer(userId, query),
+    countTradeOffersByProposer(userId, query),
+  ])
+  const page = toCursorPage(tradeOffers, query.limit, toTradeOffer)
+  page.meta.totalCount = totalCount
 
-  return toCursorPage(tradeOffers, query.limit, toTradeOffer)
+  return page
 }
 
 export async function getMyReceivedTradeOffers(userId, query) {
-  const tradeOffers = await findTradeOffersBySeller(userId, query)
+  const [tradeOffers, totalCount] = await Promise.all([
+    findTradeOffersBySeller(userId, query),
+    countTradeOffersBySeller(userId, query),
+  ])
+  const page = toCursorPage(tradeOffers, query.limit, toTradeOffer)
+  page.meta.totalCount = totalCount
 
-  return toCursorPage(tradeOffers, query.limit, toTradeOffer)
+  return page
 }
 
 export async function getMyPurchases(userId, query) {

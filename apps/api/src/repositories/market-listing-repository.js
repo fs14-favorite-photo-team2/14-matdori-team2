@@ -1,5 +1,5 @@
 import { prisma } from '../db/prisma.js'
-import { CopyState } from '../generated/prisma/enums.ts'
+import { CopyState, ListingStatus } from '../generated/prisma/enums.ts'
 import { CREATED_AT_ORDER_BY } from '../utils/sort-orders.js'
 import { findCursorPage } from './cursor-page.js'
 import {
@@ -46,17 +46,27 @@ export function findListingById(id) {
   })
 }
 
+function sellerListingsFilter(sellerId, query) {
+  return {
+    sellerId,
+    deletedAt: null,
+    ...(query.listingType ? { listingType: query.listingType } : {}),
+    status: query.status ?? { not: ListingStatus.WITHDRAWN },
+    ...recipeFilter(query),
+  }
+}
+
+export function countListingsBySeller(sellerId, query) {
+  return prisma.marketListing.count({
+    where: sellerListingsFilter(sellerId, query),
+  })
+}
+
 export function findListingsBySeller(sellerId, query) {
-  const { listingType, status, sort, cursor, limit } = query
+  const { sort, cursor, limit } = query
 
   return findCursorPage(prisma.marketListing, {
-    where: {
-      sellerId,
-      deletedAt: null,
-      ...(listingType ? { listingType } : {}),
-      ...(status ? { status } : {}),
-      ...recipeFilter(query),
-    },
+    where: sellerListingsFilter(sellerId, query),
     select: listingSummarySelect,
     orderBy: CREATED_AT_ORDER_BY[sort],
     cursor,

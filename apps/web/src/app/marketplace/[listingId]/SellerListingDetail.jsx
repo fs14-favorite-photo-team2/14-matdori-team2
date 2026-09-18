@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
+  useDeleteMarketListing,
   useUpdateMarketListing,
   useWithdrawMarketListing,
 } from '@/features/marketplace/useMarketListingMutations'
@@ -53,6 +54,7 @@ export default function SellerListingDetail({ listing }) {
   const { recipe, seller } = listing
   const router = useRouter()
   const withdrawMutation = useWithdrawMarketListing()
+  const deleteMutation = useDeleteMarketListing()
   const updateMutation = useUpdateMarketListing()
   const rejectTradeOfferMutation = useRejectTradeOffer()
   const acceptTradeOfferMutation = useAcceptTradeOffer()
@@ -221,10 +223,13 @@ export default function SellerListingDetail({ listing }) {
     )
   }
 
-  function handleUnlistConfirm() {
-    if (withdrawMutation.isPending) return
+  function handleDeleteConfirm() {
+    if (withdrawMutation.isPending || deleteMutation.isPending) return
 
-    withdrawMutation.mutate(listing.id, {
+    const removalMutation =
+      listing.status === 'ON_SALE' ? withdrawMutation : deleteMutation
+
+    removalMutation.mutate(listing.id, {
       onSuccess: () => {
         setIsUnlistModalOpen(false)
         router.replace('/marketplace')
@@ -453,7 +458,9 @@ export default function SellerListingDetail({ listing }) {
                 variant="secondary"
                 className={styles.sellerActionButton}
                 onClick={() => setIsUnlistModalOpen(true)}
-                disabled={listing.status !== 'ON_SALE'}
+                disabled={
+                  withdrawMutation.isPending || deleteMutation.isPending
+                }
               >
                 판매글 삭제하기
               </Button>
@@ -639,11 +646,11 @@ export default function SellerListingDetail({ listing }) {
       <ActionConfirmModal
         isOpen={isUnlistModalOpen}
         onClose={() => setIsUnlistModalOpen(false)}
-        onConfirm={handleUnlistConfirm}
+        onConfirm={handleDeleteConfirm}
         title="판매글 삭제하기"
         description="정말로 판매글을 삭제하시겠습니까?"
         confirmLabel="삭제하기"
-        isPending={withdrawMutation.isPending}
+        isPending={withdrawMutation.isPending || deleteMutation.isPending}
       />
 
       <SaleEditModal

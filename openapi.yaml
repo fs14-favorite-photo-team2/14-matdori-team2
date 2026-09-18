@@ -291,6 +291,9 @@ paths:
       description: |
         현재 소유한 사본을 개별 항목으로 반환합니다. state를 생략하면 모든 상태를
         포함하며, 마이 레시피 화면에서는 state=OWNED로 조회합니다.
+        meta.totalRecipeCount는 현재 사용자와 필터 조건에 맞는 고유 레시피 수입니다.
+        같은 레시피의 사본을 여러 장 보유해도 1개로 계산하며, cursor와 limit는
+        개수 계산에 적용하지 않습니다. 목록과 커서는 계속 사본 단위입니다.
         meta.nextCursor를 같은 필터와 정렬 조건으로 전달하면 다음 페이지를
         조회합니다. 커서는 마지막 항목 ID의 문자열이며, 정렬 값이 같으면 ID를
         같은 방향으로 정렬합니다. 커서가 가리키는 항목이 삭제되었거나 현재 조회
@@ -327,8 +330,11 @@ paths:
       operationId: listMyListings
       description: |
         현재 사용자가 등록한 판매글 중 deletedAt이 null인 판매글만 조회합니다.
-        소프트 삭제된 판매글은 제외하며, 필터를 생략하면 모든 상태와
-        판매 방식을 포함합니다. remainingQuantity는 아직 LISTED 상태로 남은 사본
+        소프트 삭제된 판매글은 제외하며, status를 생략하면 WITHDRAWN을 제외합니다.
+        listingType을 생략하면 모든 판매 방식을 포함합니다.
+        meta.totalCount는 현재 사용자와 필터 조건에 맞는 전체 판매글 수이며,
+        cursor와 limit는 개수 계산에 적용하지 않습니다.
+        remainingQuantity는 아직 LISTED 상태로 남은 사본
         개수입니다. 페이지 커서 사용법은 /users/me/recipe-copies와 같습니다.
       parameters:
         - $ref: '#/components/parameters/Cursor'
@@ -353,7 +359,7 @@ paths:
           description: 현재 사용자의 판매글
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ListingCursorResponse' }
+              schema: { $ref: '#/components/schemas/MyListingCursorResponse' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -365,6 +371,8 @@ paths:
       description: |
         현재 사용자가 보낸 제안을 조회합니다. status를 생략하면 모든 상태를
         포함하며, 페이지 커서 사용법은 /users/me/recipe-copies와 같습니다.
+        meta.totalCount는 현재 사용자와 필터 조건에 맞는 전체 보낸 제안 수이며,
+        cursor와 limit는 개수 계산에 적용하지 않습니다.
       parameters:
         - $ref: '#/components/parameters/Cursor'
         - $ref: '#/components/parameters/CursorLimit'
@@ -382,7 +390,8 @@ paths:
           description: 보낸 교환 제안
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/TradeOfferCursorResponse' }
+              schema:
+                { $ref: '#/components/schemas/MyTradeOfferCursorResponse' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -394,6 +403,8 @@ paths:
       description: |
         현재 사용자 소유의 판매글에 접수된 제안을 조회합니다. status를 생략하면
         모든 상태를 포함하며, 페이지 커서 사용법은 /users/me/recipe-copies와 같습니다.
+        meta.totalCount는 현재 사용자와 필터 조건에 맞는 전체 받은 제안 수이며,
+        cursor와 limit는 개수 계산에 적용하지 않습니다.
       parameters:
         - $ref: '#/components/parameters/Cursor'
         - $ref: '#/components/parameters/CursorLimit'
@@ -411,7 +422,8 @@ paths:
           description: 현재 사용자의 판매글에 접수된 교환 제안
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/TradeOfferCursorResponse' }
+              schema:
+                { $ref: '#/components/schemas/MyTradeOfferCursorResponse' }
         '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -621,10 +633,14 @@ paths:
       tags: [마켓플레이스]
       summary: 판매글 상세 정보 조회
       description: >-
-        판매글 상세 정보를 조회합니다. 요청자가 판매자 본인인 경우
-        판매 수량 수정을 위한 soldQuantity, exchangedQuantity,
-        completedQuantity, availableAdditionalQuantity, maximumQuantity를
-        추가로 반환합니다.
+        판매글 상세 정보를 조회합니다.
+        판매글 판매자, 레시피 생성자 또는 해당 레시피 사본의 소유자인 경우
+        canViewFullRecipe가 true이며 전체 레시피 정보를 반환합니다.
+        그 외 사용자는 canViewFullRecipe가 false이며
+        summary와 하이라이트 재료 이름만 반환합니다.
+        판매자 본인인 경우 판매 수량 수정을 위한 soldQuantity,
+        exchangedQuantity, completedQuantity, availableAdditionalQuantity,
+        maximumQuantity를 추가로 반환합니다.
       operationId: getMarketListing
       parameters:
         - $ref: '#/components/parameters/ListingId'
@@ -633,7 +649,8 @@ paths:
           description: 판매글 상세 정보
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ListingResponse' }
+              schema:
+                $ref: '#/components/schemas/ListingResponse'
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
@@ -1345,15 +1362,43 @@ components:
         difficulty: { $ref: '#/components/schemas/Difficulty' }
         category: { $ref: '#/components/schemas/Category' }
         summary: { type: string, minLength: 1, maxLength: 1000 }
+        content:
+          type: string
+          minLength: 1
+          maxLength: 20000
+          description: >-
+            판매글 상세 조회에서 canViewFullRecipe가 true인 경우에만
+            반환되는 전체 조리 내용입니다.
+        totalSupply:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: >-
+            판매글 상세 조회에서 canViewFullRecipe가 true인 경우에만
+            반환되는 총 발행 사본 수입니다.
+
+        createdAt:
+          type: string
+          format: date-time
+          description: >-
+            판매글 상세 조회에서 canViewFullRecipe가 true인 경우에만
+            반환되는 레시피 생성 시각입니다.
+
+        updatedAt:
+          type: string
+          format: date-time
+          description: >-
+            판매글 상세 조회에서 canViewFullRecipe가 true인 경우에만
+            반환되는 레시피 최종 수정 시각입니다.
         ingredients:
           type: array
           description: >-
-            isHighlight가 true인 재료만 반환합니다. 전체 재료 목록은 레시피 사본을
-            소유하거나 생성한 사용자에게 RecipeDetail로만 제공하므로, 로그인하지 않은
-            사용자와 사본을 소유하지 않은 사용자는 강조 재료만 확인할 수 있습니다.
-            강조한 재료가 없거나 마이그레이션 이전 레시피는 빈 배열일 수 있습니다.
+            판매글 목록에서는 하이라이트 재료를 반환합니다.
+            판매글 상세 조회에서 canViewFullRecipe가 false이면
+            하이라이트 재료의 name만 반환합니다.
+            canViewFullRecipe가 true이면 모든 재료의 name, amount, isHighlight를 반환합니다.
           items:
-            $ref: '#/components/schemas/Ingredient'
+            $ref: '#/components/schemas/RecipeSummaryIngredient'
     RecipeDetail:
       allOf:
         - $ref: '#/components/schemas/RecipeSummary'
@@ -1366,24 +1411,35 @@ components:
             - updatedAt
             - canEdit
           properties:
-            creator: { $ref: '#/components/schemas/PublicUser' }
+            creator:
+              $ref: '#/components/schemas/PublicUser'
+
             content:
               type: string
               minLength: 1
               maxLength: 20000
               description: 상세조회 권한이 있는 사용자에게 반환하는 전체 조리 내용
+
             totalSupply:
               type: integer
               minimum: 1
               maximum: 10
-            createdAt: { type: string, format: date-time }
-            updatedAt: { type: string, format: date-time }
+
+            createdAt:
+              type: string
+              format: date-time
+
+            updatedAt:
+              type: string
+              format: date-time
+
             ingredients:
               type: array
               description: 레시피 생성자 또는 사본 소유자에게 반환하는 전체 재료 목록
               minItems: 1
               items:
                 $ref: '#/components/schemas/Ingredient'
+
             canEdit:
               type: boolean
               description: >-
@@ -1555,6 +1611,14 @@ components:
       properties:
         id: { type: integer, minimum: 1, description: 판매글 ID, example: 101 }
         recipe: { $ref: '#/components/schemas/RecipeSummary' }
+        canViewFullRecipe:
+          type: boolean
+          description: >-
+            현재 사용자가 전체 레시피를 조회할 수 있는지 여부입니다.
+            판매글 판매자, 레시피 생성자 또는 해당 레시피 사본의
+            현재 소유자인 경우 true입니다.
+            판매글 상세 조회에서만 반환됩니다.
+
         seller: { $ref: '#/components/schemas/PublicUser' }
         listingType: { $ref: '#/components/schemas/ListingType' }
         price: { type: [integer, 'null'], minimum: 0, maximum: 100000000 }
@@ -1569,28 +1633,28 @@ components:
           {
             type: integer,
             minimum: 0,
-            description: 이 판매글에서 포인트로 판매 완료된 사본 수,
+            description: 판매자 본인의 판매글 상세 조회 시 반환되는 포인트 판매 완료 수량,
           }
 
         exchangedQuantity:
           {
             type: integer,
             minimum: 0,
-            description: 이 판매글에서 교환 완료된 사본 수,
+            description: 판매자 본인의 판매글 상세 조회 시 반환되는 교환 완료 수량,
           }
 
         completedQuantity:
           {
             type: integer,
             minimum: 0,
-            description: 판매 완료 수와 교환 완료 수의 합계,
+            description: 판매자 본인의 판매글 상세 조회 시 반환되는 판매 및 교환 완료 수량 합계,
           }
 
         availableAdditionalQuantity:
           {
             type: integer,
             minimum: 0,
-            description: 판매자가 현재 판매글에 추가할 수 있는 보유 사본 수,
+            description: 판매자 본인의 판매글 상세 조회 시 반환되는 추가 등록 가능 보유 사본 수,
           }
 
         maximumQuantity:
@@ -1598,8 +1662,7 @@ components:
             type: integer,
             minimum: 0,
             maximum: 10,
-            description: 거래 완료 수량과 판매자의 보유 사본을 반영하여 계산한
-              변경 가능한 최대 remainingQuantity,
+            description: 판매자 본인의 판매글 상세 조회 시 반환되는 변경 가능한 최대 remainingQuantity,
           }
         wantedDifficulty:
           {
@@ -1775,6 +1838,26 @@ components:
       properties:
         nextCursor: { type: [string, 'null'] }
         hasNext: { type: boolean }
+    CountedCursorMeta:
+      allOf:
+        - $ref: '#/components/schemas/CursorMeta'
+        - type: object
+          required: [totalCount]
+          properties:
+            totalCount:
+              type: integer
+              minimum: 0
+              description: 현재 사용자와 필터 조건에 맞는 전체 항목 수. cursor와 limit는 적용하지 않습니다.
+    RecipeCountCursorMeta:
+      allOf:
+        - $ref: '#/components/schemas/CursorMeta'
+        - type: object
+          required: [totalRecipeCount]
+          properties:
+            totalRecipeCount:
+              type: integer
+              minimum: 0
+              description: 현재 사용자와 필터 조건에 맞는 고유 레시피 수. 같은 레시피의 사본은 1개로 계산하며 cursor와 limit는 적용하지 않습니다.
     MyRecipeCursorResponse:
       type: object
       required: [success, data, meta]
@@ -1782,7 +1865,19 @@ components:
         success: { type: boolean, const: true }
         data:
           { type: array, items: { $ref: '#/components/schemas/RecipeCopy' } }
-        meta: { $ref: '#/components/schemas/CursorMeta' }
+        meta: { $ref: '#/components/schemas/RecipeCountCursorMeta' }
+    MyListingCursorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListingCursorResponse'
+        - type: object
+          properties:
+            meta: { $ref: '#/components/schemas/CountedCursorMeta' }
+    MyTradeOfferCursorResponse:
+      allOf:
+        - $ref: '#/components/schemas/TradeOfferCursorResponse'
+        - type: object
+          properties:
+            meta: { $ref: '#/components/schemas/CountedCursorMeta' }
     ListingCursorResponse:
       type: object
       required: [success, data, meta]
@@ -1829,6 +1924,33 @@ components:
         data:
           { type: array, items: { $ref: '#/components/schemas/Notification' } }
         meta: { $ref: '#/components/schemas/CursorMeta' }
+    RecipeSummaryIngredient:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          example: 트러플
+
+        amount:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          description: >-
+            canViewFullRecipe가 true인 판매글 상세 조회에서 반환되는 재료 분량입니다.
+          example: 10g
+
+        isHighlight:
+          type: boolean
+          description: >-
+            마켓플레이스 목록 등의 기존 요약 응답에서 반환될 수 있는
+            대표 재료 여부입니다.
     Ingredient:
       type: object
       additionalProperties: false
