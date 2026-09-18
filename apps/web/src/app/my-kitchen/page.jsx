@@ -9,6 +9,7 @@ import RecipeFilter from '@/components/common/RecipeFilter/RecipeFilter'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
 import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
 import { fetchMyRecipeCopies } from '@/features/my-kitchen/api/recipeCopies'
+import { useMyRecipeCount } from '@/features/my-kitchen/useMyRecipeCopies'
 import { queryKeys } from '@/lib/queryKeys'
 import useCurrentUser from '@/features/auth/useCurrentUser'
 import ScrollToTopButton from '@/components/common/ScrollToTopButton/ScrollToTopButton'
@@ -104,6 +105,14 @@ export default function MyKitchenPage() {
   )
 
   const groupedRecipes = useMemo(() => groupByRecipe(copies), [copies])
+
+  const { data: draftResultCount } = useMyRecipeCount({
+    keyword,
+    difficulty: draftFilters.difficulty,
+    category: draftFilters.category,
+    state: 'OWNED',
+    enabled: isMobileOpen,
+  })
 
   const difficultyCounts = useMemo(() => {
     return DIFFICULTY_OPTIONS.map((option) => ({
@@ -206,7 +215,7 @@ export default function MyKitchenPage() {
             filters={filters}
             draftFilters={draftFilters}
             isMobileOpen={isMobileOpen}
-            resultCount={groupedRecipes.length}
+            resultCount={draftResultCount}
             onFilterChange={handleFilterChange}
             onDraftFilterChange={handleDraftFilterChange}
             onOpenMobile={handleOpenMobile}

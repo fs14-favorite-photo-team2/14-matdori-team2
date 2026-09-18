@@ -13,12 +13,16 @@ import useTimedToast from '@/hooks/useTimedToast'
 import { useCreateMarketListing } from '@/features/marketplace/useMarketListingMutations'
 import RecipeCard from '@/components/common/RecipeCard/RecipeCard'
 import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
-import useMyRecipeCopies from '@/features/my-kitchen/useMyRecipeCopies'
+import useMyRecipeCopies, {
+  useMyRecipeCount,
+} from '@/features/my-kitchen/useMyRecipeCopies'
 
 import LoginRequiredModal from '@/features/auth/components/LoginRequiredModal/LoginRequiredModal'
 import RecipeSelectionModal from '@/components/common/RecipeSelectionModal/RecipeSelectionModal'
 import SaleRegistrationModal from '@/features/sales/components/SaleRegistrationModal/SaleRegistrationModal'
-import useMarketListings from '@/features/marketplace/useMarketListings'
+import useMarketListings, {
+  useMarketListingCount,
+} from '@/features/marketplace/useMarketListings'
 import useInfiniteScroll from '@/hooks/useInfiniteScroll'
 import useDebouncedValue from '@/hooks/useDebouncedValue'
 import ErrorState from '@/components/common/ErrorState/ErrorState'
@@ -46,6 +50,10 @@ export default function MarketplacePage() {
     difficulty: '',
     category: '',
   })
+  const [salePreviewFilters, setSalePreviewFilters] = useState({
+    difficulty: '',
+    category: '',
+  })
   const createListingMutation = useCreateMarketListing()
   const { toastMessage, showToast } = useTimedToast()
 
@@ -67,6 +75,12 @@ export default function MarketplacePage() {
     filters,
     sort,
     enabled: pageSize !== null,
+  })
+
+  const { data: draftResultCount } = useMarketListingCount({
+    keyword: debouncedKeyword,
+    filters: draftFilters,
+    enabled: isMobileOpen,
   })
 
   const {
@@ -92,9 +106,19 @@ export default function MarketplacePage() {
   } = useMyRecipeCopies({
     limit: 10,
     state: 'OWNED',
+    createdByMe: true,
     keyword: debouncedSaleKeyword,
     difficulty: saleFilters.difficulty,
     category: saleFilters.category,
+    enabled: isSaleModalOpen && isAuthenticated,
+  })
+
+  const { data: saleResultCount } = useMyRecipeCount({
+    state: 'OWNED',
+    createdByMe: true,
+    keyword: debouncedSaleKeyword,
+    difficulty: salePreviewFilters.difficulty,
+    category: salePreviewFilters.category,
     enabled: isSaleModalOpen && isAuthenticated,
   })
 
@@ -354,6 +378,7 @@ export default function MarketplacePage() {
               sortOptions={SORT_OPTIONS}
               sort={sort}
               isMobileOpen={isMobileOpen}
+              resultCount={draftResultCount}
               onFilterChange={handleFilterChange}
               onDraftFilterChange={handleDraftFilterChange}
               onSortChange={handleSortChange}
@@ -437,13 +462,18 @@ export default function MarketplacePage() {
         title="나의 레시피 판매하기"
         emptyMessage="판매 가능한 레시피가 없습니다."
         isLoading={isSaleRecipesPending}
+        resultCount={saleResultCount}
         hasNextPage={
           Boolean(hasNextSaleRecipesPage) && !isSaleRecipesNextPageError
         }
         isFetchingNextPage={isFetchingNextSaleRecipesPage}
         onLoadMore={fetchNextSaleRecipesPage}
         onSearchChange={setSaleSearchInput}
-        onFiltersChange={setSaleFilters}
+        onDraftFiltersChange={setSalePreviewFilters}
+        onFiltersChange={(nextFilters) => {
+          setSaleFilters(nextFilters)
+          setSalePreviewFilters(nextFilters)
+        }}
       />
       <SaleRegistrationModal
         key={selectedRecipe?.recipeId ?? 'empty'}
