@@ -37,9 +37,13 @@
 }
 
 .points {
+  padding: 0;
+  border: none;
+  background-color: transparent;
   color: var(--color-gray-200);
   font-size: var(--font-size-14);
   font-weight: var(--font-weight-bold);
+  cursor: pointer;
 }
 
 .notificationArea {
