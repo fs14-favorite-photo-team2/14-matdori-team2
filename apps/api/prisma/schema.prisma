@@ -92,18 +92,19 @@ model ExpressSession {
 }
 
 model Recipe {
-  id          Int        @id @default(autoincrement())
-  creatorId   Int
-  title       String
-  imageUrls   String[]
-  ingredients Json
-  difficulty  Difficulty
-  category    Category
-  summary     String
-  content     String
-  totalSupply Int
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id             Int        @id @default(autoincrement())
+  creatorId      Int
+  title          String
+  imageUrls      String[]
+  imagePublicIds String[]    @default([])
+  ingredients    Json
+  difficulty     Difficulty
+  category       Category
+  summary        String
+  content        String
+  totalSupply    Int
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   creator       User            @relation("RecipeCreator", fields: [creatorId], references: [id])
   copies        RecipeCopy[]
