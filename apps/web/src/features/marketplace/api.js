@@ -47,6 +47,10 @@ export async function withdrawMarketListing(listingId) {
   await api.post(`/market-listings/${listingId}/withdraw`)
 }
 
+export async function deleteMarketListing(listingId) {
+  await api.delete(`/market-listings/${listingId}`)
+}
+
 export async function purchaseMarketListing(listingId) {
   const response = await api.post(`/market-listings/${listingId}/purchases`)
   return response.data.data
