@@ -9,13 +9,13 @@
 }
 
 .container {
-  max-width: 1480px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 24px 24px 40px;
+  padding: 64px 24px 40px;
 }
 
 .pageTitle {
-  font-size: var(--font-size-62);
+  font-size: var(--font-size-48);
 }
 
 .form {
@@ -168,6 +168,16 @@
   color: var(--color-white);
   font-size: var(--font-size-20);
   cursor: pointer;
+}
+
+@media (max-width: 1023px) {
+  .container {
+    padding: 48px 24px 40px;
+  }
+
+  .pageTitle {
+    font-size: var(--font-size-40);
+  }
 }
 
 @media (max-width: 743px) {
