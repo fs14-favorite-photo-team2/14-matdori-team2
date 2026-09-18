@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import styles from './ImageUploader.module.css'
 
 const MAX_IMAGES = 10
-const OUTPUT_WIDTH = 360
-const OUTPUT_HEIGHT = 270
+const OUTPUT_WIDTH = 1080
+const OUTPUT_HEIGHT = 810
 const MIN_ZOOM = 1
 const MAX_ZOOM = 3
 const ZOOM_STEP = 0.01
