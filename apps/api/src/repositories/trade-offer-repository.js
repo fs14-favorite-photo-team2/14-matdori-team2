@@ -35,13 +35,31 @@ export function toTradeOffer({ listing, offeredCopy, ...tradeOffer }) {
   }
 }
 
-function findTradeOffers(where, { status, sort, cursor, limit }) {
+function tradeOffersFilter(where, { status }) {
+  return { ...where, ...(status ? { status } : {}) }
+}
+
+function findTradeOffers(where, query) {
+  const { sort, cursor, limit } = query
+
   return findCursorPage(prisma.tradeOffer, {
-    where: { ...where, ...(status ? { status } : {}) },
+    where: tradeOffersFilter(where, query),
     select: tradeOfferSelect,
     orderBy: CREATED_AT_ORDER_BY[sort],
     cursor,
     limit,
+  })
+}
+
+export function countTradeOffersByProposer(proposerId, query) {
+  return prisma.tradeOffer.count({
+    where: tradeOffersFilter({ proposerId }, query),
+  })
+}
+
+export function countTradeOffersBySeller(sellerId, query) {
+  return prisma.tradeOffer.count({
+    where: tradeOffersFilter({ listing: { sellerId } }, query),
   })
 }
 
