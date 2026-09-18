@@ -28,11 +28,24 @@ export function findRecipeCopyById(id) {
   })
 }
 
+function creatorFilter(userId, createdByMe) {
+  if (createdByMe === undefined) {
+    return {}
+  }
+
+  return { creatorId: createdByMe ? userId : { not: userId } }
+}
+
 function ownedCopiesFilter(ownerId, query) {
+  const recipe = {
+    ...recipeFilter(query).recipe,
+    ...creatorFilter(ownerId, query.createdByMe),
+  }
+
   return {
     ownerId,
     ...(query.state ? { state: query.state } : {}),
-    ...recipeFilter(query),
+    ...(Object.keys(recipe).length > 0 ? { recipe } : {}),
   }
 }
 
