@@ -158,6 +158,19 @@ export const isRead = optional(
   ),
 )
 
+export const createdByMe = optional(
+  coerce(
+    define(
+      'createdByMe',
+      (value) =>
+        typeof value === 'boolean' ||
+        '직접 생성 여부는 true 또는 false여야 합니다.',
+    ),
+    string(),
+    toBoolean,
+  ),
+)
+
 export const dateTime = optional(
   coerce(
     define(
