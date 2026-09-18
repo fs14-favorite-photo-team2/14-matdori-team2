@@ -1,0 +1,90 @@
+.select {
+  position: relative;
+  width: 180px;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 50px;
+  padding: 0 20px;
+  border: 1px solid var(--color-gray-200);
+  background-color: var(--color-black);
+  color: var(--color-white);
+  font-size: var(--font-size-16);
+  cursor: pointer;
+}
+
+.trigger:disabled {
+  cursor: default;
+}
+
+.dropDownIcon {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.3s ease;
+}
+
+.dropDownIconOpen {
+  transform: rotate(180deg);
+}
+
+.options {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+  padding: 15px 20px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 2px;
+  background-color: var(--color-black);
+  list-style: none;
+}
+
+.option {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  color: var(--color-white);
+  font-size: var(--font-size-16);
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (max-width: 1023px) {
+  .select {
+    width: 140px;
+  }
+
+  .trigger {
+    height: 45px;
+    padding: 0 15px;
+    font-size: var(--font-size-14);
+  }
+
+  .option {
+    font-size: var(--font-size-14);
+  }
+}
+
+@media (max-width: 743px) {
+  .select {
+    width: 130px;
+  }
+
+  .trigger {
+    height: 35px;
+    font-size: var(--font-size-12);
+  }
+
+  .option {
+    font-size: var(--font-size-12);
+  }
+}

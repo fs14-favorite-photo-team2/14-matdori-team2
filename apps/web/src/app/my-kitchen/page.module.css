@@ -1,0 +1,234 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 64px 24px 40px;
+  color: var(--color-white);
+}
+
+.header {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--color-gray-400);
+}
+
+.createButton {
+  display: block;
+  text-decoration: none;
+}
+
+.createButton button {
+  width: 440px;
+  height: 60px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pageTitle {
+  font-size: var(--font-size-48);
+}
+
+.summarySection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.summaryText {
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+}
+
+.summaryCount {
+  font-weight: var(--font-weight-regular);
+  color: var(--color-gray-300);
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 4px 12px;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-bold);
+  background-color: transparent;
+}
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 60px;
+  margin: 20px 0 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-gray-400);
+}
+
+.searchField {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+.searchField form {
+  height: 50px;
+}
+
+.cardLink {
+  display: block;
+  min-width: 0;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.emptyText {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--color-gray-300);
+}
+
+.sentinel {
+  height: 1px;
+}
+
+@media (max-width: 1023px) {
+  .container {
+    padding: 48px 24px 40px;
+  }
+
+  .pageTitle {
+    font-size: var(--font-size-40);
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 모바일 전용 스타일 (743px 이하) */
+@media (max-width: 743px) {
+  .container {
+    padding: 20px 16px 100px;
+  }
+
+  .header {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 16px;
+  }
+
+  .pageTitle {
+    font-size: var(--font-size-20);
+    white-space: nowrap;
+  }
+
+  /* 모바일 하단 고정 레시피 생성 버튼 */
+  .createButton {
+    display: block;
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    z-index: 100;
+  }
+
+  .createButton button {
+    width: 100%;
+    height: 54px;
+    background-color: var(--color-main);
+    color: var(--color-black);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-16);
+    border: none;
+    border-radius: 0;
+  }
+
+  .summarySection {
+    margin-top: 16px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .filterBar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+    padding-bottom: 16px;
+  }
+
+  .searchField {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    order: 2;
+  }
+
+  .searchField form {
+    width: 100%;
+    height: 44px;
+  }
+
+  .searchField input {
+    font-size: var(--font-size-14);
+  }
+
+  .filterTrigger {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    order: 1;
+  }
+
+  .filterTrigger > div:first-child {
+    height: 100%;
+  }
+
+  .filterTrigger > div:first-child > button {
+    width: 44px;
+    height: 44px;
+    border: none;
+  }
+
+  .filterTrigger > div:first-child > button > img {
+    width: 100%;
+    height: 100%;
+  }
+
+  .chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chip {
+    flex-shrink: 0;
+  }
+}

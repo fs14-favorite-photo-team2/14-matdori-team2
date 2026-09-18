@@ -1,0 +1,205 @@
+.landing {
+  min-height: 100vh;
+  background-color: var(--color-black);
+}
+
+.hero {
+  padding: 36px 40px 0;
+  overflow-x: clip;
+}
+
+.heroPanel {
+  width: 100%;
+  margin: 0 auto;
+  padding-top: 44px;
+  background-image: url('/images/landing/hero-bg-desktop.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  border-radius: 28px;
+}
+
+.heroContent {
+  padding: 0 24px;
+  text-align: center;
+}
+
+.heroLogo {
+  width: 140px;
+  height: auto;
+}
+
+.heroTitle {
+  margin-top: 16px;
+  font-size: var(--font-size-40);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.25;
+}
+
+.heroTitle span {
+  color: var(--color-main);
+}
+
+.ctaLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 220px;
+  height: 60px;
+  margin-top: 28px;
+  padding: 0 36px;
+  background-color: var(--color-main);
+  color: var(--color-black);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+}
+
+.heroVisual {
+  width: 108%;
+  margin-top: 32px;
+  margin-left: 50%;
+  transform: translateX(-50%);
+}
+
+.heroImage,
+.featureImage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.featureSection {
+  margin-top: 120px;
+}
+
+.heroTabletImage,
+.heroMobileImage {
+  display: none;
+}
+
+.finalCta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 160px 24px 180px;
+  text-align: center;
+}
+
+.finalCtaDesktopImage {
+  display: block;
+  width: 150px;
+  height: auto;
+}
+
+.finalCtaMobileImage {
+  display: none;
+}
+
+.finalCtaTitle {
+  margin-top: 32px;
+  font-size: 32px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.3;
+}
+
+@media (max-width: 1023px) {
+  .hero {
+    padding: 32px 24px 0;
+  }
+
+  .heroPanel {
+    padding-top: 48px;
+    background-image: url('/images/landing/hero-bg-tablet.png');
+  }
+
+  .heroDesktopImage {
+    display: none;
+  }
+
+  .heroTabletImage {
+    display: block;
+  }
+
+  .heroTitle {
+    margin-top: 12px;
+    font-size: 28px;
+  }
+
+  .heroCtaLink {
+    min-width: 180px;
+    height: 48px;
+    margin-top: 20px;
+    padding: 0 28px;
+    font-size: 14px;
+  }
+
+  .heroVisual {
+    width: 108%;
+    margin-top: 36px;
+  }
+}
+
+@media (max-width: 743px) {
+  .hero {
+    padding: 20px 14px 0;
+  }
+
+  .heroPanel {
+    padding-top: 48px;
+    background-image: url('/images/landing/hero-bg-mobile.png');
+  }
+
+  .heroTabletImage {
+    display: none;
+  }
+
+  .heroMobileImage {
+    display: block;
+  }
+
+  .heroLogo {
+    display: none;
+  }
+
+  .heroContent {
+    padding: 0 16px;
+  }
+
+  .heroTitle {
+    margin-top: 0;
+    font-size: 20px;
+    line-height: 1.3;
+  }
+
+  .ctaLink {
+    min-width: 140px;
+    height: 40px;
+    margin-top: 20px;
+    padding: 0 20px;
+    font-size: 12px;
+  }
+
+  .heroVisual {
+    width: 110%;
+    margin-top: 28px;
+  }
+
+  .finalCta {
+    padding: 100px 16px 120px;
+  }
+
+  .finalCtaDesktopImage {
+    display: none;
+  }
+
+  .finalCtaMobileImage {
+    display: block;
+    width: 113px;
+    height: auto;
+  }
+
+  .finalCtaTitle {
+    margin-top: 24px;
+    font-size: 20px;
+  }
+}

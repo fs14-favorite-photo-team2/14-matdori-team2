@@ -63,12 +63,49 @@ Copy-Item apps/web/.env.example apps/web/.env.local
 
 생성한 `apps/api/.env`의 `DATABASE_URL`을 각자의 로컬 PostgreSQL 환경에 맞게 수정합니다. `apps/web/.env.local`의 `NEXT_PUBLIC_API_URL`은 브라우저에서 요청할 Express 서버 주소입니다. `NEXT_PUBLIC_` 접두사가 붙은 값은 브라우저에 공개되므로 비밀값을 넣지 않습니다. 실제 환경 변수 파일은 커밋하지 않습니다.
 
-| 이름                  | 기본값/예시                       | 설명                            |
-| --------------------- | --------------------------------- | ------------------------------- |
-| `PORT`                | `3001`                            | Express 서버 포트               |
-| `CLIENT_ORIGIN`       | `http://localhost:3000`           | CORS에서 허용할 프론트엔드 주소 |
-| `DATABASE_URL`        | `postgresql://.../matdori_market` | PostgreSQL 연결 문자열          |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:3001`           | 프론트엔드에서 사용할 API 주소  |
+| 이름                            | 기본값/예시                                      | 설명                                       |
+| ------------------------------- | ------------------------------------------------ | ------------------------------------------ |
+| `PORT`                          | `3001`                                           | Express 서버 포트                          |
+| `NODE_ENV`                      | `development`                                    | 실행 환경 (`production` 등)                |
+| `LOG_LEVEL`                     | `info`                                           | 최소 로그 레벨                             |
+| `TRUST_PROXY`                   | `1`                                              | 클라이언트 IP 판별 시 신뢰할 프록시 수     |
+| `CLIENT_ORIGIN`                 | `http://localhost:3000`                          | CORS 허용 origin. 여러 개는 쉼표로 구분    |
+| `SESSION_COOKIE_NAME`           | `session`                                        | HttpOnly 로그인 세션 쿠키 이름             |
+| `SESSION_SECRET`                | `replace-with-at-least-32-random...`             | 세션 ID 서명용 비밀값(최소 32바이트 필수)  |
+| `SESSION_TTL_SECONDS`           | `604800`                                         | 활동 시 연장되는 세션 비활성 제한 시간(초) |
+| `DATABASE_URL`                  | `postgresql://.../matdori_market`                | PostgreSQL 연결 문자열(필수)               |
+| `GOOGLE_CLIENT_ID`              | Google OAuth 클라이언트 ID                       | Google Cloud Console에서 발급한 공개 ID    |
+| `GOOGLE_CLIENT_SECRET`          | Google OAuth 클라이언트 보안 비밀                | Google Cloud Console에서 발급한 비밀값     |
+| `GOOGLE_CALLBACK_URL`           | `http://localhost:3001/api/auth/google/callback` | Google에 등록한 승인된 리디렉션 URI        |
+| `GOOGLE_OAUTH_SUCCESS_REDIRECT` | `http://localhost:3000`                          | 선택 사항. 생략 시 첫 CLIENT_ORIGIN 사용   |
+| `NEXT_PUBLIC_API_URL`           | `http://localhost:3001/api`                      | 프론트엔드에서 사용할 API 주소             |
+
+`DATABASE_URL`이 없으면 서버가 시작되지 않습니다. `CLIENT_ORIGIN`에는
+`http://localhost:3000`처럼 경로나 끝 `/` 없이 origin만 적습니다. 끝에 `/`가 붙으면
+CORS 요청이 차단됩니다.
+
+세션 쿠키는 로컬 개발에서 `HttpOnly`, `SameSite=Lax`를 사용하고, 프로덕션에서는
+`Secure`, `HttpOnly`, `SameSite=None`을 사용합니다. `SESSION_SECRET`에는 예시
+문자열 대신 충분히 긴 무작위 값을 사용하고 커밋하지 않습니다.
+
+Google 로그인에는 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`이
+필요합니다. 세 값 중 하나라도 없으면 개발 환경에서는 Google 로그인만 비활성화됩니다.
+이때 `GET /api/auth/google`은 503과 `GOOGLE_OAUTH_NOT_CONFIGURED`를 반환합니다.
+Google 로그인을 사용하지 않는 팀원은 `apps/api/.env`에서 이 세 줄을 지우면 됩니다.
+`NODE_ENV=production`에서는 세 값 중 하나라도 없으면 서버가 시작되지 않습니다.
+예시 파일의 `replace-with-...` 값은 실제 Google 자격 증명으로 바꿔야 합니다.
+
+`GOOGLE_OAUTH_SUCCESS_REDIRECT`는 선택 사항입니다. 생략하면 `CLIENT_ORIGIN`의 첫 번째
+주소로 이동하며, `CLIENT_ORIGIN`도 생략하면 `http://localhost:3000`을 사용합니다.
+로그인 시작 시 전달한 `redirectUri`의 origin이 `CLIENT_ORIGIN`에 등록된 주소와 일치하면
+해당 URI를 우선 사용합니다. 잘못된 URI나 허용되지 않은 origin은 무시합니다.
+
+Google Cloud Console의 OAuth 클라이언트에는 `GOOGLE_CALLBACK_URL`과 동일한 주소를
+승인된 리디렉션 URI로 등록합니다. Google 로그인은
+`GET /api/auth/google`에서 시작하며, 같은 이메일의 기존 계정이 있으면 해당 계정에
+Google 로그인을 연결합니다. OAuth 콜백 처리에 실패하면 첫 번째 CLIENT_ORIGIN의 로그인 페이지로
+`?oauthError=<코드>`를 붙여 리디렉션하므로, 프론트엔드에서 해당 코드에 맞는
+안내 문구를 보여 줍니다.
 
 `npm run build`와 Prisma 명령어는 API의 Prisma 설정을 불러오므로 먼저 `apps/api/.env`를 만들어야 합니다. Prisma Client 생성 자체는 데이터베이스에 연결하지 않으므로 PostgreSQL을 실행하지 않은 상태에서도 예시 URL을 사용할 수 있습니다.
 
@@ -80,7 +117,7 @@ Copy-Item apps/web/.env.example apps/web/.env.local
 npm run prisma:generate
 ```
 
-첫 모델을 정의한 뒤 아래 명령어로 마이그레이션을 생성하고 로컬 데이터베이스에 적용합니다.
+아래 명령어로 저장소의 기존 마이그레이션을 로컬 데이터베이스에 적용합니다. 모델을 변경한 경우에는 새 마이그레이션도 생성합니다.
 
 ```bash
 npm run prisma:migrate
@@ -112,6 +149,45 @@ npm run dev:api
 | Frontend     | `http://localhost:3000`        |
 | Backend      | `http://localhost:3001`        |
 | Health Check | `http://localhost:3001/health` |
+| Ready Check  | `http://localhost:3001/ready`  |
+| API Docs     | `http://localhost:3001/docs`   |
+
+`/health`는 서버 프로세스의 생존 여부를 확인하고, `/ready`는 데이터베이스 연결을 포함한 요청 처리 준비 여부를 확인합니다. API 문서는 개발 환경에서만 제공되며, `NODE_ENV=production`에서는 `/docs` 경로가 등록되지 않습니다. API 명세는 프로젝트 루트의 `openapi.yaml`에서 관리합니다.
+
+`/api`의 모든 경로에는 클라이언트 IP 기준 분당 300회의 공통 요청 제한이 적용됩니다.
+로그인은 IP 기준 15분당 실패 30회로 제한하며 `401`을 반환한 요청만 실패로 셉니다.
+회원가입은 IP 기준 시간당 성공 30회,
+랜덤 상자 보상 요청은 사용자 ID 기준 분당 10회의 추가 제한을 적용합니다.
+제한을 초과하면 `429 TOO_MANY_REQUESTS`와 재시도까지 남은 초를 담은 `Retry-After` 헤더를 반환합니다.
+`/health`, `/ready`, `/docs`와 CORS 사전 요청은 공통 제한에서 제외됩니다.
+요청 횟수는 서버 프로세스의 메모리에 저장되어 재시작하면 초기화됩니다.
+서버 프로세스를 여러 개 실행할 때는 일관된 제한을 위해 공유 저장소가 필요합니다.
+
+클라이언트 IP는 `X-Forwarded-For` 헤더에서 `TRUST_PROXY`에 설정한 프록시 수만큼 신뢰해 판별합니다.
+값이 실제 프록시 구성보다 작으면 모든 사용자가 프록시 IP 하나로 묶이고, 크면 클라이언트가 IP를 위조할 수 있습니다.
+배포 후 요청의 IP가 실제 접속 IP와 다르면 코드 변경 없이 `TRUST_PROXY` 값만 조정합니다.
+
+다른 사이트가 로그인 세션으로 요청을 보내지 못하도록 `GET`, `HEAD`, `OPTIONS` 외의 `/api` 요청은 `Origin` 헤더를 확인합니다.
+`Origin`이 `CLIENT_ORIGIN` 또는 API 서버 자신의 origin과 다르면 `403 FORBIDDEN`을 반환합니다.
+
+Helmet 보안 헤더는 모든 환경에 적용합니다. 로컬 HTTP 개발을 위해
+HTTPS 전환 지시와 HSTS 헤더는 `NODE_ENV=production`에서만 활성화합니다.
+
+### API 로그
+
+API 로그는 Pino를 사용합니다. 개발 환경에서는 `pino-pretty`로 읽기 쉽게 출력하고,
+`NODE_ENV=production`에서는 표준 출력으로 JSON 로그를 남깁니다.
+`LOG_LEVEL`로 최소 로그 레벨을 설정할 수 있으며 기본값은 `info`입니다.
+`fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent` 외의 값이면 서버가 시작되지 않습니다.
+
+요청 로그는 `pino-http`로 남기며 요청 ID, HTTP 메서드, 쿼리 문자열을 제외한 경로,
+응답 상태 코드, 처리 시간(`responseTime`)과 로그인한 사용자 ID를 기록합니다.
+요청 헤더와 쿼리 문자열은 쿠키나 OAuth 인가 코드가 남지 않도록 기록하지 않습니다.
+응답의 `Request-ID` 헤더 값으로 `req.id`를 검색하면 해당 요청의 로그를 찾을 수 있습니다.
+
+5xx 응답은 처리되지 않은 오류와 함께 `error`, 나머지 요청은 `info` 레벨로 기록합니다.
+`/health`, `/ready` 요청은 5xx 응답일 때만 기록합니다.
+응답이 끝나기 전에 연결이 끊기면 `request aborted` 메시지로 기록합니다.
 
 ## 주요 명령어
 
@@ -129,7 +205,12 @@ npm run dev:api
 | `npm run prisma:migrate`  | 로컬 마이그레이션 생성 및 적용 |
 | `npm run prisma:studio`   | Prisma Studio 실행             |
 
+현재 API에는 인증(회원가입, 로그인, 로그아웃, Google OAuth), 사용자와 상태 확인 경로가 구현되어 있습니다.
+루트의 openapi.yaml에는 앞으로 구현할 레시피, 거래, 알림, 랜덤 상자 API도 포함되어 있습니다.
+
 ## 폴더 구조
+
+아래는 프로젝트의 목표 구조이며, 일부 프론트엔드 폴더는 구현 예정입니다.
 
 ```text
 14-matdori-team2/
@@ -149,8 +230,8 @@ npm run dev:api
               page.jsx                # 판매 항목 상세
               purchase/success/page.jsx
               exchange/success/page.jsx
-          my-recipes/
-            page.jsx                  # 내 레시피 목록
+          my-kitchen/
+            page.jsx                  # 마이키친 목록
             create/
               page.jsx                # 레시피 생성
               success/page.jsx
@@ -176,7 +257,7 @@ npm run dev:api
         features/                     # 도메인별 기능 모듈
           auth/
           marketplace/
-          my-recipes/
+          my-kitchen/
           sales/
           random-point/
           notifications/
@@ -191,6 +272,18 @@ npm run dev:api
       src/
         app.js              # Express 앱과 미들웨어 설정
         server.js           # API 서버 실행 진입점
+        config/             # 환경 변수 로딩·검증과 Passport 설정
+        constants/          # 오류 코드와 메시지
+        controllers/        # HTTP 응답과 세션 처리
+        db/                 # PostgreSQL 연결 풀과 Prisma Client
+        errors/             # 애플리케이션 오류
+        http/               # 공통 응답 형식
+        middlewares/        # 인증 및 요청 검증 미들웨어
+        repositories/       # 데이터베이스 접근
+        routes/             # API 경로
+        services/           # 비즈니스 로직
+        utils/              # 닉네임, 세션, 커서 페이지네이션 등 유틸리티
+        validators/         # 요청 스키마
         generated/          # 생성된 Prisma Client
       .env.example          # 백엔드 환경 변수 예시
   .github/

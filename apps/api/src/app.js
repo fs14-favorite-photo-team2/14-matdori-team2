@@ -1,13 +1,45 @@
-import cors from 'cors'
 import express from 'express'
+
+import { env } from './config/env.js'
+import passport from './config/passport.js'
+import {
+  getHealthController,
+  getReadyController,
+} from './controllers/health-controller.js'
+import corsMiddleware from './middlewares/cors.js'
+import { errorHandler } from './middlewares/error-handler.js'
+import helmetMiddleware from './middlewares/helmet.js'
+import httpLoggerMiddleware from './middlewares/http-logger.js'
+import { notFoundHandler } from './middlewares/not-found.js'
+import { apiRateLimit } from './middlewares/rate-limit.js'
+import serveUploads from './middlewares/serve-uploads.js'
+import sessionMiddleware from './middlewares/session.js'
+import { verifyOrigin } from './middlewares/verify-origin.js'
+import apiDocsRouter from './routes/api-docs.js'
+import apiRouter from './routes/index.js'
 
 const app = express()
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN ?? 'http://localhost:3000' }))
-app.use(express.json())
+app.set('trust proxy', env.trustProxy)
 
-app.get('/health', (_request, response) => {
-  response.status(200).json({ status: 'ok' })
-})
+app.use(httpLoggerMiddleware)
+app.use(helmetMiddleware)
+app.use(corsMiddleware)
+app.use('/api', verifyOrigin)
+app.use('/api', apiRateLimit)
+app.use(express.json())
+app.use(sessionMiddleware)
+app.use(passport.initialize())
+
+app.use('/uploads', serveUploads)
+
+app.get('/health', getHealthController)
+app.get('/ready', getReadyController)
+
+app.use('/docs', apiDocsRouter)
+app.use('/api', apiRouter)
+
+app.use(notFoundHandler)
+app.use(errorHandler)
 
 export default app

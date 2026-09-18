@@ -1,0 +1,194 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  width: 100%;
+  background-color: var(--color-black);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1200px;
+  height: 80px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.brandArea {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.logoLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.serviceIcon {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.actions a {
+  color: var(--color-white);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-regular);
+  text-decoration: none;
+}
+
+.points {
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: var(--color-gray-200);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+.notificationArea {
+  position: relative;
+}
+
+.iconButton,
+.profileButton,
+.logoutButton {
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.profileArea {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.profileMenuWrapper {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 110;
+}
+
+.profileButton {
+  color: var(--color-white);
+  font-family: var(--font-baskin-robbins);
+  font-size: var(--font-size-18);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: -0.03em;
+}
+
+.divider {
+  width: 1px;
+  height: 16px;
+  background-color: var(--color-gray-400);
+}
+
+.logoutButton {
+  color: var(--color-gray-400);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-regular);
+}
+
+.mobileInner {
+  display: none;
+}
+
+.toastWrapper {
+  position: fixed;
+  top: 88px;
+  left: 50%;
+  z-index: 300;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 1023px) {
+  .wordmark {
+    width: 112px;
+    height: auto;
+  }
+
+  .serviceIcon {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 743px) {
+  .inner {
+    display: none;
+  }
+
+  .mobileInner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 60px;
+    padding: 0 20px;
+  }
+
+  .mobileBrand {
+    position: absolute;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    transform: translateX(-50%);
+  }
+
+  .mobileLogoLink {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mobileWordmark {
+    width: 84px;
+    height: auto;
+  }
+
+  .mobileServiceIcon {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+  }
+
+  .mobileRight {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+  }
+
+  .mobileLogin {
+    color: var(--color-white);
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-regular);
+    text-decoration: none;
+  }
+
+  .toastWrapper {
+    top: 68px;
+  }
+}

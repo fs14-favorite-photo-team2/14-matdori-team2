@@ -1,0 +1,46 @@
+.mobileHeader {
+  display: none;
+}
+
+@media (max-width: 743px) {
+  .mobileHeader {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) 32px;
+    align-items: center;
+    width: 100%;
+    min-height: 32px;
+    margin-bottom: 32px;
+  }
+
+  .backButton {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+  }
+
+  .backButton img {
+    display: block;
+    width: 32px;
+    height: 32px;
+  }
+
+  .title {
+    grid-column: 2;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    color: var(--color-white);
+    font-size: var(--font-size-20);
+    font-weight: var(--font-weight-bold);
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

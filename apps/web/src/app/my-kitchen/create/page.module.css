@@ -1,0 +1,224 @@
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 64px 24px 40px;
+}
+
+.pageTitle {
+  font-size: var(--font-size-48);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.row {
+  display: flex;
+  gap: 16px;
+}
+
+.row .field {
+  flex: 1;
+}
+
+.errorText {
+  font-size: var(--font-size-12);
+  color: var(--color-red);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hintBox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-white);
+  font-size: var(--font-size-12);
+  margin-bottom: 12px;
+}
+
+.hintIcon {
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-bold);
+}
+
+.input,
+.textarea {
+  height: 50px;
+  padding: 0 20px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 2px;
+  background-color: var(--color-black);
+  color: var(--color-white);
+  font-size: var(--font-size-16);
+}
+
+.inputError {
+  border-color: var(--color-red);
+}
+
+.textarea {
+  height: auto;
+  padding: 16px 20px;
+  resize: vertical;
+}
+
+.submitButton {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.ingredientRow {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.ingredientRowGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    'highlight qtyLabel'
+    'nameInput qtyInput';
+  gap: 8px 16px;
+}
+
+.areaHighlight {
+  grid-area: highlight;
+}
+.areaQtyLabel {
+  grid-area: qtyLabel;
+}
+.areaNameInput {
+  grid-area: nameInput;
+}
+.areaQtyInput {
+  grid-area: qtyInput;
+}
+
+.ingredientRowGrid .highlightButton,
+.ingredientRowGrid .label {
+  text-align: left;
+  padding-left: 2px;
+  font-size: var(--font-size-16);
+}
+
+.highlightButton {
+  border: none;
+  background: transparent;
+  color: var(--color-white);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  padding: 0;
+}
+
+.removeIngredientButton {
+  position: absolute;
+  top: -10px;
+  right: 0;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--color-gray-400);
+  color: var(--color-white);
+  font-size: var(--font-size-18);
+  cursor: pointer;
+}
+
+.removeIngredientButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.addIngredientButton {
+  width: 100%;
+  height: 50px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 2px;
+  background: var(--color-gray-400);
+  color: var(--color-white);
+  font-size: var(--font-size-20);
+  cursor: pointer;
+}
+
+@media (max-width: 1023px) {
+  .container {
+    padding: 48px 24px 40px;
+  }
+
+  .pageTitle {
+    font-size: var(--font-size-40);
+  }
+}
+
+@media (max-width: 743px) {
+  .container {
+    padding: 20px 16px;
+  }
+
+  .header {
+    justify-content: center;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+
+  .pageTitle {
+    font-size: var(--font-size-20);
+  }
+
+  .row {
+    flex-direction: column;
+  }
+
+  .ingredientRowGrid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'highlight'
+      'nameInput'
+      'qtyLabel'
+      'qtyInput';
+  }
+
+  .ingredientRow {
+    padding: 16px;
+    border: 1px solid var(--color-gray-200);
+    border-radius: 8px;
+  }
+
+  .removeIngredientButton {
+    top: 12px;
+    right: 12px;
+    width: 24px;
+    height: 24px;
+    font-size: var(--font-size-14);
+  }
+}

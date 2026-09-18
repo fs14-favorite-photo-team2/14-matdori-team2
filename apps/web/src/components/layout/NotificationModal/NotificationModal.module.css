@@ -1,0 +1,232 @@
+.notificationModal {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  max-height: 536px;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: var(--color-gray-500);
+}
+
+.open {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.desktopHeader {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mobileHeader {
+  display: none;
+}
+
+.readAllButton {
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: var(--color-gray-300);
+  font-size: var(--font-size-12);
+  cursor: pointer;
+}
+
+.readAllButton:disabled {
+  color: var(--color-gray-400);
+  cursor: default;
+}
+
+.notificationList {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.state {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 160px;
+  padding: 24px 20px;
+}
+
+.stateMessage {
+  margin: 0;
+  padding: 32px 20px;
+  color: var(--color-gray-300);
+  font-size: var(--font-size-14);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.state .stateMessage {
+  padding: 0;
+}
+
+.retryButton {
+  padding: 6px 12px;
+  border: 1px solid var(--color-gray-400);
+  background-color: transparent;
+  color: var(--color-white);
+  font-size: var(--font-size-12);
+  cursor: pointer;
+}
+
+.retryButton:disabled {
+  color: var(--color-gray-300);
+  cursor: default;
+}
+
+.notificationItem {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 18px 20px;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  cursor: pointer;
+}
+
+.notificationItem:last-child {
+  border-bottom: none;
+}
+
+.unread {
+  background-color: var(--color-gray-450);
+}
+
+.read {
+  background-color: var(--color-gray-500);
+}
+
+.message {
+  color: var(--color-white);
+  font-size: var(--font-size-14);
+  line-height: 1.5;
+}
+
+.read .message {
+  color: var(--color-gray-300);
+}
+
+.time {
+  margin-top: 10px;
+  color: var(--color-gray-300);
+  font-size: var(--font-size-12);
+}
+
+.nextPageState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+}
+
+.nextPageMessage {
+  margin: 0;
+  padding: 12px 20px;
+  color: var(--color-gray-300);
+  font-size: var(--font-size-12);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.nextPageState .nextPageMessage {
+  padding: 0;
+}
+
+.scrollTrigger {
+  flex-shrink: 0;
+  height: 1px;
+}
+
+@media (max-width: 743px) {
+  .notificationModal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    width: 100%;
+    height: 100dvh;
+    max-height: none;
+    border: none;
+    background-color: var(--color-black);
+    transform: translateX(100%);
+    transition:
+      transform 0.3s ease,
+      visibility 0s linear 0.3s;
+  }
+
+  .notificationModal.open {
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(0);
+    transition-delay: 0s;
+  }
+
+  .desktopHeader {
+    display: none;
+  }
+
+  .mobileHeader {
+    position: relative;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    height: 60px;
+    padding: 0 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: var(--color-black);
+  }
+
+  .backButton {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+  }
+
+  .mobileTitle {
+    position: absolute;
+    left: 50%;
+    margin: 0;
+    color: var(--color-white);
+    font-size: var(--font-size-20);
+    font-weight: var(--font-weight-bold);
+    text-align: center;
+    transform: translateX(-50%);
+  }
+
+  .mobileHeader .readAllButton {
+    margin-left: auto;
+  }
+
+  .notificationList {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .notificationItem {
+    padding: 20px;
+  }
+}

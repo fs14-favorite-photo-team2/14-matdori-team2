@@ -1,0 +1,60 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.arrowButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-white);
+}
+
+.arrowButton:disabled {
+  color: var(--color-gray-400);
+  cursor: not-allowed;
+}
+
+.pageButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: none;
+  font-size: var(--font-size-14);
+  cursor: pointer;
+  color: var(--color-white);
+}
+
+.pageButton.active {
+  border-color: var(--color-gray-200);
+  background: var(--color-black);
+  font-weight: var(--font-weight-bold);
+}
+
+.ellipsis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--color-white);
+  font-size: var(--font-size-14);
+}
+
+@media (max-width: 1023px) {
+  .pageButton {
+    width: 45px;
+    height: 45px;
+  }
+}
