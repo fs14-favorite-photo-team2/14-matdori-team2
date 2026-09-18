@@ -46,13 +46,13 @@ export default function RecipeFilter({
   const handleOptionSelect = (groupKey, value) => {
     const nextValue = filters[groupKey] === value ? '' : value
 
-    onFilterChange?.(groupKey, nextValue)
     setOpenMenu(null)
+    onFilterChange?.(groupKey, nextValue)
   }
 
   const handleSortSelect = (value) => {
-    onSortChange?.(value)
     setOpenMenu(null)
+    onSortChange?.(value)
   }
 
   const handleOverlayClick = (event) => {

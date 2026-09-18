@@ -72,6 +72,21 @@
   object-fit: cover;
 }
 
+.soldOutImage {
+  filter: brightness(0.45);
+}
+
+.soldOutBadge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  width: 24%;
+  max-width: 160px;
+  height: auto;
+  transform: translate(-50%, -50%);
+}
+
 .productInfo {
   min-width: 0;
 }
@@ -248,11 +263,12 @@
 }
 
 .summary {
-  max-height: 6em;
+  max-height: 4.5em;
   padding-right: 8px;
   overflow-y: auto;
   font-size: var(--font-size-16);
   line-height: 1.5;
+  white-space: pre-line;
   word-break: keep-all;
   overflow-wrap: break-word;
   scrollbar-width: thin;
@@ -270,6 +286,43 @@
 .summary::-webkit-scrollbar-thumb {
   background-color: var(--color-gray-400);
   border-radius: 999px;
+}
+
+.highlightIngredients {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  color: var(--color-gray-200);
+  font-size: var(--font-size-16);
+  line-height: 1.5;
+}
+
+.highlightIngredientsLabel {
+  color: var(--color-white);
+}
+
+.highlightIngredientsValue {
+  min-width: 0;
+  max-height: 4.5em;
+  padding-right: 8px;
+  overflow-y: auto;
+  overflow-wrap: break-word;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gray-400) transparent;
+}
+
+.highlightIngredientsValue::-webkit-scrollbar {
+  width: 6px;
+}
+
+.highlightIngredientsValue::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.highlightIngredientsValue::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background-color: var(--color-gray-400);
 }
 
 .priceInfo {
