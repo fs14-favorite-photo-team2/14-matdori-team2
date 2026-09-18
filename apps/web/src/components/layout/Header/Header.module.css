@@ -21,12 +21,12 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  gap: 8px;
 }
 
 .logoLink {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
 .serviceIcon {
@@ -155,13 +155,13 @@
     left: 50%;
     display: flex;
     align-items: center;
-    gap: 6px;
     transform: translateX(-50%);
   }
 
   .mobileLogoLink {
     display: flex;
     align-items: center;
+    gap: 6px;
   }
 
   .mobileWordmark {
