@@ -4,6 +4,7 @@ import { CREATED_AT_SORTS, RECIPE_COPY_SORTS } from '../utils/sort-orders.js'
 import {
   category,
   copyState,
+  createdByMe,
   cursor,
   dateTime,
   difficulty,
@@ -36,6 +37,7 @@ export const myRecipeCopiesRequest = request({
     ...cursorQuery,
     ...recipeQuery,
     state: copyState,
+    createdByMe,
     sort: sort(RECIPE_COPY_SORTS),
   }),
 })
@@ -53,7 +55,9 @@ export const myListingsRequest = request({
 export const myTradeOffersRequest = request({
   query: object({
     ...cursorQuery,
+    ...recipeQuery,
     status: tradeOfferStatus,
+    listingStatus,
     sort: sort(CREATED_AT_SORTS),
   }),
 })
