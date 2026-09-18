@@ -59,6 +59,16 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
   const [thumbnailSrc, setThumbnailSrc] = useState(
     recipe.imageUrls[0] || DEFAULT_THUMBNAIL_URL,
   )
+
+  const canViewFullRecipe = listing.canViewFullRecipe === true
+
+  const displayedRecipeContent = canViewFullRecipe
+    ? (recipe.content ?? recipe.summary)
+    : recipe.summary
+
+  const displayedIngredients = Array.isArray(recipe.ingredients)
+    ? recipe.ingredients
+    : []
   const difficultyOption = DIFFICULTY_OPTIONS.find(
     (option) => option.value === recipe.difficulty,
   )
@@ -76,7 +86,7 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
   } = useSentTradeOffers({ status: 'PENDING' }, { enabled: !isSeller })
 
   const tradeOffers = sentTradeOffers.filter(
-    (tradeOffer) => Number(tradeOffer.listingId) === Number(listing.id),
+    (tradeOffer) => Number(tradeOffer.listing?.id) === Number(listing.id),
   )
   const tradeOfferSentinelRef = useInfiniteScroll({
     hasMore: Boolean(hasNextPage),
@@ -327,9 +337,21 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
               fill
               preload
               sizes="(max-width: 743px) 100vw, (max-width: 1023px) 50vw, 780px"
-              className={styles.thumbnail}
+              className={`${styles.thumbnail} ${
+                isSoldOut ? styles.soldOutImage : ''
+              }`}
               onError={() => setThumbnailSrc(DEFAULT_THUMBNAIL_URL)}
             />
+
+            {isSoldOut && (
+              <Image
+                className={styles.soldOutBadge}
+                src="/icons/sold-out.svg"
+                alt="품절"
+                width={160}
+                height={160}
+              />
+            )}
           </div>
           <div className={styles.productInfo}>
             <div className={styles.metaRow}>
@@ -349,7 +371,7 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
             </div>
 
             <div className={styles.summaryWrapper}>
-              <p className={styles.summary}>{recipe.summary}</p>
+              <p className={styles.summary}>{displayedRecipeContent}</p>
             </div>
 
             <div className={styles.priceInfo}>
@@ -365,6 +387,26 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
                 </span>
               </div>
             </div>
+
+            {displayedIngredients.length > 0 && (
+              <div className={styles.highlightIngredients}>
+                <span className={styles.highlightIngredientsLabel}>
+                  {canViewFullRecipe ? '레시피 재료' : '하이라이트 재료'}
+                </span>
+
+                <span className={styles.highlightIngredientsValue}>
+                  {displayedIngredients
+                    .map((ingredient) =>
+                      canViewFullRecipe
+                        ? [ingredient.name, ingredient.amount]
+                            .filter(Boolean)
+                            .join(' ')
+                        : ingredient.name,
+                    )
+                    .join(', ')}
+                </span>
+              </div>
+            )}
 
             <Button
               type="button"

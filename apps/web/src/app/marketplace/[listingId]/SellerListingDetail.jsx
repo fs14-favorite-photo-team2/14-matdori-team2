@@ -106,6 +106,8 @@ export default function SellerListingDetail({ listing }) {
     ? DEFAULT_THUMBNAIL_URL
     : recipe.imageUrls[currentImageIndex] || DEFAULT_THUMBNAIL_URL
   const hasMultipleImages = imageCount > 1
+  const isSoldOut =
+    listing.status === 'SOLD_OUT' || listing.remainingQuantity === 0
   const isExchangeAvailable = listing.listingType === 'BOTH'
 
   function handlePreviousImage() {
@@ -259,8 +261,20 @@ export default function SellerListingDetail({ listing }) {
               preload
               sizes="(max-width: 743px) 100vw, (max-width: 1023px) 50vw, 780px"
               onError={() => setImageLoadFailed(true)}
-              className={styles.thumbnail}
+              className={`${styles.thumbnail} ${
+                isSoldOut ? styles.soldOutImage : ''
+              }`}
             />
+
+            {isSoldOut && (
+              <Image
+                className={styles.soldOutBadge}
+                src="/icons/sold-out.svg"
+                alt="품절"
+                width={160}
+                height={160}
+              />
+            )}
 
             {hasMultipleImages && (
               <>
@@ -314,7 +328,9 @@ export default function SellerListingDetail({ listing }) {
 
             <div className={styles.sellerInfoContent}>
               <div className={styles.recipePreview}>
-                <p className={styles.recipePreviewContent}>{recipe.content}</p>
+                <p className={styles.recipePreviewContent}>
+                  {recipe.content ?? recipe.summary}
+                </p>
 
                 <button
                   type="button"
@@ -415,7 +431,7 @@ export default function SellerListingDetail({ listing }) {
 
                     <div className={styles.recipeContentSection}>
                       <p className={styles.fullRecipeContent}>
-                        {recipe.content}
+                        {recipe.content ?? recipe.summary}
                       </p>
                     </div>
                   </div>
