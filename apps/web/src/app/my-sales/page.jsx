@@ -3,7 +3,9 @@
 import { useMemo, useState, useCallback } from 'react'
 import Link from 'next/link'
 import {
+  useMyMarketListingCount,
   useMyMarketListings,
+  useMySentTradeOfferCount,
   useMySentTradeOffers,
 } from '@/features/my-sales/hooks'
 import useCurrentUser from '@/features/auth/useCurrentUser'
@@ -67,17 +69,26 @@ export default function MySalesPage() {
   const [draftFilters, setDraftFilters] = useState(DEFAULT_FILTERS)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
 
+  const showOwnListings = filters.listingType !== 'EXCHANGE'
+  const showSentOffers = filters.listingType !== 'SALE'
+
   // ---- 내가 등록한 판매글  ----
   const {
     data: listingsPages,
     fetchNextPage: fetchNextListings,
     hasNextPage: hasNextListings,
     isFetchingNextPage: isFetchingNextListings,
-  } = useMyMarketListings({
-    keyword,
-    difficulty: filters.difficulty,
-    category: filters.category,
-  })
+  } = useMyMarketListings(
+    {
+      keyword,
+      difficulty: filters.difficulty,
+      category: filters.category,
+      status: filters.status,
+    },
+    {
+      enabled: showOwnListings,
+    },
+  )
 
   // ---- 내가 보낸 교환 제안 ----
   const {
@@ -85,7 +96,50 @@ export default function MySalesPage() {
     fetchNextPage: fetchNextOffers,
     hasNextPage: hasNextOffers,
     isFetchingNextPage: isFetchingNextOffers,
-  } = useMySentTradeOffers({ status: 'PENDING' })
+  } = useMySentTradeOffers(
+    {
+      status: 'PENDING',
+      keyword,
+      difficulty: filters.difficulty,
+      category: filters.category,
+      listingStatus: filters.status,
+    },
+    {
+      enabled: showSentOffers,
+    },
+  )
+
+  const previewOwnListings = draftFilters.listingType !== 'EXCHANGE'
+  const previewSentOffers = draftFilters.listingType !== 'SALE'
+
+  const ownCountQuery = useMyMarketListingCount(
+    {
+      keyword,
+      difficulty: draftFilters.difficulty,
+      category: draftFilters.category,
+      status: draftFilters.status,
+    },
+    {
+      enabled: isMobileOpen && previewOwnListings,
+    },
+  )
+
+  const sentOfferCountQuery = useMySentTradeOfferCount(
+    {
+      status: 'PENDING',
+      keyword,
+      difficulty: draftFilters.difficulty,
+      category: draftFilters.category,
+      listingStatus: draftFilters.status,
+    },
+    {
+      enabled: isMobileOpen && previewSentOffers,
+    },
+  )
+
+  const draftResultCount =
+    (previewOwnListings ? (ownCountQuery.data ?? 0) : 0) +
+    (previewSentOffers ? (sentOfferCountQuery.data ?? 0) : 0)
 
   const myListings = useMemo(
     () => listingsPages?.pages.flatMap((page) => page.data) ?? [],
@@ -119,18 +173,23 @@ export default function MySalesPage() {
     [displayableListings, keyword, filters],
   )
 
-  const draftFilteredListings = useMemo(
-    () => getFilteredListings(displayableListings, keyword, draftFilters),
-    [displayableListings, keyword, draftFilters],
-  )
-
-  const hasNext = hasNextListings || hasNextOffers
-  const isFetchingNext = isFetchingNextListings || isFetchingNextOffers
+  const hasNext =
+    (showOwnListings && hasNextListings) || (showSentOffers && hasNextOffers)
+  const isFetchingNext =
+    (showOwnListings && isFetchingNextListings) ||
+    (showSentOffers && isFetchingNextOffers)
 
   const handleLoadMore = useCallback(() => {
-    if (hasNextListings) fetchNextListings()
-    if (hasNextOffers) fetchNextOffers()
-  }, [hasNextListings, hasNextOffers, fetchNextListings, fetchNextOffers])
+    if (showOwnListings && hasNextListings) fetchNextListings()
+    if (showSentOffers && hasNextOffers) fetchNextOffers()
+  }, [
+    showOwnListings,
+    showSentOffers,
+    hasNextListings,
+    hasNextOffers,
+    fetchNextListings,
+    fetchNextOffers,
+  ])
 
   const sentinelRef = useInfiniteScroll({
     hasMore: hasNext,
@@ -216,7 +275,7 @@ export default function MySalesPage() {
             filters={filters}
             draftFilters={draftFilters}
             isMobileOpen={isMobileOpen}
-            resultCount={draftFilteredListings.length}
+            resultCount={draftResultCount}
             onFilterChange={handleFilterChange}
             onDraftFilterChange={handleDraftFilterChange}
             onOpenMobile={handleOpenMobile}

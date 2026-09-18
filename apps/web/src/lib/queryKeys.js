@@ -7,6 +7,8 @@ export const queryKeys = {
     all: ['marketplace'],
     lists: () => [...queryKeys.marketplace.all, 'list'],
     list: (params) => [...queryKeys.marketplace.lists(), params],
+    counts: () => [...queryKeys.marketplace.lists(), 'count'],
+    count: (params = {}) => [...queryKeys.marketplace.counts(), params],
     details: () => [...queryKeys.marketplace.all, 'detail'],
     detail: (listingId) => [
       ...queryKeys.marketplace.details(),
@@ -24,17 +26,27 @@ export const queryKeys = {
     all: ['my-kitchen'],
     lists: () => [...queryKeys.myKitchen.all, 'list'],
     list: (params = {}) => [...queryKeys.myKitchen.lists(), params],
+    counts: () => [...queryKeys.myKitchen.lists(), 'count'],
+    count: (params = {}) => [...queryKeys.myKitchen.counts(), params],
   },
 
   mySales: {
     all: ['my-sales'],
     lists: () => [...queryKeys.mySales.all, 'list'],
     list: (params = {}) => [...queryKeys.mySales.lists(), params],
+    counts: () => [...queryKeys.mySales.lists(), 'count'],
+    count: (params = {}) => [...queryKeys.mySales.counts(), params],
   },
 
   tradeOffers: {
     all: ['trade-offers'],
     sent: (params = {}) => [...queryKeys.tradeOffers.all, 'sent', params], // 보낸 교환 제안 목록
+    sentCount: (params = {}) => [
+      ...queryKeys.tradeOffers.all,
+      'sent',
+      'count',
+      params,
+    ],
     byListing: (listingId, params = {}) => [
       ...queryKeys.tradeOffers.all,
       'listing',

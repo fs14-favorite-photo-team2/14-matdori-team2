@@ -285,9 +285,7 @@ export default function RecipeFilter({
                 type="button"
                 onClick={() => onApply?.(draftFilters)}
               >
-                {resultCount == null
-                  ? '레시피 보기'
-                  : `${resultCount}개 레시피 보기`}
+                {`${resultCount ?? 0}개 레시피 보기`}
               </button>
             </footer>
           </section>

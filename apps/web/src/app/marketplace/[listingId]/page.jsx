@@ -17,7 +17,9 @@ import ErrorState from '@/components/common/ErrorState/ErrorState'
 import useCurrentUser from '@/features/auth/useCurrentUser'
 import useMarketListing from '@/features/marketplace/useMarketListing'
 import getApiErrorMessage from '@/utils/getApiErrorMessage'
-import useMyRecipeCopies from '@/features/my-kitchen/useMyRecipeCopies'
+import useMyRecipeCopies, {
+  useMyRecipeCount,
+} from '@/features/my-kitchen/useMyRecipeCopies'
 import { useSentTradeOffers } from '@/features/exchanges/useTradeOffers'
 import LoadingIndicator from '@/components/common/LoadingIndicator/LoadingIndicator'
 import {
@@ -104,6 +106,10 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
     difficulty: '',
     category: '',
   })
+  const [exchangePreviewFilters, setExchangePreviewFilters] = useState({
+    difficulty: '',
+    category: '',
+  })
 
   const debouncedExchangeKeyword = useDebouncedValue(
     exchangeSearchInput.trim(),
@@ -125,6 +131,14 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
     keyword: debouncedExchangeKeyword,
     difficulty: exchangeFilters.difficulty,
     category: exchangeFilters.category,
+    enabled: !isSeller && isExchangeSelectionOpen,
+  })
+
+  const { data: exchangeResultCount } = useMyRecipeCount({
+    state: 'OWNED',
+    keyword: debouncedExchangeKeyword,
+    difficulty: exchangePreviewFilters.difficulty,
+    category: exchangePreviewFilters.category,
     enabled: !isSeller && isExchangeSelectionOpen,
   })
 
@@ -569,13 +583,18 @@ function MarketplaceListingContent({ listing, currentUserId, onPurchased }) {
         title="레시피 교환하기"
         emptyMessage="교환 가능한 레시피가 없습니다."
         isLoading={isRecipeCopiesPending}
+        resultCount={exchangeResultCount}
         hasNextPage={
           Boolean(hasNextRecipeCopiesPage) && !isRecipeCopiesNextPageError
         }
         isFetchingNextPage={isFetchingNextRecipeCopiesPage}
         onLoadMore={fetchNextRecipeCopiesPage}
         onSearchChange={setExchangeSearchInput}
-        onFiltersChange={setExchangeFilters}
+        onDraftFiltersChange={setExchangePreviewFilters}
+        onFiltersChange={(nextFilters) => {
+          setExchangeFilters(nextFilters)
+          setExchangePreviewFilters(nextFilters)
+        }}
       />
 
       <ExchangeOfferModal

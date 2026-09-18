@@ -46,9 +46,11 @@ export default function RecipeSelectionModal({
   isLoading = false,
   hasNextPage = false,
   isFetchingNextPage = false,
+  resultCount,
   onLoadMore,
   onSearchChange,
   onFiltersChange,
+  onDraftFiltersChange,
 }) {
   const [searchInput, setSearchInput] = useState('')
   const [filters, setFilters] = useState({ ...DEFAULT_FILTERS })
@@ -57,12 +59,6 @@ export default function RecipeSelectionModal({
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const modalScrollRef = useRef(null)
   const filteredRecipes = getFilteredRecipes(recipes, searchInput, filters)
-
-  const draftFilteredRecipes = getFilteredRecipes(
-    recipes,
-    searchInput,
-    draftFilters,
-  )
 
   const visibleRecipes = filteredRecipes.slice(0, visibleCount)
   const hasMoreVisibleRecipes = visibleCount < filteredRecipes.length
@@ -93,7 +89,10 @@ export default function RecipeSelectionModal({
   }
 
   function handleOpenMobileFilter() {
-    setDraftFilters(filters)
+    const nextFilters = { ...filters }
+
+    setDraftFilters(nextFilters)
+    onDraftFiltersChange?.(nextFilters)
     setIsMobileFilterOpen(true)
   }
 
@@ -105,7 +104,10 @@ export default function RecipeSelectionModal({
   }
 
   function handleResetFilter() {
-    setDraftFilters({ ...DEFAULT_FILTERS })
+    const nextFilters = { ...DEFAULT_FILTERS }
+
+    setDraftFilters(nextFilters)
+    onDraftFiltersChange?.(nextFilters)
   }
 
   function handleFilterChange(key, value) {
@@ -125,10 +127,13 @@ export default function RecipeSelectionModal({
 
   // 적용되어 있는 필터를 또 누르면 풀리고, 적용 X 면 적용
   function handleDraftFilterChange(key, value) {
-    setDraftFilters((currentFilters) => ({
-      ...currentFilters,
-      [key]: currentFilters[key] === value ? '' : value,
-    }))
+    const nextFilters = {
+      ...draftFilters,
+      [key]: draftFilters[key] === value ? '' : value,
+    }
+
+    setDraftFilters(nextFilters)
+    onDraftFiltersChange?.(nextFilters)
   }
 
   return (
@@ -161,7 +166,7 @@ export default function RecipeSelectionModal({
             filters={filters}
             draftFilters={draftFilters}
             isMobileOpen={isMobileFilterOpen}
-            resultCount={draftFilteredRecipes.length}
+            resultCount={resultCount}
             onFilterChange={handleFilterChange}
             onDraftFilterChange={handleDraftFilterChange}
             onOpenMobile={handleOpenMobileFilter}
