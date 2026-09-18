@@ -754,7 +754,7 @@ paths:
     post:
       tags: [마켓플레이스]
       summary: 포인트로 레시피 사본 한 장 구매
-      description: 포인트 결제와 재고 차감이 모두 완료된 경우에만 구매를 반영하고, 구매한 사본의 everPurchased를 true로 설정합니다.
+      description: 포인트 결제와 재고 차감이 모두 완료된 경우에만 구매를 반영하고, 구매한 사본의 everPurchased를 true로 설정합니다. 판매자에게 PURCHASED 알림을 보냅니다. 재고가 0이 되면 판매글을 SOLD_OUT 상태로 변경하고 판매자에게 SOLD_OUT 알림을 보내며, 같은 판매글의 대기 중인 교환 제안을 취소 처리합니다.
       operationId: purchaseListing
       parameters:
         - $ref: '#/components/parameters/ListingId'
