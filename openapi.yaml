@@ -1840,11 +1840,22 @@ components:
       properties:
         success: { type: boolean, const: true }
         data:
-          {
-            type: array,
-            items: { $ref: '#/components/schemas/ListingSummary' },
-          }
-        meta: { $ref: '#/components/schemas/CursorMeta' }
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingSummary'
+        meta:
+          allOf:
+            - $ref: '#/components/schemas/CursorMeta'
+            - type: object
+              required: [totalCount]
+              properties:
+                totalCount:
+                  type: integer
+                  minimum: 0
+                  description: >-
+                    cursor와 limit을 제외하고 현재 검색 및 필터 조건을
+                    모두 적용한 판매글의 전체 개수
+                  example: 2
     PurchaseCursorResponse:
       type: object
       required: [success, data, meta]

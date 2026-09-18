@@ -2,6 +2,7 @@ import { ERROR_CODES } from '../constants/error-codes.js'
 import { PRISMA_ERROR_CODES } from '../constants/prisma-error-codes.js'
 import { AppError } from '../errors/app-error.js'
 import {
+  countMarketListings,
   findMarketListingById,
   findMarketListingDetailById,
   findMarketListings,
@@ -88,7 +89,10 @@ function formatMarketListingDetail(
 export async function getMarketListings(query) {
   try {
     // 필터링한 판매레시피들 디비 조회
-    const listings = await findMarketListings(query)
+    const [listings, totalCount] = await Promise.all([
+      findMarketListings(query),
+      countMarketListings(query),
+    ])
 
     // 다음 페이지 확인
     const hasNext = listings.length > query.limit
@@ -108,6 +112,7 @@ export async function getMarketListings(query) {
       meta: {
         nextCursor,
         hasNext,
+        totalCount,
       },
     }
   } catch (error) {
