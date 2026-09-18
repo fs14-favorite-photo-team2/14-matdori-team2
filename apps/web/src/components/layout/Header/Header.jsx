@@ -7,6 +7,7 @@ import useCurrentUser, {
   CURRENT_USER_QUERY_KEY,
 } from '@/features/auth/useCurrentUser'
 import useUnreadNotificationCount from '@/features/notifications/useUnreadNotificationCount'
+import RandomPointModal from '@/features/random-point/RandomPointModal'
 import useTimedToast from '@/hooks/useTimedToast'
 import { queryKeys } from '@/lib/queryKeys'
 import formatPoints from '@/utils/formatPoints'
@@ -41,7 +42,13 @@ function getServerMobileViewportSnapshot() {
 }
 
 export default function Header() {
-  const { user, isAuthenticated, isLoading, error } = useCurrentUser()
+  const {
+    user,
+    isAuthenticated,
+    isLoading,
+    error,
+    refetch: refetchCurrentUser,
+  } = useCurrentUser()
   const { data: unreadCount = 0 } = useUnreadNotificationCount({
     enabled: !isLoading && !error && isAuthenticated,
   })
@@ -73,6 +80,8 @@ export default function Header() {
   const [showLogoutToast, setShowLogoutToast] = useState(false)
   const logoutToastTimerRef = useRef(null)
 
+  const [isRandomPointOpen, setIsRandomPointOpen] = useState(false)
+
   const logoutMutation = useMutation({
     mutationFn: logout,
 
@@ -95,6 +104,7 @@ export default function Header() {
       setIsProfileOpen(false)
       setIsNotificationOpen(false)
       setIsMobileMenuOpen(false)
+      setIsRandomPointOpen(false)
 
       router.replace('/')
     },
@@ -170,6 +180,13 @@ export default function Header() {
     setIsMobileMenuOpen(true)
   }
 
+  const handleRandomPointOpen = () => {
+    setIsProfileOpen(false)
+    setIsNotificationOpen(false)
+    setIsMobileMenuOpen(false)
+    setIsRandomPointOpen(true)
+  }
+
   useEffect(() => {
     const mobileMediaQuery = window.matchMedia(MOBILE_MEDIA_QUERY)
 
@@ -228,9 +245,15 @@ export default function Header() {
 
           {!isLoading && !error && isAuthenticated && (
             <>
-              <span className={styles.points}>
+              <button
+                type="button"
+                className={styles.points}
+                onClick={handleRandomPointOpen}
+                aria-haspopup="dialog"
+                aria-expanded={isRandomPointOpen}
+              >
                 {formatPoints(user?.points)}
-              </span>
+              </button>
 
               <div
                 className={styles.notificationArea}
@@ -384,7 +407,15 @@ export default function Header() {
         isLoggingOut={logoutMutation.isPending}
         onClose={() => setIsMobileMenuOpen(false)}
         onLogout={handleLogout}
+        onOpenRandomPoint={handleRandomPointOpen}
       />
+      {isAuthenticated && (
+        <RandomPointModal
+          isOpen={isRandomPointOpen}
+          onClose={() => setIsRandomPointOpen(false)}
+          onClaimed={() => refetchCurrentUser()}
+        />
+      )}
     </header>
   )
 }
