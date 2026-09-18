@@ -51,21 +51,6 @@
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-gray-400) transparent;
-}
-
-.notificationList::-webkit-scrollbar {
-  width: 6px;
-}
-
-.notificationList::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.notificationList::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background-color: var(--color-gray-400);
 }
 
 .state {

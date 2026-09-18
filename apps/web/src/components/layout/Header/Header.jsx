@@ -219,12 +219,12 @@ export default function Header() {
 
       <div className={styles.inner}>
         <div className={styles.brandArea}>
-          <Image src={serviceIcon} alt="" className={styles.serviceIcon} />
-
           <Link
             href={isAuthenticated ? '/marketplace' : '/'}
             className={styles.logoLink}
           >
+            <Image src={serviceIcon} alt="" className={styles.serviceIcon} />
+
             <Image
               src="/logos/matdori-logo.svg"
               alt="맛도리 마켓"
@@ -336,18 +336,18 @@ export default function Header() {
         </button>
 
         <div className={styles.mobileBrand}>
-          <Image
-            src={serviceIcon}
-            alt=""
-            width={29}
-            height={29}
-            className={styles.mobileServiceIcon}
-          />
-
           <Link
             href={isAuthenticated ? '/marketplace' : '/'}
             className={styles.mobileLogoLink}
           >
+            <Image
+              src={serviceIcon}
+              alt=""
+              width={29}
+              height={29}
+              className={styles.mobileServiceIcon}
+            />
+
             <Image
               src="/logos/matdori-logo.svg"
               alt="맛도리 마켓"
