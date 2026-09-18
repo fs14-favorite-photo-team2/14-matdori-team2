@@ -3,6 +3,7 @@ import { PRISMA_ERROR_CODES } from '../constants/prisma-error-codes.js'
 import { AppError } from '../errors/app-error.js'
 import {
   findMarketListingById,
+  findMarketListingDetailById,
   findMarketListings,
   findRecipeCopiesByIds,
   createMarketListingRecord,
@@ -25,6 +26,61 @@ function formatMarketListing({ _count, recipe, ...listing }) {
         ? recipe.ingredients.filter((ingredient) => ingredient.isHighlight)
         : [],
     },
+    remainingQuantity: _count.copies,
+  }
+}
+
+// 유저 권한 분기
+function formatMarketListingDetail(
+  { _count, recipe, ...listing },
+  canViewFullRecipe,
+) {
+  const ingredients = Array.isArray(recipe.ingredients)
+    ? recipe.ingredients
+    : []
+
+  const {
+    copies: _currentUserCopies,
+    ingredients: _ingredients,
+    content,
+    totalSupply,
+    createdAt,
+    updatedAt,
+    ...recipeBase
+  } = recipe
+
+  return {
+    ...listing,
+
+    canViewFullRecipe,
+
+    recipe: {
+      ...recipeBase,
+
+      imageUrl: recipe.imageUrls[0] ?? null,
+
+      ...(canViewFullRecipe
+        ? {
+            content,
+            totalSupply,
+            createdAt,
+            updatedAt,
+
+            ingredients: ingredients.map((ingredient) => ({
+              name: ingredient.name,
+              amount: ingredient.amount,
+              isHighlight: ingredient.isHighlight,
+            })),
+          }
+        : {
+            ingredients: ingredients
+              .filter((ingredient) => ingredient.isHighlight)
+              .map((ingredient) => ({
+                name: ingredient.name,
+              })),
+          }),
+    },
+
     remainingQuantity: _count.copies,
   }
 }
@@ -65,18 +121,28 @@ export async function getMarketListings(query) {
 }
 
 export async function getMarketListing(userId, listingId) {
-  const listing = await findMarketListingById(listingId)
+  const listing = await findMarketListingDetailById(listingId, userId)
 
   if (!listing) {
     throw AppError.from(ERROR_CODES.RESOURCE_NOT_FOUND)
   }
 
-  const formattedListing = formatMarketListing(listing)
+  const isSeller = userId != null && listing.seller.id === userId
 
-  if (listing.seller.id !== userId) {
+  const isCreator = userId != null && listing.recipe.creator.id === userId
+
+  const ownsRecipeCopy = (listing.recipe.copies?.length ?? 0) > 0
+
+  const canViewFullRecipe = isSeller || isCreator || ownsRecipeCopy
+
+  const formattedListing = formatMarketListingDetail(listing, canViewFullRecipe)
+
+  // 판매자가 아니면 레시피 정보만 권한에 맞춰 반환
+  if (!isSeller) {
     return formattedListing
   }
 
+  // 판매자만 판매수량 수정 정보 추가
   const quantityInfo = await findMarketListingQuantityInfo(listingId, userId)
 
   return {
